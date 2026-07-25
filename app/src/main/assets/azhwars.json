@@ -1,0 +1,463 @@
+[
+ {
+  "id": "poigai",
+  "order": 1,
+  "name": "பொய்கையாழ்வார்",
+  "name_en": "Poigai Aazhwar",
+  "epithets": [
+   "காசார யோகி",
+   "சரோயோகி"
+  ],
+  "sthalam": "திருவெஃகா, காஞ்சிபுரம்",
+  "sthalam_en": "Thiruvekka, Kanchipuram",
+  "bio_ta": "முதலாழ்வார் மூவரில் முதல்வர். திருக்கோவலூரின் இடைகழியில் பூதத்தாழ்வார், பேயாழ்வாருடன் ஒருங்கே நின்ற காட்சியில், உலகையே அகல் விளக்காகவும் கடலை நெய்யாகவும் கதிரவனை சுடராகவும் ஏற்றி இறைவனுக்கு ஒளியேற்றியவர். முதல் திருவந்தாதியை அருளினார்.",
+  "bio_en": "First of the three Mudhal Aazhwars. In the narrow passage at Thirukkovalur, crowded together with Bhoothath and Pey, he lit a lamp for the Lord out of the world itself — the earth as the vessel, the ocean as ghee, the sun as flame. Author of Mudhal Thiruvandhadhi.",
+  "works": [
+   {
+    "id": "b3w1",
+    "title": "முதல் திருவந்தாதி",
+    "verses": 100
+   }
+  ],
+  "total_verses": 100
+ },
+ {
+  "id": "bhoothath",
+  "order": 2,
+  "name": "பூதத்தாழ்வார்",
+  "name_en": "Bhoothath Aazhwar",
+  "epithets": [
+   "பூதயோகி",
+   "மல்லாபுர சுதர்"
+  ],
+  "sthalam": "திருக்கடல்மல்லை (மாமல்லபுரம்)",
+  "sthalam_en": "Thirukkadalmallai (Mahabalipuram)",
+  "bio_ta": "முதலாழ்வார்களுள் இரண்டாமவர். அன்பையே விளக்காகவும், ஆர்வத்தையே நெய்யாகவும், உருகும் நெஞ்சத்தையே திரியாகவும் கொண்டு ஞானச் சுடர் ஏற்றியவர். இரண்டாம் திருவந்தாதியை அருளினார்.",
+  "bio_en": "Second of the Mudhal Aazhwars. His lamp was made of inward things: love for the vessel, longing for the ghee, a melting heart for the wick — and knowledge for the flame. Author of Irandam Thiruvandhadhi.",
+  "works": [
+   {
+    "id": "b3w2",
+    "title": "இரண்டாம் திருவந்தாதி",
+    "verses": 100
+   }
+  ],
+  "total_verses": 100
+ },
+ {
+  "id": "pey",
+  "order": 3,
+  "name": "பேயாழ்வார்",
+  "name_en": "Pey Aazhwar",
+  "epithets": [
+   "மகதாக்ய யோகி",
+   "மயிலாபுரத் தலைவர்"
+  ],
+  "sthalam": "திருமயிலை (மயிலாப்பூர்), சென்னை",
+  "sthalam_en": "Thirumylai (Mylapore), Chennai",
+  "bio_ta": "முதலாழ்வார்களுள் மூன்றாமவர். மூவரும் ஒருங்கே நின்றபோது, \"திருக்கண்டேன், பொன்மேனி கண்டேன்\" என்று இறைவனை நேரில் கண்ட காட்சியைப் பாடியவர். மூன்றாம் திருவந்தாதியை அருளினார்.",
+  "bio_en": "Third of the Mudhal Aazhwars. When the three stood pressed together, it was he who saw — 'I have seen Thiru, I have seen the golden form' — and sang the seeing itself. Author of Moondram Thiruvandhadhi.",
+  "works": [
+   {
+    "id": "b3w3",
+    "title": "மூன்றாம் திருவந்தாதி",
+    "verses": 100
+   }
+  ],
+  "total_verses": 100
+ },
+ {
+  "id": "thirumazhisai",
+  "order": 4,
+  "name": "திருமழிசையாழ்வார்",
+  "name_en": "Thirumazhisai Aazhwar",
+  "epithets": [
+   "பக்திசாரர்",
+   "திருமழிசைப்பிரான்"
+  ],
+  "sthalam": "திருமழிசை",
+  "sthalam_en": "Thirumazhisai",
+  "bio_ta": "பல சமயங்களையும் ஆராய்ந்து இறுதியில் ஸ்ரீவைஷ்ணவத்தில் நிலைபெற்றவர். உறுதியான, வாதத்திறன் மிக்க பாடல்களால் பரத்துவத்தை நிலைநாட்டியவர். திருச்சந்த விருத்தமும் நான்முகன் திருவந்தாதியும் அருளினார்.",
+  "bio_en": "He tested many faiths before settling in Srivaishnavam, and the argumentative edge of that search stayed in his verse — he establishes the Lord's supremacy by reasoning, not only by praise. Author of Thiruchchanda Viruththam and Naanmugan Thiruvandhadhi.",
+  "works": [
+   {
+    "id": "w6",
+    "title": "திருச்சந்த விருத்தம்",
+    "verses": 120
+   },
+   {
+    "id": "b3w4",
+    "title": "நான்முகன் திருவந்தாதி",
+    "verses": 96
+   }
+  ],
+  "total_verses": 216
+ },
+ {
+  "id": "nammazhwar",
+  "order": 5,
+  "name": "நம்மாழ்வார்",
+  "name_en": "Nammaazhwar",
+  "epithets": [
+   "சடகோபன்",
+   "மாறன்",
+   "பராங்குசன்",
+   "வகுளாபரணன்",
+   "குருகூர் நம்பி"
+  ],
+  "sthalam": "ஆழ்வார்திருநகரி (திருக்குருகூர்)",
+  "sthalam_en": "Aazhwarthirunagari (Thirukkurugur)",
+  "bio_ta": "ஆழ்வார்களுள் தலைவராகக் கருதப்படுபவர். புளியமரத்தடியில் அமர்ந்து மௌனத்தில் இருந்தவரை மதுரகவியாழ்வார் கண்டடைந்தார். நாலாயிரத்தின் மையமான திருவாய்மொழி உட்பட நான்கு பிரபந்தங்களை அருளினார்; வேதத்திற்கு நிகராகத் திருவாய்மொழி போற்றப்படுகிறது.",
+  "bio_en": "Held the foremost of the Aazhwars. He sat in silence beneath a tamarind tree until Madhurakavi found him. Author of four works including Thiruvaymozhi, the centre of the whole collection, which tradition ranks alongside the Veda itself.",
+  "works": [
+   {
+    "id": "b4w1",
+    "title": "திருவாய்மொழி",
+    "verses": 1102
+   },
+   {
+    "id": "b3w5",
+    "title": "திருவிருத்தம்",
+    "verses": 100
+   },
+   {
+    "id": "b3w7",
+    "title": "பெரிய திருவந்தாதி",
+    "verses": 87
+   },
+   {
+    "id": "b3w6",
+    "title": "திருவாசிரியம்",
+    "verses": 7
+   }
+  ],
+  "total_verses": 1296
+ },
+ {
+  "id": "madhurakavi",
+  "order": 6,
+  "name": "மதுரகவியாழ்வார்",
+  "name_en": "Madhurakavi Aazhwar",
+  "epithets": [],
+  "sthalam": "திருக்கோளூர்",
+  "sthalam_en": "Thirukkolur",
+  "bio_ta": "நம்மாழ்வாரின் சீடர். இறைவனையன்றி ஆசாரியனையே பாடிய ஒரே ஆழ்வார் — \"தேவு மற்றறியேன்\" என்று மாறனையே தெய்வமாகக் கொண்டவர். கண்ணிநுண் சிறுத்தாம்பு என்னும் பதினொரு பாசுரங்களை அருளினார்.",
+  "bio_en": "Disciple of Nammaazhwar, and the one Aazhwar who sings not the Lord but his teacher — 'I know no other god.' Author of the eleven verses of Kanninun Siruthaambu.",
+  "works": [
+   {
+    "id": "w10",
+    "title": "கண்ணிநுண் சிறுத்தாம்பு",
+    "verses": 11
+   }
+  ],
+  "total_verses": 11
+ },
+ {
+  "id": "kulasekhara",
+  "order": 7,
+  "name": "குலசேகராழ்வார்",
+  "name_en": "Kulasekhara Aazhwar",
+  "epithets": [
+   "கொல்லி காவலன்",
+   "சேரலர் கோன்"
+  ],
+  "sthalam": "திருவஞ்சிக்களம், சேர நாடு",
+  "sthalam_en": "Thiruvanjikkalam, Chera country",
+  "bio_ta": "சேர நாட்டு அரசர்; அரசைத் துறந்து அடியவரானவர். திருவேங்கடத்தில் ஒரு படியாகவோ, மீனாகவோ, பொற்சுனைப் பொய்கையாகவோ ஆகிலும் இருக்க வேண்டும் என்று வேண்டியவர். பெருமாள் திருமொழியை அருளினார்.",
+  "bio_en": "A Chera king who set the throne aside for servitude. His most famous wish is to be reborn at Thiruvenkatam as anything at all — a step, a fish, a pool — so long as it is there. Author of Perumal Thirumozhi.",
+  "works": [
+   {
+    "id": "w5",
+    "title": "பெருமாள் திருமொழி",
+    "verses": 105
+   }
+  ],
+  "total_verses": 105
+ },
+ {
+  "id": "periyazhwar",
+  "order": 8,
+  "name": "பெரியாழ்வார்",
+  "name_en": "Periyaazhwar",
+  "epithets": [
+   "விஷ்ணுசித்தர்",
+   "பட்டர்பிரான்"
+  ],
+  "sthalam": "ஸ்ரீவில்லிபுத்தூர்",
+  "sthalam_en": "Srivilliputhur",
+  "bio_ta": "இறைவனுக்கே மங்களாசாசனம் செய்த ஆழ்வார் — காக்க வேண்டியவனுக்குக் காப்பிட்டவர். கண்ணனைத் தன் மகனாகவே பாவித்து, தாய்மையின் நோக்கில் பிள்ளைத்தமிழ் பாடியவர். திருப்பல்லாண்டும் பெரியாழ்வார் திருமொழியும் அருளினார்.",
+  "bio_en": "The Aazhwar who blesses the Lord rather than asking blessing — who fears for the safety of the one who keeps everyone else safe. He takes Krishna as his own infant son and sings him in a mother's voice. Author of Thiruppallandu and Periyaazhwar Thirumozhi.",
+  "works": [
+   {
+    "id": "w2",
+    "title": "பெரியாழ்வார் திருமொழி",
+    "verses": 461
+   },
+   {
+    "id": "w1",
+    "title": "திருப்பல்லாண்டு",
+    "verses": 12
+   }
+  ],
+  "total_verses": 473
+ },
+ {
+  "id": "aandal",
+  "order": 9,
+  "name": "ஆண்டாள்",
+  "name_en": "Aandal",
+  "epithets": [
+   "கோதை",
+   "சூடிக்கொடுத்த சுடர்க்கொடி",
+   "நாச்சியார்"
+  ],
+  "sthalam": "ஸ்ரீவில்லிபுத்தூர்",
+  "sthalam_en": "Srivilliputhur",
+  "bio_ta": "ஆழ்வார்களுள் ஒரே பெண். பெரியாழ்வாரால் துளசித் தோட்டத்தில் கண்டெடுக்கப்பட்டவர். தான் சூடிய மாலையையே இறைவனுக்குச் சூட்டியவர். மார்கழி நோன்பைப் பாடும் திருப்பாவையும், நாச்சியார் திருமொழியும் அருளினார்.",
+  "bio_en": "The only woman among the Aazhwars, found by Periyaazhwar in his tulasi garden. She wore the garland first and gave it to the Lord after. Author of Thiruppavai, the Margazhi observance, and Nachiyar Thirumozhi.",
+  "works": [
+   {
+    "id": "w4",
+    "title": "நாச்சியார் திருமொழி",
+    "verses": 143
+   },
+   {
+    "id": "w3",
+    "title": "திருப்பாவை",
+    "verses": 30
+   }
+  ],
+  "total_verses": 173
+ },
+ {
+  "id": "thondaradippodi",
+  "order": 10,
+  "name": "தொண்டரடிப்பொடியாழ்வார்",
+  "name_en": "Thondaradippodi Aazhwar",
+  "epithets": [
+   "விப்ரநாராயணன்"
+  ],
+  "sthalam": "திருமண்டங்குடி",
+  "sthalam_en": "Thirumandangudi",
+  "bio_ta": "அடியார்களின் திருவடித் தூளியே தனக்குப் பேறு எனக் கொண்ட பெயருடையவர். அரங்கனுக்குத் தொண்டு செய்து, வீழ்ச்சியையும் மீட்சியையும் கண்டவர். திருமாலையும் திருப்பள்ளியெழுச்சியும் அருளினார்.",
+  "bio_en": "His very name means the dust of the feet of the devotees — that is what he claims as his portion. He served the Lord of Srirangam, fell, and was raised again. Author of Thirumaalai and Thiruppalliyezhuchi.",
+  "works": [
+   {
+    "id": "w7",
+    "title": "திருமாலை",
+    "verses": 45
+   },
+   {
+    "id": "w8",
+    "title": "திருப்பள்ளியெழுச்சி",
+    "verses": 10
+   }
+  ],
+  "total_verses": 55
+ },
+ {
+  "id": "thiruppaan",
+  "order": 11,
+  "name": "திருப்பாணாழ்வார்",
+  "name_en": "Thiruppaan Aazhwar",
+  "epithets": [
+   "முனிவாகனர்"
+  ],
+  "sthalam": "உறையூர்",
+  "sthalam_en": "Uraiyur",
+  "bio_ta": "லோகசாரங்க முனிவரின் தோளிலேறி அரங்கன் சந்நிதி புகுந்தவர். இறைவனது திருவடி முதல் திருமுடி வரை கண்டு, \"என் அமுதினைக் கண்ட கண்கள் மற்றொன்றினைக் காணா\" என்று முடித்தவர். அமலனாதிபிரான் என்னும் பத்துப் பாசுரங்களை அருளினார்.",
+  "bio_en": "Carried into the sanctum on the shoulders of the sage Lokasaranga. He looks the Lord over from the feet upward to the crown, and ends by refusing to look at anything else ever again. Author of the ten verses of Amalanaadhipiraan.",
+  "works": [
+   {
+    "id": "w9",
+    "title": "அமலனாதிபிரான்",
+    "verses": 10
+   }
+  ],
+  "total_verses": 10
+ },
+ {
+  "id": "thirumangai",
+  "order": 12,
+  "name": "திருமங்கையாழ்வார்",
+  "name_en": "Thirumangai Aazhwar",
+  "epithets": [
+   "கலியன்",
+   "பரகாலன்",
+   "நீலன்",
+   "ஆலிநாடன்"
+  ],
+  "sthalam": "திருக்குறையலூர்",
+  "sthalam_en": "Thirukkuraiyalur",
+  "bio_ta": "ஆழ்வார்களுள் மிக அதிகமான திவ்ய தேசங்களைப் பாடியவர்; பயணத்தின் ஆழ்வார். திருமந்திரத்தைப் பெற்ற பின் தன் வாழ்வையே கைங்கர்யமாக்கியவர். ஆறு பிரபந்தங்களை அருளினார்; அவற்றுள் பெரிய திருமொழி மிகப் பெரியது.",
+  "bio_en": "Sang more of the Divya Desams than any other Aazhwar — the Aazhwar of the road. After receiving the mantra he turned his whole life into service. Author of six works, the largest being Periya Thirumozhi.",
+  "works": [
+   {
+    "id": "b2w1",
+    "title": "பெரிய திருமொழி",
+    "verses": 1084
+   },
+   {
+    "id": "b2w3",
+    "title": "திருநெடுந்தாண்டகம்",
+    "verses": 30
+   },
+   {
+    "id": "b2w2",
+    "title": "திருக்குறுந்தாண்டகம்",
+    "verses": 20
+   },
+   {
+    "id": "b3w8",
+    "title": "திருவெழுகூற்றிருக்கை",
+    "verses": 1
+   },
+   {
+    "id": "b3w9",
+    "title": "சிறிய திருமடல்",
+    "verses": 1
+   },
+   {
+    "id": "b3w10",
+    "title": "பெரிய திருமடல்",
+    "verses": 1
+   }
+  ],
+  "total_verses": 1137
+ },
+ {
+  "id": "amudhanar",
+  "order": 13,
+  "name": "திருவரங்கத்தமுதனார்",
+  "name_en": "Thiruvarangathu Amudhanar",
+  "epithets": [],
+  "sthalam": "திருவரங்கம்",
+  "sthalam_en": "Srirangam",
+  "bio_ta": "ஆழ்வார் அல்லர்; இராமானுசரின் சீடர். ஆசாரியனையே சரணாகக் கொண்டு இராமானுச நூற்றந்தாதியை அருளினார். இது நாலாயிரத்தின் இறுதி முத்திரையாக அமைந்துள்ளது.",
+  "bio_en": "Not an Aazhwar but a disciple of Ramanuja. His Ramanusa Nootrandhadhi takes the acharya himself as refuge, and stands as the closing seal of the four thousand.",
+  "works": [
+   {
+    "id": "b4w2",
+    "title": "இராமானுச நூற்றந்தாதி",
+    "verses": 108
+   }
+  ],
+  "total_verses": 108
+ },
+ {
+  "id": "desika",
+  "order": 14,
+  "name": "வேதாந்த தேசிகர்",
+  "name_en": "Vedanta Desika",
+  "epithets": [
+   "சுவாமி தேசிகன்",
+   "கவிதார்க்கிக சிம்மம்"
+  ],
+  "sthalam": "தூப்புல், காஞ்சிபுரம்",
+  "sthalam_en": "Thooppul, Kanchipuram",
+  "bio_ta": "ஆழ்வார் அல்லர்; ஸ்ரீவைஷ்ணவ ஆசாரியர். தமிழிலும் வடமொழியிலும் ஆற்றல் மிக்கவர். தேசிக பிரபந்தம் என்னும் தமிழ்த் தொகுப்பை அருளினார்.",
+  "bio_en": "Not an Aazhwar but a Srivaishnava acharya, master of both Tamil and Sanskrit. Author of the Tamil collection known as the Desika Prabandham.",
+  "works": [
+   {
+    "id": "b5w2",
+    "title": "அதிகாரசங்கிரகம்",
+    "verses": 56
+   },
+   {
+    "id": "b5w5",
+    "title": "பரமதபங்கம்",
+    "verses": 54
+   },
+   {
+    "id": "b5w1",
+    "title": "அமிருதரஞ்சனி",
+    "verses": 39
+   },
+   {
+    "id": "b5w3",
+    "title": "அமிருதாசுவாதினி",
+    "verses": 37
+   },
+   {
+    "id": "b5w6",
+    "title": "மெய்விரதமான்மியம்",
+    "verses": 29
+   },
+   {
+    "id": "b5w15",
+    "title": "கீதார்த்தசங்கிரகம்",
+    "verses": 23
+   },
+   {
+    "id": "b5w4",
+    "title": "பரமபதசோபானம்",
+    "verses": 21
+   },
+   {
+    "id": "b5w19",
+    "title": "ஆகாரநியமம்",
+    "verses": 21
+   },
+   {
+    "id": "b5w20",
+    "title": "பிள்ளையந்தாதி",
+    "verses": 20
+   },
+   {
+    "id": "b5w18",
+    "title": "ப்ரபந்தசாரம்",
+    "verses": 18
+   },
+   {
+    "id": "b5w11",
+    "title": "பன்னிருநாமம்",
+    "verses": 13
+   },
+   {
+    "id": "b5w13",
+    "title": "துவயச்சுருக்கு",
+    "verses": 13
+   },
+   {
+    "id": "b5w7",
+    "title": "அடைக்கலப்பத்து",
+    "verses": 11
+   },
+   {
+    "id": "b5w8",
+    "title": "அர்த்தபஞ்சகம்",
+    "verses": 11
+   },
+   {
+    "id": "b5w10",
+    "title": "திருச்சின்னமாலை",
+    "verses": 11
+   },
+   {
+    "id": "b5w14",
+    "title": "சரமச்லோகச்சுருக்கு",
+    "verses": 11
+   },
+   {
+    "id": "b5w9",
+    "title": "ஸ்ரீவைஷ்ணவதினசரி",
+    "verses": 10
+   },
+   {
+    "id": "b5w12",
+    "title": "திருமந்திரச்சுருக்கு",
+    "verses": 10
+   },
+   {
+    "id": "b5w16",
+    "title": "மும்மணிக்கோவை",
+    "verses": 10
+   },
+   {
+    "id": "b5w17",
+    "title": "நவமணிமாலை",
+    "verses": 9
+   }
+  ],
+  "total_verses": 427
+ }
+]

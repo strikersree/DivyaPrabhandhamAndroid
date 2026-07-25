@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Daily reading reminders (API 33+ asks at runtime). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Re-arm reminders after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Play Billing for the tip jar. -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <!--
+      Android 11+ hides other packages unless declared. RecitationLauncher
+      checks for these two so it can send playback straight to the app rather
+      than bouncing the listener into a browser tab.
+    -->
+    <queries>
+        <package android:name="com.google.android.apps.youtube.music" />
+        <package android:name="com.google.android.youtube" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".DivyaPrabhandhamApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:localeConfig="@xml/locales_config"
+        android:enableOnBackInvokedCallback="true"
+        android:theme="@style/Theme.DivyaPrabhandham.Splash">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|fontScale"
+            android:theme="@style/Theme.DivyaPrabhandham.Splash">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Deep links from the widget and the reminder notification.
+                 Mirrors the iOS `divyaprabhandham://` custom scheme. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="divyaprabhandham" />
+            </intent-filter>
+        </activity>
+
+        <!-- Hourly verse widget (Glance). -->
+        <receiver
+            android:name=".widget.VerseWidgetReceiver"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/verse_widget_info" />
+        </receiver>
+
+        <!-- Fires a scheduled daily reminder. -->
+        <receiver
+            android:name=".notify.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- Re-schedules reminders after reboot, since AlarmManager alarms
+             do not survive one. -->
+        <receiver
+            android:name=".notify.BootReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

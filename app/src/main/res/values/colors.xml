@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Warm sandalwood, matching the iOS LaunchBackground colorset. -->
+    <color name="splash_background">#FFF6EDE0</color>
+    <color name="widget_background">#FFFDF8F1</color>
+</resources>

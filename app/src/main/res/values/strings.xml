@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Only chrome that lives outside Compose belongs here (launcher label,
+  widget metadata, notification channel). Every in-app string is served by
+  data/UiText.kt, which follows the in-app script setting rather than the
+  device locale — the same design as the iOS Localization.swift table.
+-->
+<resources>
+    <string name="app_name">Divya Prabhandham</string>
+    <string name="widget_label">Pasuram</string>
+    <string name="widget_description">An hourly verse from the Divya Prabandham.</string>
+    <string name="notification_channel_reminders">Daily reading reminders</string>
+    <string name="notification_channel_reminders_desc">A gentle nudge to continue reading, at the times you choose.</string>
+</resources>

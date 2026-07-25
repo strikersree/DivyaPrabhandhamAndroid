@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+"""
+Structural audit for the Android port.
+
+There is no Kotlin compiler in this environment (JRE only, and both the Google
+and Maven repositories are blocked), so this stands in for one. It cannot catch
+type errors, but it does catch the mistakes that actually happen when writing a
+lot of Kotlin without a build: unbalanced delimiters, references to enum cases
+that were never declared, imports of classes that do not exist, package
+declarations that disagree with the directory, and manifest or resource
+references that point at nothing.
+
+Run it after every edit. Exit code is non-zero if anything is wrong.
+"""
+
+import os
+import re
+import sys
+import json
+from collections import defaultdict
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+APP = os.path.join(ROOT, "app", "src", "main")
+SRC = os.path.join(APP, "java")
+PKG_ROOT = "com.srinivaskannan.divyaprabhandham"
+
+problems = []
+notes = []
+
+
+def fail(where, msg):
+    problems.append(f"{where}: {msg}")
+
+
+def note(msg):
+    notes.append(msg)
+
+
+def kotlin_files():
+    for base, _, names in os.walk(SRC):
+        for name in sorted(names):
+            if name.endswith(".kt"):
+                yield os.path.join(base, name)
+
+
+def strip_code(text):
+    """Remove comments, strings and char literals so delimiters can be counted."""
+    out = []
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        # Triple-quoted string
+        if text.startswith('"""', i):
+            j = text.find('"""', i + 3)
+            i = n if j < 0 else j + 3
+            continue
+        if c == '"':
+            i += 1
+            while i < n and text[i] != '"':
+                if text[i] == "\\":
+                    i += 1
+                i += 1
+            i += 1
+            continue
+        if c == "'":
+            i += 1
+            while i < n and text[i] != "'":
+                if text[i] == "\\":
+                    i += 1
+                i += 1
+            i += 1
+            continue
+        if text.startswith("//", i):
+            j = text.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        if text.startswith("/*", i):
+            depth, i = 1, i + 2
+            while i < n and depth:
+                if text.startswith("/*", i):
+                    depth += 1
+                    i += 2
+                elif text.startswith("*/", i):
+                    depth -= 1
+                    i += 2
+                else:
+                    i += 1
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+# ---------------------------------------------------------------- delimiters
+
+def check_delimiters(path, code):
+    pairs = {")": "(", "]": "[", "}": "{"}
+    stack = []
+    line = 1
+    for ch in code:
+        if ch == "\n":
+            line += 1
+        elif ch in "([{":
+            stack.append((ch, line))
+        elif ch in ")]}":
+            if not stack:
+                fail(rel(path), f"unmatched '{ch}' at line {line}")
+                return
+            open_ch, open_line = stack.pop()
+            if open_ch != pairs[ch]:
+                fail(rel(path), f"'{open_ch}' at line {open_line} closed by '{ch}' at line {line}")
+                return
+    for open_ch, open_line in stack:
+        fail(rel(path), f"unclosed '{open_ch}' opened at line {open_line}")
+
+
+def rel(path):
+    return os.path.relpath(path, ROOT)
+
+
+# ------------------------------------------------------------------ packages
+
+def check_package(path, text):
+    m = re.search(r"^package\s+([\w.]+)", text, re.M)
+    if not m:
+        fail(rel(path), "no package declaration")
+        return None
+    declared = m.group(1)
+    expected_dir = os.path.join(SRC, *declared.split("."))
+    if os.path.dirname(os.path.abspath(path)) != expected_dir:
+        fail(rel(path), f"package '{declared}' does not match its directory")
+    return declared
+
+
+# ------------------------------------------------------------------- symbols
+
+def collect_declarations(files):
+    """Map fully-qualified name -> file, for every top-level declaration."""
+    declared = {}
+    pattern = re.compile(
+        r"^(?:@\w+(?:\([^)]*\))?\s*)*"
+        r"(?:public\s+|internal\s+|private\s+)?"
+        r"(?:abstract\s+|sealed\s+|open\s+|final\s+|data\s+|value\s+|enum\s+|annotation\s+)*"
+        r"(class|interface|object|fun|val|var)\s+"
+        r"([A-Za-z_]\w*)",
+        re.M,
+    )
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        pkg = re.search(r"^package\s+([\w.]+)", text, re.M)
+        if not pkg:
+            continue
+        pkg = pkg.group(1)
+        code = strip_code(text)
+        for kind, name in pattern.findall(code):
+            declared.setdefault(f"{pkg}.{name}", path)
+        # Extension properties/functions on a receiver: `val Foo.bar get()`
+        for m in re.finditer(r"^(?:val|var|fun)\s+[\w.<>]+\.(\w+)", code, re.M):
+            declared.setdefault(f"{pkg}.{m.group(1)}", path)
+    return declared
+
+
+def check_internal_imports(files, declared):
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        for m in re.finditer(r"^import\s+(" + re.escape(PKG_ROOT) + r"[\w.]*)", text, re.M):
+            target = m.group(1)
+            # R is generated by the Android build, not by us.
+            if target == PKG_ROOT + ".R" or target.startswith(PKG_ROOT + ".R."):
+                continue
+            if target in declared:
+                continue
+            # Nested types (Foo.Bar) and enum members import via their owner.
+            owner = target.rsplit(".", 1)[0]
+            if owner in declared:
+                continue
+            fail(rel(path), f"imports '{target}', which is not declared anywhere")
+
+
+# ------------------------------------------------------------------ Ui table
+
+def check_ui_keys(files):
+    ui_path = os.path.join(SRC, *PKG_ROOT.split("."), "data", "UiText.kt")
+    text = open(ui_path, encoding="utf-8").read()
+    body = text[text.index("enum class Ui {"): text.index("object UiText")]
+    cases = set(re.findall(r"^\s*([A-Z][A-Z0-9_]*),", body, re.M))
+    entries = set(re.findall(r"Ui\.([A-Z][A-Z0-9_]*)\s+to\s+\(", text))
+
+    missing_entry = cases - entries
+    orphan_entry = entries - cases
+    if missing_entry:
+        fail("UiText.kt", f"enum cases with no string: {sorted(missing_entry)}")
+    if orphan_entry:
+        fail("UiText.kt", f"strings with no enum case: {sorted(orphan_entry)}")
+
+    used = set()
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        if path.endswith("UiText.kt"):
+            continue
+        used |= set(re.findall(r"\bUi\.([A-Z][A-Z0-9_]*)\b", text))
+
+    unknown = used - cases
+    if unknown:
+        fail("Ui references", f"used but never declared: {sorted(unknown)}")
+
+    unused = cases - used
+    if unused:
+        note(f"{len(unused)} Ui strings are declared but never used: {sorted(unused)}")
+    return cases
+
+
+# ------------------------------------------------------------- Android bits
+
+def check_manifest(files, declared):
+    path = os.path.join(APP, "AndroidManifest.xml")
+    xml = open(path, encoding="utf-8").read()
+
+    for m in re.finditer(r'android:name="(\.[\w.]+)"', xml):
+        cls = PKG_ROOT + m.group(1)
+        if cls not in declared:
+            fail("AndroidManifest.xml", f"declares '{cls}', which is not defined")
+
+    # Resource references
+    for m in re.finditer(r'"@(\w+)/(\w+)"', xml):
+        kind, name = m.group(1), m.group(2)
+        if kind in ("android", "style"):
+            continue
+        if not resource_exists(kind, name):
+            fail("AndroidManifest.xml", f"references @{kind}/{name}, which does not exist")
+
+
+def resource_exists(kind, name):
+    res = os.path.join(APP, "res")
+    # Glance supplies this layout from its own library.
+    if name == "glance_default_loading_layout":
+        return True
+    if kind == "mipmap":
+        for base, _, names in os.walk(res):
+            if any(n.startswith(name + ".") for n in names):
+                return True
+        return False
+    for base, _, names in os.walk(res):
+        folder = os.path.basename(base).split("-")[0]
+        if folder == kind:
+            for n in names:
+                if n.rsplit(".", 1)[0] == name:
+                    return True
+        # values files declare resources by name
+        if folder == "values":
+            for n in names:
+                if not n.endswith(".xml"):
+                    continue
+                text = open(os.path.join(base, n), encoding="utf-8").read()
+                if re.search(r'name="%s"' % re.escape(name), text):
+                    return True
+    return False
+
+
+def check_r_references(files):
+    res_names = defaultdict(set)
+    res = os.path.join(APP, "res")
+    for base, _, names in os.walk(res):
+        folder = os.path.basename(base).split("-")[0]
+        for n in names:
+            stem = n.rsplit(".", 1)[0]
+            if folder == "values" and n.endswith(".xml"):
+                text = open(os.path.join(base, n), encoding="utf-8").read()
+                for m in re.finditer(r'<(string|color|style|array|integer|bool)\s+name="([\w.]+)"', text):
+                    res_names[m.group(1)].add(m.group(2))
+            else:
+                res_names[folder].add(stem)
+
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        for m in re.finditer(r"\bR\.(\w+)\.(\w+)\b", text):
+            kind, name = m.group(1), m.group(2)
+            if name not in res_names.get(kind, set()):
+                fail(rel(path), f"references R.{kind}.{name}, which does not exist")
+
+
+def check_gradle():
+    catalog = open(os.path.join(ROOT, "gradle", "libs.versions.toml"), encoding="utf-8").read()
+    versions = set(re.findall(r"^(\w[\w-]*)\s*=", catalog.split("[libraries]")[0], re.M))
+    libs = set(re.findall(r"^([\w-]+)\s*=\s*\{", catalog.split("[libraries]")[1].split("[plugins]")[0], re.M))
+    plugins = set(re.findall(r"^([\w-]+)\s*=\s*\{", catalog.split("[plugins]")[1], re.M))
+
+    # Every version.ref must exist
+    for ref in re.findall(r'version\.ref\s*=\s*"([\w-]+)"', catalog):
+        if ref not in versions:
+            fail("libs.versions.toml", f"version.ref '{ref}' is not declared")
+
+    for gradle in ("build.gradle.kts", os.path.join("app", "build.gradle.kts")):
+        text = open(os.path.join(ROOT, gradle), encoding="utf-8").read()
+        for m in re.finditer(r"libs\.((?:\w+\.)*\w+)", text):
+            alias = m.group(1)
+            if alias.startswith("plugins."):
+                key = alias[len("plugins."):].replace(".", "-")
+                pool = plugins
+            else:
+                key = alias.replace(".", "-")
+                pool = libs
+            if key not in pool:
+                fail(gradle, f"uses libs alias '{alias}' -> '{key}', which is not in the catalog")
+
+
+def check_assets():
+    """Every division/resource the code expects must actually be bundled."""
+    assets = os.path.join(APP, "assets")
+    present = {n[:-5] for n in os.listdir(assets) if n.endswith(".json")}
+    divisions_kt = open(
+        os.path.join(SRC, *PKG_ROOT.split("."), "data", "Divisions.kt"), encoding="utf-8"
+    ).read()
+    for res in re.findall(r'resource\s*=\s*"(\w+)"', divisions_kt):
+        if res not in present:
+            fail("assets", f"Divisions.kt expects {res}.json, which is not bundled")
+    for extra in ("essences", "decad_essences", "divyadesams", "recitations", "azhwars"):
+        if extra not in present:
+            fail("assets", f"{extra}.json is referenced by the repository but not bundled")
+    # And the JSON must actually parse.
+    for name in sorted(present):
+        try:
+            json.load(open(os.path.join(assets, name + ".json"), encoding="utf-8"))
+        except Exception as exc:
+            fail("assets", f"{name}.json does not parse: {exc}")
+
+
+def check_composable_previews(files):
+    """@Composable functions must be capitalised, or Compose tooling complains."""
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        for m in re.finditer(r"@Composable\s*(?:@\w+(?:\([^)]*\))?\s*)*"
+                             r"(?:private\s+|internal\s+|public\s+)?fun\s+([a-z]\w*)"
+                             r"\s*\([^)]*\)\s*(:)?", text, re.S):
+            name, returns = m.group(1), m.group(2)
+            # A composable that returns a value is conventionally lowercase.
+            if returns or name.startswith("remember") or name.startswith("current"):
+                continue
+            note(f"{rel(path)}: @Composable '{name}' is lowercase; "
+                 "capitalise it unless it returns a value")
+
+
+def main():
+    files = list(kotlin_files())
+    if not files:
+        fail("project", "no Kotlin sources found")
+        report()
+        return
+
+    for path in files:
+        text = open(path, encoding="utf-8").read()
+        check_package(path, text)
+        check_delimiters(path, strip_code(text))
+
+    declared = collect_declarations(files)
+    check_internal_imports(files, declared)
+    check_ui_keys(files)
+    check_manifest(files, declared)
+    check_r_references(files)
+    check_gradle()
+    check_assets()
+    check_composable_previews(files)
+
+    print(f"audited {len(files)} Kotlin files, {len(declared)} top-level declarations")
+    report()
+
+
+def report():
+    if notes:
+        print("\nNotes (not failures):")
+        for n in notes:
+            print(f"  - {n}")
+    if problems:
+        print(f"\n{len(problems)} PROBLEM(S):")
+        for p in problems:
+            print(f"  ! {p}")
+        sys.exit(1)
+    print("\nNo structural problems found.")
+
+
+if __name__ == "__main__":
+    main()

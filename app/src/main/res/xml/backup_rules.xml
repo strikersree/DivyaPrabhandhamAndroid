@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto Backup is the closest native analogue to the iOS build's
+  NSUbiquitousKeyValueStore mirroring: reading position, bookmarks, pins and
+  preferences ride the user's Google account to a new device with no sign-in
+  UI and no server of our own. Unlike iCloud KVS it is restore-on-install
+  rather than continuous, so two devices in daily use will not converge —
+  see prefs/AppState.kt.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="." />
+    <include domain="file" path="datastore/" />
+</full-backup-content>
