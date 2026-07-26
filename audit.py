@@ -254,6 +254,54 @@ def check_project_type_usage(files, declared):
                             f"(declared in {sorted(owners)[0]})")
 
 
+def check_hardcoded_application_id(files):
+    """
+    Flags the applicationId written as a literal in Kotlin.
+
+    Debug builds carry an applicationIdSuffix, so a hardcoded package name is
+    correct in release and wrong everywhere else. This is written from a real
+    failure: the widget set `intent.package` to the literal release id, so on a
+    debug install the tap intent resolved to nothing and the widget quietly
+    stopped opening the app. Use context.packageName.
+    """
+    gradle = open(os.path.join(ROOT, "app", "build.gradle.kts"), encoding="utf-8").read()
+    m = re.search(r'applicationId\s*=\s*"([\w.]+)"', gradle)
+    if not m:
+        return
+    app_id = m.group(1)
+    if not re.search(r'applicationIdSuffix', gradle):
+        return
+    for path in files:
+        code = strip_code_keep_strings(open(path, encoding="utf-8").read())
+        if f'"{app_id}"' in code:
+            fail(rel(path), f"hardcodes the applicationId '{app_id}'; debug builds "
+                            f"append a suffix, so use context.packageName instead")
+
+
+def strip_code_keep_strings(text):
+    """Removes comments but keeps string literals, for literal-matching checks."""
+    out = []
+    i, n = 0, len(text)
+    while i < n:
+        if text.startswith("//", i):
+            j = text.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        if text.startswith("/*", i):
+            depth, i = 1, i + 2
+            while i < n and depth:
+                if text.startswith("/*", i):
+                    depth += 1; i += 2
+                elif text.startswith("*/", i):
+                    depth -= 1; i += 2
+                else:
+                    i += 1
+            continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
 def check_state_read_from_ui(files):
     """
     Flags mutable fields the UI reads that are not snapshot-backed.
@@ -508,6 +556,7 @@ def main():
     checks = [
         ("imports", lambda: check_internal_imports(files, declared)),
         ("type usage", lambda: check_project_type_usage(files, declared)),
+        ("hardcoded appId", lambda: check_hardcoded_application_id(files)),
         ("UI state backing", lambda: check_state_read_from_ui(files)),
         ("JVM setter clash", lambda: check_jvm_setter_clash(files)),
         ("Ui table", lambda: check_ui_keys(files)),

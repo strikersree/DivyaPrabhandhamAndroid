@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Numbers
@@ -64,7 +67,12 @@ fun SearchScreen(
         else repository.filteredWorks(trimmed, appState.scriptChoice)
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    // No app bar here either, so the search field needs the inset itself.
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars),
+    ) {
         SearchBar(
             inputField = {
                 SearchBarDefaults.InputField(

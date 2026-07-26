@@ -48,19 +48,23 @@ class VerseWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val snapshot = WidgetBridge.readSnapshot(context)
+        // Read from the context, never hardcoded: debug builds carry an
+        // applicationIdSuffix, so a literal package name makes the tap intent
+        // resolve to nothing and the widget silently stops opening the app.
+        val packageName = context.packageName
 
         provideContent {
             GlanceTheme {
                 val verses = snapshot?.verses(WidgetAayiram.FOLLOW_APP).orEmpty()
                 if (verses.isEmpty()) {
-                    EmptyWidget()
+                    EmptyWidget(deepLink(packageName, null, null))
                 } else {
                     val verse = verses[hourIndex(verses.size)]
                     VerseContent(
                         pasuramLabel = "${snapshot?.uiPasuram.orEmpty()} ${verse.n}",
                         text = verse.t,
                         work = verse.w,
-                        deepLink = deepLink(verse.s, verse.k),
+                        deepLink = deepLink(packageName, verse.s, verse.k),
                     )
                 }
             }
@@ -114,14 +118,14 @@ class VerseWidget : GlanceAppWidget() {
     }
 
     @androidx.compose.runtime.Composable
-    private fun EmptyWidget() {
+    private fun EmptyWidget(deepLink: Intent) {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
                 .cornerRadius(16.dp)
                 .padding(14.dp)
-                .clickable(actionStartActivity(deepLink(null, null))),
+                .clickable(actionStartActivity(deepLink)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -145,7 +149,7 @@ class VerseWidget : GlanceAppWidget() {
         return ((hours * 7919) % poolSize).toInt().coerceAtLeast(0)
     }
 
-    private fun deepLink(sectionId: String?, stanzaKey: String?): Intent {
+    private fun deepLink(packageName: String, sectionId: String?, stanzaKey: String?): Intent {
         val uri = if (sectionId == null) {
             Uri.parse("divyaprabhandham://resume")
         } else {
@@ -156,7 +160,7 @@ class VerseWidget : GlanceAppWidget() {
                 .build()
         }
         return Intent(Intent.ACTION_VIEW, uri).apply {
-            `package` = "com.srinivaskannan.divyaprabhandham"
+            `package` = packageName
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
     }

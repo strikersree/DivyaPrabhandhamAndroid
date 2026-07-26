@@ -73,15 +73,20 @@ class GoogleSyncManager(
 
     /**
      * Obtains an access token for the Drive appdata scope, or null if the
-     * person has not granted it. When consent is needed, [pendingConsent] is
-     * set and null is returned; the caller should simply give up for now and
-     * let the UI drive the grant.
+     * person has not granted it.
+     *
+     * [interactive] is the important argument. Google's account chooser may
+     * only be raised by something the person just did — turning sync on, or
+     * tapping Sync now. Background work (the pull on every resume, the debounced
+     * push while reading) asks silently and gives up quietly if the grant is
+     * missing. Without that split, every return to the app threw up a sign-in
+     * sheet, over and over, whether or not they had already signed in.
      */
-    private suspend fun accessToken(): String? {
+    private suspend fun accessToken(interactive: Boolean): String? {
         cachedToken?.let { return it }
         val result = authorize() ?: return null
         if (result.hasResolution()) {
-            pendingConsent = result.pendingIntent
+            if (interactive) pendingConsent = result.pendingIntent
             return null
         }
         cachedToken = result.accessToken
@@ -99,21 +104,25 @@ class GoogleSyncManager(
     /** Called by the UI once the consent activity returns. */
     fun onConsentResult(granted: Boolean, appState: AppState) {
         pendingConsent = null
-        if (!granted) return
         cachedToken = null
-        pull(appState)
+        if (!granted) return
+        // Silent on purpose. If the grant still is not usable — an OAuth client
+        // that was never registered, say — this must not bounce straight back
+        // into the account chooser.
+        pull(appState, interactive = false)
     }
 
     /**
      * Pulls the remote document and adopts it if it is newer than what this
-     * device has. Safe to call on every launch and resume.
+     * device has. Safe to call on every launch and resume, which is exactly why
+     * [interactive] defaults to false.
      */
-    fun pull(appState: AppState) {
+    fun pull(appState: AppState, interactive: Boolean = false) {
         if (!appState.syncEnabled) return
         scope.launch {
             isSyncing = true
             try {
-                val token = accessToken() ?: return@launch
+                val token = accessToken(interactive) ?: return@launch
                 val fileId = cachedFileId ?: DriveAppData.findFileId(token)?.also {
                     cachedFileId = it
                 } ?: run {
@@ -142,7 +151,7 @@ class GoogleSyncManager(
         pushJob?.cancel()
         pushJob = scope.launch {
             delay(PUSH_DEBOUNCE_MS)
-            val token = accessToken() ?: return@launch
+            val token = accessToken(interactive = false) ?: return@launch
             val payload = snapshot(appState)
             val fileId = cachedFileId ?: DriveAppData.findFileId(token)
             if (fileId == null) {
@@ -157,6 +166,7 @@ class GoogleSyncManager(
 
     /** Forgets local credentials. The remote document is left alone. */
     fun disconnect() {
+        pendingConsent = null
         cachedToken = null
         cachedFileId = null
         pushJob?.cancel()

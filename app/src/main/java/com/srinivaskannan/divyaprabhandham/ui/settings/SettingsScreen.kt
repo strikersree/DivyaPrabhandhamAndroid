@@ -225,7 +225,10 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
                 checked = appState.syncEnabled,
                 onCheckedChange = { enabled ->
                     appState.updateSyncEnabled(enabled)
-                    if (enabled) sync.pull(appState) else sync.disconnect()
+                    // Turning the switch on is an explicit act, so this is the
+                    // one place the account chooser may appear unprompted.
+                    if (enabled) sync.pull(appState, interactive = true)
+                    else sync.disconnect()
                 },
             )
         }
@@ -241,7 +244,7 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
                 else -> appState.ui(Ui.SYNC_NEVER)
             },
             showChevron = false,
-            onClick = { sync.pull(appState) },
+            onClick = { sync.pull(appState, interactive = true) },
         )
     }
     GroupFooter(appState.ui(Ui.ACCOUNT_FOOTER))

@@ -91,14 +91,16 @@ fun AppScaffold(
         }
     }
 
-    // The reader takes the whole window: a navigation bar under a verse is
-    // noise, and the reader has its own way back.
-    val showNavigation = currentRoute?.startsWith("reader/") != true
+    // The navigation bar stays put everywhere, including the reader. iOS hides
+    // the tab bar on a pushed view, but on Android a bottom bar that vanishes
+    // on a detail screen reads as the app losing its footing — the platform
+    // convention is that it persists.
+    val isReader = currentRoute?.startsWith("reader/") == true
 
     NavigationSuiteScaffold(
         modifier = modifier,
         navigationSuiteItems = {
-            if (showNavigation) TopLevel.entries.forEach { destination ->
+            TopLevel.entries.forEach { destination ->
                 val selected = currentRoute == destination.route
                 item(
                     selected = selected,
@@ -223,9 +225,9 @@ fun AppScaffold(
             }
 
             // Continue Reading sits above the navigation bar, app-wide — but
-            // never over the reader, where it would offer to take you where you
+            // not over the reader, where it would offer to take you where you
             // already are.
-            if (showNavigation) {
+            if (!isReader) {
                 ResumePill(onOpen = openSection)
             }
         }
