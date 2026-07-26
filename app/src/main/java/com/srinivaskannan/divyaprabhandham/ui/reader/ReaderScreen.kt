@@ -79,7 +79,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 import com.srinivaskannan.divyaprabhandham.ui.theme.ReadingFonts
 import com.srinivaskannan.divyaprabhandham.ui.theme.currentReaderTheme
-import ReaderPalette
+import com.srinivaskannan.divyaprabhandham.ui.theme.ReaderPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged

@@ -49,6 +49,23 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+
+        // Material 3's newer surfaces — the expressive theme, the adaptive
+        // navigation suite, the time picker, the search bar — are still behind
+        // opt-in markers, and which ones are experimental moves between
+        // releases. Declaring them here rather than sprinkling @OptIn through
+        // the screens means a marker that graduates (or that is named slightly
+        // differently in the resolved version) costs a warning instead of a
+        // build failure.
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+            "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
+            "-opt-in=androidx.compose.material3.adaptive.navigationsuite.ExperimentalMaterial3AdaptiveNavigationSuiteApi",
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+            "-opt-in=kotlinx.coroutines.FlowPreview",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+        )
     }
 
     buildFeatures {
