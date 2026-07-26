@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The supplied artwork, split into adaptive icon layers.
+
+  Background is the mandala ground; foreground is the emblem (thiruman,
+  chakra, shankha) sized inside the 66dp safe circle so no launcher mask
+  clips it. The wordmark from the full artwork is deliberately not here:
+  it is unreadable at launcher size and would be cropped by round masks.
+  The full artwork is used whole on the splash screen instead.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_lotus_foreground" />
-    <monochrome android:drawable="@drawable/ic_lotus_foreground" />
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />
 </adaptive-icon>

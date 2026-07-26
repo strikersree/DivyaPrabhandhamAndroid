@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Warm sandalwood, matching the iOS LaunchBackground colorset. -->
-    <color name="splash_background">#FFF6EDE0</color>
+    <!--
+      Sampled from the supplied splash artwork so the system splash screen and
+      the artwork behind it are the same maroon — no seam when one hands over
+      to the other.
+    -->
+    <color name="splash_background">#FF50071B</color>
     <color name="widget_background">#FFFDF8F1</color>
 </resources>

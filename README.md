@@ -53,7 +53,32 @@ Create three **consumable** in-app products in the Play Console with the IDs in
 `billing/TipJar.kt`: `tip_small`, `tip_medium`, `tip_large`. Until they exist,
 the tip screen says the tip jar is unavailable rather than showing dead buttons.
 
-### 4. Reading fonts (optional, recommended for release)
+### 4. Artwork (already wired in)
+
+Nothing to do — noted here because two things about it are not obvious.
+
+**The app icon drops the wordmark.** Adaptive icons are masked by the launcher
+(circle, squircle, teardrop), so only a 66dp circle inside the 108dp canvas is
+guaranteed to survive. The supplied square art has "Naalayira Divya
+Prabhandham" running nearly edge to edge, which a round mask would slice
+through — and which is unreadable at launcher size regardless. So the icon uses
+the mandala ground as its background layer and the emblem (thiruman, chakra,
+shankha) as its foreground, sized to the safe circle. A monochrome layer is
+generated from the same silhouette for Android 13+ themed icons. The full
+artwork, wordmark and all, is used whole on the splash screen.
+
+`store/play-icon-512.png` is the 512x512 Play Console icon — the complete
+artwork, with the white baked into the bottom corners of the source filled back
+to maroon. It is outside `src/` so it is not packaged into the APK.
+
+**The splash is a Compose screen, not the system splash.** Android 12+ only
+lets the system splash show a centred icon on a flat colour, so a full-bleed
+image is impossible there. The system splash therefore shows the emblem on the
+artwork's maroon and hands over on the first frame to a Compose screen that
+draws the artwork edge to edge until the corpus finishes parsing. Both use the
+same `#50071B`, so the handover has no seam.
+
+### 5. Reading fonts (optional, recommended for release)
 
 The four reading typefaces fall back to generic families, and Android's own font
 fallback picks a Tamil face for each. To pin them down across every device, drop
@@ -68,7 +93,7 @@ literata           source_serif      noto_serif      nunito_sans
 See `ui/theme/Type.kt` for why this is a runtime lookup rather than downloadable
 Google Fonts.
 
-### 5. Gradle wrapper JAR
+### 6. Gradle wrapper JAR
 
 `gradle/wrapper/gradle-wrapper.properties` is here but `gradle-wrapper.jar` is
 binary and could not be generated offline. Either open the project in Android
@@ -130,9 +155,10 @@ app there is nothing to observe or control. The bottom accessory slot is given
 over to Continue Reading alone.
 
 To link specific recordings, add `yt_playlist` or `yt_video` to entries in
-`recitations.json`; the model already reads them. Until then the button runs a
-YouTube Music search for the work's Tamil title, author and "பாராயணம்", which
-lands well for most of the corpus.
+`recitations.json`, keyed by work id — the model already reads both, so no code
+change is needed. Until then the button runs a YouTube Music search for the
+work's Tamil title, author and "பாராயணம்", which lands well for most of the
+corpus.
 
 ### Sync is not continuous
 

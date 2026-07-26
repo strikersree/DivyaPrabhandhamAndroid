@@ -45,7 +45,7 @@ class ReminderReceiver : BroadcastReceiver() {
         ReminderScheduler.ensureChannel(context)
 
         val notification = NotificationCompat.Builder(context, ReminderScheduler.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_splash)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .apply { if (body != null) setContentText(body) }
             .setContentIntent(pending)

@@ -5,9 +5,13 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,6 +26,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -63,23 +70,34 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val app = application as DivyaPrabhandhamApp
-        splash.setKeepOnScreenCondition {
-            app.startup is DivyaPrabhandhamApp.Startup.Loading
-        }
 
+        // The system splash is deliberately *not* held until the corpus is
+        // parsed. It can only show a centred icon on a flat colour, so holding
+        // it would mean the supplied artwork never appears. Instead it hands
+        // over on the first Compose frame, which draws the artwork full-bleed
+        // and keeps it there until loading finishes. Both are the same maroon,
+        // so the handover has no seam.
         deepLink = parseDeepLink(intent)
 
         setContent {
             when (val startup = app.startup) {
-                // The splash screen is still up; drawing anything here would
-                // only flash behind it.
-                is DivyaPrabhandhamApp.Startup.Loading -> Unit
+                is DivyaPrabhandhamApp.Startup.Loading -> {
+                    // Light system icons over the dark artwork.
+                    LaunchedEffect(Unit) { applyBarStyle(dark = true) }
+                    BrandedSplash()
+                }
 
                 is DivyaPrabhandhamApp.Startup.Failed -> StartupFailure(startup.message)
 
                 is DivyaPrabhandhamApp.Startup.Ready -> {
                     val appState = startup.appState
                     val sync = startup.sync
+
+                    // System bar icons follow the app's own light/dark choice,
+                    // not just the device's — the two can disagree.
+                    val systemDark = isSystemInDarkTheme()
+                    val dark = appState.forcedDarkMode ?: systemDark
+                    LaunchedEffect(dark) { applyBarStyle(dark) }
 
                     LaunchedEffect(Unit) { startup.tipJar.connect(this@MainActivity) }
 
@@ -122,6 +140,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun applyBarStyle(dark: Boolean) {
+        val transparent = android.graphics.Color.TRANSPARENT
+        enableEdgeToEdge(
+            statusBarStyle = if (dark) SystemBarStyle.dark(transparent)
+            else SystemBarStyle.light(transparent, transparent),
+            navigationBarStyle = if (dark) SystemBarStyle.dark(transparent)
+            else SystemBarStyle.light(transparent, transparent),
+        )
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -144,6 +172,29 @@ class MainActivity : ComponentActivity() {
             }
             else -> null
         }
+    }
+}
+
+/**
+ * The loading screen: the supplied artwork, edge to edge.
+ *
+ * Cropped rather than fitted, because the art is a fixed portrait ratio and
+ * letterboxing it would put bars above and below on most phones. The emblem and
+ * wordmark sit centred, so cropping only ever eats into the mandala border.
+ */
+@Composable
+private fun BrandedSplash() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF50071B)),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.splash_artwork),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 

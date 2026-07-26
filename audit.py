@@ -453,6 +453,36 @@ def resource_exists(kind, name):
     return False
 
 
+def check_res_xml_references():
+    """
+    Validates resource-to-resource references inside res/**.xml.
+
+    The manifest and Kotlin R.* references were already checked, but themes,
+    adaptive icons and widget metadata reference drawables too — and deleting a
+    drawable that only those point at would have gone unnoticed until the build.
+    """
+    res = os.path.join(APP, "res")
+    # References appear both as attribute values (android:drawable="@mipmap/x")
+    # and as element text (<item ...>@mipmap/x</item>), so this must not require
+    # surrounding quotes — an earlier version did, and silently skipped every
+    # reference in themes.xml.
+    # '@android:color/...' does not match, because the colon breaks \w+ before
+    # the slash, which is the behaviour we want.
+    pattern = re.compile(r'@(?:\+)?(\w+)/([\w.]+)')
+    for base, _, names in os.walk(res):
+        for name in sorted(names):
+            if not name.endswith(".xml"):
+                continue
+            path = os.path.join(base, name)
+            xml = open(path, encoding="utf-8").read()
+            for kind, ref in pattern.findall(xml):
+                if kind in ("android", "style", "id"):
+                    continue
+                if not resource_exists(kind, ref):
+                    fail(os.path.relpath(path, ROOT),
+                         f"references @{kind}/{ref}, which does not exist")
+
+
 def check_r_references(files):
     res_names = defaultdict(set)
     res = os.path.join(APP, "res")
@@ -562,6 +592,7 @@ def main():
         ("Ui table", lambda: check_ui_keys(files)),
         ("manifest", lambda: check_manifest(files, declared)),
         ("resources", lambda: check_r_references(files)),
+        ("res xml refs", check_res_xml_references),
         ("gradle", check_gradle),
         ("assets", check_assets),
         ("composables", lambda: check_composable_previews(files)),
