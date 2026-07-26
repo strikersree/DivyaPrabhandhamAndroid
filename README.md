@@ -57,34 +57,40 @@ the tip screen says the tip jar is unavailable rather than showing dead buttons.
 
 Nothing to do — noted here because two things about it are not obvious.
 
-**The app icon keeps the emblem only.** Adaptive icons are masked by the
-launcher (circle, squircle, teardrop), and only a 66dp *circle* inside the
-108dp canvas is guaranteed to survive. The supplied icon is a complete
-rounded-square design — decorative border, Tamil wordmark along the bottom —
-none of which survives a round mask, and none of which is legible at launcher
-size anyway.
+**The app icon is the supplied artwork, whole.** Not split apart, not
+redrawn — but it does need two things done to it, both because of how Android
+composites icons.
 
-So the icon is split: the mandala ground as the background layer, and the
-emblem (thiruman, chakra, shankha) as the foreground. The emblem is keyed off
-the maroon by luminance, which separates cleanly here — the ground and its
-tracery sit around 50-60, while the saffron drop (152), the chakra (196) and
-the namam and shankha (251+) are all well above.
+First, the source PNG has a pale grey canvas around its rounded square. That
+has to go: when a launcher falls back to a non-adaptive bitmap it generates a
+background by sampling the image's edge pixels, and a pale edge produces a
+light ring with the artwork sitting inset inside it — the icon appears to have
+two frames. The pale surround is trimmed and the rounded corners flooded with
+the artwork's own maroon (`#680923`, sampled from its ground), so the square is
+opaque edge to edge and no layer contains a pale pixel.
 
-Scaling is by the emblem's farthest opaque pixel, not by its bounding box.
-That distinction matters: fitting the square bounding box to 66dp put the
-chakra and shankha at 1.41x the safe radius, outside anything a circular mask
-shows. Measured after generation, the farthest opaque pixel now sits at 131px
-of a 132px safe radius, and the namam fills 61% of the visible area.
+Second, sizing. The adaptive icon's background is that same flat maroon, and
+the artwork is the foreground, scaled so the Tamil wordmark — the outermost
+element that carries meaning — lands on the circular viewport. That puts the
+artwork at 97% of the visible area, so it fills the icon rather than floating
+in it, and its own square edge is invisible against the matching background.
+The namam lands at 112px against a 132px safe radius, comfortably inside.
 
-One honest caveat: the chakra is fine line art — about 38% ink coverage in the
-source — so at launcher size it reads as ornamental texture flanking the namam
-rather than as a distinct wheel. Dropping the chakra and shankha would let the
-namam be about 18% larger and crisper. That is a design call, not a technical
-one, so the supplied composition was kept.
+What this costs: on launchers that mask to a **circle**, the decorative frame's
+corner lotuses fall outside and are trimmed. Squircle and rounded-square masks
+keep them. Fitting those corners too would have shrunk the artwork to 77% of
+the viewport, which is the inset look this is meant to avoid — so the corners
+were the thing to give up.
 
-`store/play-icon-512.png` is the 512x512 Play Console icon: the complete
-artwork, border and wordmark included, with the pale canvas behind its rounded
-corners flooded to maroon so the square is opaque edge to edge.
+Full-bleed legacy bitmaps (`ic_launcher`, `ic_launcher_round`) ship alongside
+the adaptive XML, so any non-adaptive path shows the artwork on maroon instead
+of a generated pale background.
+
+The themed icon (Android 13+) is a namam silhouette — a monochrome layer is
+alpha-only, so the full artwork cannot be used there.
+
+`store/play-icon-512.png` is the Play Console icon: the complete artwork with
+its corners flooded to maroon, opaque edge to edge.
 
 **The splash is a Compose screen, not the system splash.** Android 12+ only
 lets the system splash show a centred icon on a flat colour, so a full-bleed
