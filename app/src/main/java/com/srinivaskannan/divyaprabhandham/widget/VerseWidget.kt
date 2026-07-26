@@ -8,8 +8,11 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.action.actionStartActivity
+// The Intent overload of actionStartActivity lives in the appwidget artifact,
+// not in androidx.glance.action — that package only offers the ComponentName
+// and reified-Activity forms, neither of which can carry the deep-link URI.
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.cornerRadius
