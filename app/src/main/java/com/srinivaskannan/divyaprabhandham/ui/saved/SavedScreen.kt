@@ -53,7 +53,8 @@ fun SavedScreen(
     val repository = LocalRepository.current
 
     val rows = appState.bookmarks.mapNotNull { key ->
-        repository.stanzaForKey(key)?.let { (section, stanza) -> Triple(key, section, stanza) }
+        repository.stanzaForKey(key, appState.scriptChoice)
+            ?.let { (section, stanza) -> Triple(key, section, stanza) }
     }
 
     Scaffold(

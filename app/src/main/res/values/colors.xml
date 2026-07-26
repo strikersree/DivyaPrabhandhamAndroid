@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Sampled from the supplied splash artwork so the system splash screen and
-      the artwork behind it are the same maroon — no seam when one hands over
-      to the other.
+      Sampled from the ground behind the emblem in the splash artwork. The
+      system splash can only show a flat colour, so this is the single colour
+      that best approximates the artwork the Compose splash draws a frame
+      later — the emblem lands on the same ground either side of the handover.
     -->
-    <color name="splash_background">#FF50071B</color>
+    <color name="splash_background">#FF6A0F1A</color>
     <color name="widget_background">#FFFDF8F1</color>
 </resources>

@@ -137,14 +137,35 @@ class PrabandhamRepository private constructor(
 
     /**
      * Resolves a bookmark/scroll key ("<sectionID>#<n>" or "<sectionID>#i<i>")
-     * back to its section and stanza, for the bookmarks quick-list.
+     * back to its section and stanza.
+     *
+     * Two scripts are in play and conflating them was a real bug. The key is
+     * resolved against the Tamil, always, because keys are derived from the
+     * authoritative structure and must mean the same thing whatever the reader
+     * has selected. The stanza that comes *back* is in [script], because it is
+     * going on screen. Returning the Tamil stanza to a caller displaying it
+     * meant bookmark previews and Divya Desam verses stayed Tamil in English
+     * mode, then appeared to switch language when tapped through to the reader.
+     *
+     * Transliteration preserves line count and the parser derives block
+     * structure from the Tamil, so the two lists are index-aligned; the Tamil
+     * is used as a fallback if they somehow are not.
      */
-    fun stanzaForKey(key: String): Pair<BookSection, Stanza>? {
+    fun stanzaForKey(
+        key: String,
+        script: ScriptChoice = ScriptChoice.TAMIL,
+    ): Pair<BookSection, Stanza>? {
         val hashIndex = key.lastIndexOf('#')
         if (hashIndex < 0) return null
         val section = section(key.substring(0, hashIndex)) ?: return null
-        val stanza = section.stanzas(ScriptChoice.TAMIL)
-            .firstOrNull { section.key(it) == key } ?: return null
+        val tamil = section.stanzas(ScriptChoice.TAMIL)
+        val index = tamil.indexOfFirst { section.key(it) == key }
+        if (index < 0) return null
+        val stanza = if (script == ScriptChoice.TAMIL) {
+            tamil[index]
+        } else {
+            section.stanzas(script).getOrNull(index) ?: tamil[index]
+        }
         return section to stanza
     }
 

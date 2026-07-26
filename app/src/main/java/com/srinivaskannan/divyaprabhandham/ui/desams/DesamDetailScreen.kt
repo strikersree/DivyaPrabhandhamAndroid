@@ -52,7 +52,7 @@ fun DesamDetailScreen(
     val verses = remember(desam.id, script) {
         desam.pasurams.mapNotNull { number ->
             repository.location(number)?.let { (sectionId, key) ->
-                repository.stanzaForKey(key)?.let { (section, stanza) ->
+                repository.stanzaForKey(key, script)?.let { (section, stanza) ->
                     Triple(number, section, stanza)
                 }
             }

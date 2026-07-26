@@ -107,8 +107,12 @@ data class BookSection(
      * Stanzas in the given script. Parsing is not free (a regex pass over the
      * whole section) and the reader asks for this on every recomposition, so
      * results are memoised — see [StanzaParser].
+     *
+     * [script] has no default on purpose. It used to default to Tamil, which
+     * made it easy for a display caller to omit it and quietly render the wrong
+     * script; requiring it puts that mistake in front of the compiler.
      */
-    fun stanzas(script: ScriptChoice = ScriptChoice.TAMIL): List<Stanza> =
+    fun stanzas(script: ScriptChoice): List<Stanza> =
         StanzaParser.stanzas(this, script)
 
     /** Lowest/highest pasuram numbers appearing in this section, if any. */

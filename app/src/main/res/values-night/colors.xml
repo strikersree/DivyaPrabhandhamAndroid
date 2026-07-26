@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The artwork is dark already, so the splash reads the same either way. -->
-    <color name="splash_background">#FF50071B</color>
+    <color name="splash_background">#FF6A0F1A</color>
     <color name="widget_background">#FF1A1714</color>
 </resources>

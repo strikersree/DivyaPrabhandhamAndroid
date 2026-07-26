@@ -178,16 +178,19 @@ class MainActivity : ComponentActivity() {
 /**
  * The loading screen: the supplied artwork, edge to edge.
  *
- * Cropped rather than fitted, because the art is a fixed portrait ratio and
- * letterboxing it would put bars above and below on most phones. The emblem and
- * wordmark sit centred, so cropping only ever eats into the mandala border.
+ * Cropped rather than fitted, so it fills the screen with no letterbox bars.
+ * That is only safe because the asset is pre-padded vertically to a 0.415 ratio
+ * — narrower than any normal phone — so the crop is always taken out of the
+ * padding rather than the sides. The wordmark reaches within 3.4% of the
+ * artwork's edge; cropping the unpadded art to fill a 20:9 screen would have
+ * sliced the first and last letters off "Divya Prabhandham".
  */
 @Composable
 private fun BrandedSplash() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF50071B)),
+            .background(Color(0xFF6A0F1A)),
     ) {
         Image(
             painter = painterResource(R.drawable.splash_artwork),

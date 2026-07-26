@@ -154,7 +154,7 @@ fun HomeScreen(
                 items = appState.bookmarks.take(8),
                 key = { "bookmark-$it" },
             ) { key ->
-                val found = repository.stanzaForKey(key)
+                val found = repository.stanzaForKey(key, appState.scriptChoice)
                 if (found != null) {
                     val (section, stanza) = found
                     RowCard(
