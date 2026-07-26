@@ -254,6 +254,30 @@ def check_project_type_usage(files, declared):
                             f"(declared in {sorted(owners)[0]})")
 
 
+def check_internet_permission(files):
+    """
+    If any code opens a network connection, INTERNET must be declared.
+
+    This is written from a real miss: Google Drive sync used HttpURLConnection
+    but the manifest never declared INTERNET, so every call threw
+    SecurityException — which the sync layer's runCatching swallowed, so sync
+    silently never worked and nothing surfaced it.
+    """
+    manifest = open(os.path.join(APP, "AndroidManifest.xml"), encoding="utf-8").read()
+    has_internet = "android.permission.INTERNET" in manifest
+    if has_internet:
+        return
+    needles = ("HttpURLConnection", "openConnection(", "java.net.URL",
+               "OkHttp", "WebView(")
+    for path in files:
+        code = strip_code(open(path, encoding="utf-8").read())
+        for n in needles:
+            if n in code:
+                fail(rel(path), f"uses '{n}' but the manifest does not declare "
+                                f"android.permission.INTERNET")
+                break
+
+
 def check_hardcoded_application_id(files):
     """
     Flags the applicationId written as a literal in Kotlin.
@@ -540,7 +564,7 @@ def check_assets():
     for res in re.findall(r'resource\s*=\s*"(\w+)"', divisions_kt):
         if res not in present:
             fail("assets", f"Divisions.kt expects {res}.json, which is not bundled")
-    for extra in ("essences", "decad_essences", "divyadesams", "recitations", "azhwars"):
+    for extra in ("essences", "decad_essences", "divyadesams", "recitations", "azhwars", "youtube"):
         if extra not in present:
             fail("assets", f"{extra}.json is referenced by the repository but not bundled")
     # And the JSON must actually parse.
@@ -586,6 +610,7 @@ def main():
     checks = [
         ("imports", lambda: check_internal_imports(files, declared)),
         ("type usage", lambda: check_project_type_usage(files, declared)),
+        ("internet permission", lambda: check_internet_permission(files)),
         ("hardcoded appId", lambda: check_hardcoded_application_id(files)),
         ("UI state backing", lambda: check_state_read_from_ui(files)),
         ("JVM setter clash", lambda: check_jvm_setter_clash(files)),

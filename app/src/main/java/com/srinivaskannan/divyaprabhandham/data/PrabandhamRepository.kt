@@ -26,6 +26,7 @@ class PrabandhamRepository private constructor(
     val essences: Map<Int, Essence>,
     val decadEssences: Map<String, Essence>,
     val recitations: Map<String, Recitation>,
+    private val youtube: YouTubeCatalogue,
     val divyaDesams: List<DivyaDesam>,
     val aazhwars: List<Aazhwar>,
 ) {
@@ -107,6 +108,19 @@ class PrabandhamRepository private constructor(
 
     /** The recitation mapping for a work, if one exists. */
     fun recitation(workId: String): Recitation? = recitations[workId]
+
+    /**
+     * YouTube video ids for a work's recitation, for the in-app player. Falls
+     * back to the work's division pool, so a division can carry one playlist
+     * before each work has its own. Empty when nothing is mapped.
+     */
+    fun videoIds(workId: String): List<String> {
+        youtube.works[workId]?.takeIf { it.isNotEmpty() }?.let { return it }
+        val divisionId = divisionForWork(workId)?.id ?: return emptyList()
+        return youtube.divisions[divisionId].orEmpty()
+    }
+
+    fun hasRecitation(workId: String): Boolean = videoIds(workId).isNotEmpty()
 
     // MARK: - Lookups
 
@@ -264,6 +278,10 @@ class PrabandhamRepository private constructor(
                 runCatching { json.decodeFromString<Map<String, Recitation>>(text) }.getOrNull()
             }.orEmpty()
 
+            val youtube: YouTubeCatalogue = readOrNull("youtube")?.let { text ->
+                runCatching { json.decodeFromString<YouTubeCatalogue>(text) }.getOrNull()
+            } ?: YouTubeCatalogue()
+
             val desams: List<DivyaDesam> = readOrNull("divyadesams")?.let { text ->
                 runCatching { json.decodeFromString<List<DivyaDesam>>(text) }.getOrNull()
             }.orEmpty()
@@ -277,6 +295,7 @@ class PrabandhamRepository private constructor(
                 essences = essences,
                 decadEssences = decadEssences,
                 recitations = recitations,
+                youtube = youtube,
                 divyaDesams = desams,
                 aazhwars = aazhwars,
             )

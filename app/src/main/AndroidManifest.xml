@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+      Needed by Google Drive sync and by the in-app recitation player. Its
+      absence was invisible: DriveAppData wraps its calls in runCatching, so the
+      SecurityException this permission's absence throws was swallowed and sync
+      simply never worked.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Daily reading reminders (API 33+ asks at runtime). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Re-arm reminders after a reboot. -->

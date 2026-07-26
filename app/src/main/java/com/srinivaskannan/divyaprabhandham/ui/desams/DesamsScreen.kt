@@ -24,12 +24,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.DivyaDesam
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
-import com.srinivaskannan.divyaprabhandham.ui.components.ListRow
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 
@@ -152,6 +155,16 @@ fun DesamsScreen(
     }
 }
 
+/**
+ * A temple row.
+ *
+ * Purpose-built rather than the shared ListRow because the verse count is the
+ * problem it solves: as a right-aligned trailing column, a label like
+ * "21 பாசுரங்கள்" claimed a third of the width and forced long Tamil temple
+ * names to wrap after one or two words. Here the count is a compact pill on the
+ * same line as the name, sharing the title's baseline, so the name gets almost
+ * the full width and wraps only when it genuinely must.
+ */
 @Composable
 private fun DesamRow(desam: DivyaDesam, onClick: () -> Unit) {
     val appState = LocalAppState.current
@@ -160,11 +173,44 @@ private fun DesamRow(desam: DivyaDesam, onClick: () -> Unit) {
         append(desam.place(script))
         desam.perumal(script)?.let { append(" · ").append(it) }
     }
-    ListRow(
-        title = desam.name(script),
-        subtitle = subtitle,
-        trailingText = "${desam.pasurams.size} ${appState.ui(Ui.DESAM_VERSES)}",
-        showChevron = false,
-        onClick = onClick,
-    )
+    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = desam.name(script),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // Just the number in the pill; the word "பாசுரங்கள்" is what made
+            // the old trailing column wide, and the pill's context makes it
+            // redundant.
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            ) {
+                Text(
+                    text = "${desam.pasurams.size}",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                )
+            }
+        }
+    }
 }

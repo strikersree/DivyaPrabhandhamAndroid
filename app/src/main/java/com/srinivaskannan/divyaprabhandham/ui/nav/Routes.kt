@@ -37,10 +37,13 @@ object Routes {
     const val DESAM_DETAIL = "desam/{desamId}"
     const val ABOUT = "about"
     const val TIP_JAR = "tipjar"
+    const val RECITATION = "recitation/{workId}"
 
     fun division(divisionId: String) = "division/$divisionId"
 
     fun desam(desamId: String) = "desam/$desamId"
+
+    fun recitation(workId: String) = "recitation/$workId"
 
     /**
      * The stanza key is encoded because it contains a '#', which a nav route

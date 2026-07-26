@@ -34,14 +34,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
-import com.srinivaskannan.divyaprabhandham.media.RecitationLauncher
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
 import com.srinivaskannan.divyaprabhandham.ui.components.BackButton
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
@@ -60,11 +58,11 @@ fun DivisionBrowserScreen(
     division: Division,
     onBack: () -> Unit,
     onOpenSection: (String) -> Unit,
+    onListen: (workId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appState = LocalAppState.current
     val repository = LocalRepository.current
-    val context = LocalContext.current
     val works = repository.works(division)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     val snackbars = remember { SnackbarHostState() }
@@ -126,13 +124,13 @@ fun DivisionBrowserScreen(
                             }
                             scope.launch { snackbars.showSnackbar(message) }
                         },
+                        // In-app player when a recitation is mapped for this
+                        // work; otherwise say so rather than opening an empty
+                        // player.
+                        hasRecitation = repository.hasRecitation(work.id),
                         onListen = {
-                            val ok = RecitationLauncher.launch(
-                                context, work,
-                                repository.recitation(work.id),
-                                appState.scriptChoice,
-                            )
-                            if (!ok) scope.launch {
+                            if (repository.hasRecitation(work.id)) onListen(work.id)
+                            else scope.launch {
                                 snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
                             }
                         },
@@ -181,6 +179,7 @@ fun DivisionBrowserScreen(
 private fun WorkRow(
     work: Work,
     isExpanded: Boolean,
+    hasRecitation: Boolean,
     onToggle: () -> Unit,
     onPin: () -> Unit,
     onListen: () -> Unit,
@@ -246,7 +245,10 @@ private fun WorkRow(
                 Icon(
                     Icons.Filled.PlayCircle,
                     contentDescription = appState.ui(Ui.LISTEN),
-                    tint = MaterialTheme.colorScheme.primary,
+                    // Dimmed when no recitation is mapped, so the affordance
+                    // reads as unavailable rather than broken.
+                    tint = if (hasRecitation) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 )
             }
             Icon(

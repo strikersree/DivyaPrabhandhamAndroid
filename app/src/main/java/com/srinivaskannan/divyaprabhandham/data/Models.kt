@@ -162,6 +162,18 @@ data class Stanza(
  * that hand playback to the listener's own music app and their own
  * subscription.
  */
+/**
+ * YouTube video ids for in-app recitation, loaded from youtube.json.
+ * A work's own list wins when present; otherwise the division fallback applies,
+ * so a division can be given a single pooled playlist before per-work mapping
+ * exists.
+ */
+@Serializable
+data class YouTubeCatalogue(
+    val works: Map<String, List<String>> = emptyMap(),
+    val divisions: Map<String, List<String>> = emptyMap(),
+)
+
 @Immutable
 @Serializable
 data class Recitation(

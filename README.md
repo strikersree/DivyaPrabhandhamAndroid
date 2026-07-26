@@ -164,22 +164,23 @@ byte-identical to the iOS build's values.
 
 ### Recitations
 
-`recitations.json` holds Apple Music catalogue IDs, which mean nothing here. The
-Listen button hands off to YouTube Music (then YouTube, then a browser) rather
-than playing in-process, because the only way to embed YouTube is the IFrame
-player in a WebView, and using that for background audio is what YouTube's terms
-forbid. Handing off is also closer to what the iOS design promised: audio is
-never bundled, and playback happens under the listener's own account.
+Recitations now play **inside the app**, through YouTube's official IFrame
+Player in a WebView (`media/YouTubePlayer.kt`). That is the sanctioned way to
+embed YouTube on Android — there is no native playback SDK, and extracting
+stream URLs for ExoPlayer would violate the terms. The player is driven from
+`youtube.json`, keyed by work id with a per-division fallback, so a division can
+carry one pooled playlist before every work is mapped individually.
 
-**The Now Playing pill and full player are gone** — once playback leaves the
-app there is nothing to observe or control. The bottom accessory slot is given
-over to Continue Reading alone.
+Two consequences of the embed terms, both deliberate: the player stays **on
+screen** (it cannot play hidden or in the background), and leaving the screen
+disposes the WebView, so there is **no background audio**. This differs from the
+iOS build, where MusicKit drove audio-only playback under the listener's Apple
+Music subscription. `media/RecitationLauncher.kt` (hand-off to the YouTube Music
+app) remains as a fallback but is no longer the primary path.
 
-To link specific recordings, add `yt_playlist` or `yt_video` to entries in
-`recitations.json`, keyed by work id — the model already reads both, so no code
-change is needed. Until then the button runs a YouTube Music search for the
-work's Tamil title, author and "பாராயணம்", which lands well for most of the
-corpus.
+To map a specific work, add its id to `youtube.json` under `works` with a list
+of video ids; that wins over the division fallback. The old `yt_playlist` /
+`yt_video` fields on the Recitation model are retained for the hand-off path.
 
 ### Sync is not continuous
 

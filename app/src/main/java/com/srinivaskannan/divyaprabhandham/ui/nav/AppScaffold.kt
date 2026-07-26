@@ -29,6 +29,7 @@ import com.srinivaskannan.divyaprabhandham.ui.desams.DesamDetailScreen
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamsScreen
 import com.srinivaskannan.divyaprabhandham.ui.home.HomeScreen
 import com.srinivaskannan.divyaprabhandham.ui.reader.ReaderScreen
+import com.srinivaskannan.divyaprabhandham.ui.reader.RecitationScreen
 import com.srinivaskannan.divyaprabhandham.ui.saved.SavedScreen
 import com.srinivaskannan.divyaprabhandham.ui.search.SearchScreen
 import com.srinivaskannan.divyaprabhandham.ui.settings.AboutScreen
@@ -123,6 +124,10 @@ fun AppScaffold(
                     navController = navController,
                     startDestination = Routes.HOME,
                 ) {
+                    val openRecitation: (String) -> Unit = { workId ->
+                        navController.navigate(Routes.recitation(workId))
+                    }
+
                     composable(Routes.HOME) {
                         HomeScreen(
                             onOpenDivision = { navController.navigate(Routes.division(it)) },
@@ -164,6 +169,7 @@ fun AppScaffold(
                                 division = division,
                                 onBack = { navController.popBackStack() },
                                 onOpenSection = { openSection(it, null) },
+                                onListen = openRecitation,
                             )
                         }
                     }
@@ -218,6 +224,16 @@ fun AppScaffold(
                     composable(Routes.TIP_JAR) {
                         TipJarScreen(
                             tipJar = tipJar,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+
+                    composable(
+                        route = Routes.RECITATION,
+                        arguments = listOf(navArgument("workId") { type = NavType.StringType }),
+                    ) { entry ->
+                        RecitationScreen(
+                            workId = entry.arguments?.getString("workId").orEmpty(),
                             onBack = { navController.popBackStack() },
                         )
                     }
