@@ -166,7 +166,7 @@ fun ReaderScreen(
             .distinctUntilChanged()
             .collect { index ->
                 val stanza = stanzas.getOrNull(index - leadingRows) ?: return@collect
-                appState.setLastRead(LastRead(section.id, section.key(stanza)))
+                appState.updateLastRead(LastRead(section.id, section.key(stanza)))
             }
     }
 
@@ -212,7 +212,7 @@ fun ReaderScreen(
                                             Icon(themeIcon(option), contentDescription = null)
                                         },
                                         onClick = {
-                                            appState.setTheme(option)
+                                            appState.updateTheme(option)
                                             themeMenuOpen = false
                                         },
                                     )
@@ -704,7 +704,7 @@ private fun FontSizeControl(
                     Text("A", style = MaterialTheme.typography.labelSmall)
                     Slider(
                         value = appState.fontSize,
-                        onValueChange = { appState.setFontSize(it) },
+                        onValueChange = { appState.updateFontSize(it) },
                         valueRange = AppState.MIN_FONT_SIZE..AppState.MAX_FONT_SIZE,
                         steps = (AppState.MAX_FONT_SIZE - AppState.MIN_FONT_SIZE).toInt() - 1,
                         modifier = Modifier

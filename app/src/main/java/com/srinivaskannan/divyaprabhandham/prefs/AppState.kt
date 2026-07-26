@@ -44,9 +44,13 @@ data class LastRead(val sectionId: String, val stanzaKey: String? = null)
  *
  * Two mutation paths exist and the difference matters:
  *
- *  - The public `setX` / `toggleX` functions are local edits. They persist,
+ *  - The public `updateX` / `toggleX` functions are local edits. They persist,
  *    stamp [changedAt], and fire [onChanged] so the sync manager and the widget
- *    can react.
+ *    can react. They are named `update` rather than `set` on purpose: a
+ *    `setFoo(value)` beside a `var foo` with a non-public setter is the same
+ *    JVM signature, which is a platform declaration clash. The properties whose
+ *    setters are `internal` happen to escape it through name mangling, but
+ *    relying on that would be a trap for the next property added here.
  *  - [applyRemote] adopts state that arrived from another device. It persists
  *    but deliberately does *not* fire [onChanged], which is what stops a pulled
  *    change from being pushed straight back up as though it were local.
@@ -177,7 +181,7 @@ class AppState private constructor(
 
     // MARK: - Local mutations
 
-    fun setLastRead(value: LastRead?) {
+    fun updateLastRead(value: LastRead?) {
         if (value == lastRead) return
         lastRead = value
         commit { prefs ->
@@ -225,42 +229,42 @@ class AppState private constructor(
         commit { it[Keys.RECENT] = encodeList(list) }
     }
 
-    fun setTheme(value: ReaderThemeChoice) {
+    fun updateTheme(value: ReaderThemeChoice) {
         theme = value
         commit { it[Keys.THEME] = value.key }
     }
 
-    fun setFontSize(value: Float) {
+    fun updateFontSize(value: Float) {
         fontSize = value.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE)
         commit { it[Keys.FONT_SIZE] = fontSize.toDouble() }
     }
 
-    fun setAccent(value: AccentChoice) {
+    fun updateAccent(value: AccentChoice) {
         accentChoice = value
         commit { it[Keys.ACCENT] = value.key }
     }
 
-    fun setAppearance(value: AppearanceChoice) {
+    fun updateAppearance(value: AppearanceChoice) {
         appearance = value
         commit { it[Keys.APPEARANCE] = value.key }
     }
 
-    fun setScript(value: ScriptChoice) {
+    fun updateScript(value: ScriptChoice) {
         scriptChoice = value
         commit { it[Keys.SCRIPT] = value.key }
     }
 
-    fun setFontChoice(value: FontChoice) {
+    fun updateFontChoice(value: FontChoice) {
         fontChoice = value
         commit { it[Keys.FONT_FAMILY] = value.key }
     }
 
-    fun setWidgetAayiram(value: WidgetAayiram) {
+    fun updateWidgetAayiram(value: WidgetAayiram) {
         widgetAayiram = value
         commit { it[Keys.WIDGET_AAYIRAM] = value.key }
     }
 
-    fun setSyncEnabled(value: Boolean) {
+    fun updateSyncEnabled(value: Boolean) {
         syncEnabled = value
         commit { it[Keys.SYNC] = value }
     }
@@ -285,12 +289,12 @@ class AppState private constructor(
     // scheduling are), and the launch/prompt counters describe this install.
     // None of these stamp changedAt or reach the network.
 
-    fun setNotificationsEnabled(value: Boolean) {
+    fun updateNotificationsEnabled(value: Boolean) {
         notificationsEnabled = value
         persist { it[Keys.NOTIFY_ENABLED] = value }
     }
 
-    fun setReminderTimes(value: List<ReminderTime>) {
+    fun updateReminderTimes(value: List<ReminderTime>) {
         reminderTimes = value.take(MAX_REMINDERS)
         persist { it[Keys.NOTIFY_TIMES] = json.encodeToString(reminderTimes) }
     }

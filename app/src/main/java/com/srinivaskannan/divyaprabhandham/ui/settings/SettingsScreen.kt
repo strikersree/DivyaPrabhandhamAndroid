@@ -224,7 +224,7 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
             Switch(
                 checked = appState.syncEnabled,
                 onCheckedChange = { enabled ->
-                    appState.setSyncEnabled(enabled)
+                    appState.updateSyncEnabled(enabled)
                     if (enabled) sync.pull(appState) else sync.disconnect()
                 },
             )
@@ -254,7 +254,7 @@ private fun ScriptPane(appState: AppState) {
             title = choice.label,
             subtitle = choice.detail,
             selected = appState.scriptChoice == choice,
-            onClick = { appState.setScript(choice) },
+            onClick = { appState.updateScript(choice) },
         )
     }
     GroupFooter(appState.ui(Ui.SCRIPT_FOOTER))
@@ -266,7 +266,7 @@ private fun AppearancePane(appState: AppState) {
         ChoiceRow(
             title = appearanceLabel(appState, choice),
             selected = appState.appearance == choice,
-            onClick = { appState.setAppearance(choice) },
+            onClick = { appState.updateAppearance(choice) },
         )
     }
     GroupFooter(appState.ui(Ui.APPEARANCE_FOOTER))
@@ -279,7 +279,7 @@ private fun FontPane(appState: AppState) {
             title = fontLabel(appState, choice),
             subtitle = choice.preview,
             selected = appState.fontChoice == choice,
-            onClick = { appState.setFontChoice(choice) },
+            onClick = { appState.updateFontChoice(choice) },
         )
     }
     GroupFooter(appState.ui(Ui.FONT_FOOTER))
@@ -292,7 +292,7 @@ private fun AccentPane(appState: AppState) {
         // would be a row that visibly does nothing.
         if (choice == AccentChoice.DYNAMIC && !supportsDynamicColor) return@forEach
         Surface(
-            onClick = { appState.setAccent(choice) },
+            onClick = { appState.updateAccent(choice) },
             color = MaterialTheme.colorScheme.surface,
         ) {
             Row(
@@ -321,7 +321,7 @@ private fun AccentPane(appState: AppState) {
                 )
                 RadioButton(
                     selected = appState.accentChoice == choice,
-                    onClick = { appState.setAccent(choice) },
+                    onClick = { appState.updateAccent(choice) },
                 )
             }
         }
@@ -340,7 +340,7 @@ private fun NotificationsPane(appState: AppState) {
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         if (granted) {
-            appState.setNotificationsEnabled(true)
+            appState.updateNotificationsEnabled(true)
             ReminderScheduler.reschedule(context, appState)
         } else {
             permissionDenied = true
@@ -364,7 +364,7 @@ private fun NotificationsPane(appState: AppState) {
                 onCheckedChange = { wanted ->
                     when {
                         !wanted -> {
-                            appState.setNotificationsEnabled(false)
+                            appState.updateNotificationsEnabled(false)
                             ReminderScheduler.cancelAll(context)
                         }
                         // Android 13 asks at runtime; below that the permission
@@ -373,7 +373,7 @@ private fun NotificationsPane(appState: AppState) {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 
                         else -> {
-                            appState.setNotificationsEnabled(true)
+                            appState.updateNotificationsEnabled(true)
                             ReminderScheduler.reschedule(context, appState)
                         }
                     }
@@ -414,7 +414,7 @@ private fun NotificationsPane(appState: AppState) {
                     )
                     IconButton(
                         onClick = {
-                            appState.setReminderTimes(appState.reminderTimes - time)
+                            appState.updateReminderTimes(appState.reminderTimes - time)
                             ReminderScheduler.reschedule(context, appState)
                         },
                     ) {
@@ -449,7 +449,7 @@ private fun NotificationsPane(appState: AppState) {
                     onClick = {
                         val times = appState.reminderTimes +
                             ReminderTime(state.hour, state.minute)
-                        appState.setReminderTimes(times.sortedWith(
+                        appState.updateReminderTimes(times.sortedWith(
                             compareBy({ it.hour }, { it.minute }),
                         ))
                         ReminderScheduler.reschedule(context, appState)
@@ -484,7 +484,7 @@ private fun WidgetPane(appState: AppState) {
                 else -> Division.byId(choice.key)?.title(appState.scriptChoice) ?: choice.key
             },
             selected = appState.widgetAayiram == choice,
-            onClick = { appState.setWidgetAayiram(choice) },
+            onClick = { appState.updateWidgetAayiram(choice) },
         )
     }
     GroupFooter(appState.ui(Ui.WIDGET_FOOTER))

@@ -254,6 +254,29 @@ def check_project_type_usage(files, declared):
                             f"(declared in {sorted(owners)[0]})")
 
 
+def check_jvm_setter_clash(files):
+    """
+    Catches Kotlin/JVM platform declaration clashes.
+
+    A `var foo` whose setter is not public still generates a `setFoo(...)`
+    method, so declaring `fun setFoo(value)` in the same class collides with it.
+    Properties with an `internal` setter escape only because Kotlin mangles
+    internal accessors with a module suffix — which makes this a trap that
+    fires for some properties and not others, for reasons invisible at the
+    call site.
+    """
+    for path in files:
+        code = strip_code(open(path, encoding="utf-8").read())
+        properties = set(re.findall(r"^\s*(?:private\s+|internal\s+)?var\s+(\w+)\s*:", code, re.M))
+        functions = set(re.findall(r"^\s*(?:private\s+|internal\s+)?fun\s+(set[A-Z]\w*)\s*\(", code, re.M))
+        for prop in sorted(properties):
+            generated = "set" + prop[0].upper() + prop[1:]
+            if generated in functions:
+                fail(rel(path), f"'fun {generated}(...)' clashes with the setter "
+                                f"generated for 'var {prop}' — rename it to "
+                                f"'update{prop[0].upper() + prop[1:]}'")
+
+
 def check_ui_keys(files):
     ui_path = os.path.join(SRC, *PKG_ROOT.split("."), "data", "UiText.kt")
     text = open(ui_path, encoding="utf-8").read()
@@ -435,6 +458,7 @@ def main():
     checks = [
         ("imports", lambda: check_internal_imports(files, declared)),
         ("type usage", lambda: check_project_type_usage(files, declared)),
+        ("JVM setter clash", lambda: check_jvm_setter_clash(files)),
         ("Ui table", lambda: check_ui_keys(files)),
         ("manifest", lambda: check_manifest(files, declared)),
         ("resources", lambda: check_r_references(files)),
