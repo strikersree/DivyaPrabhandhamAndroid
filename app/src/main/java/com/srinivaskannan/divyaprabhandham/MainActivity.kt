@@ -64,6 +64,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private companion object {
+        // Roughly the system splash's own minimum; past this we show the
+        // branded Compose screen rather than freezing on the system splash.
+        const val SPLASH_HOLD_MS = 900L
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -71,12 +77,17 @@ class MainActivity : ComponentActivity() {
 
         val app = application as DivyaPrabhandhamApp
 
-        // The system splash is deliberately *not* held until the corpus is
-        // parsed. It can only show a centred icon on a flat colour, so holding
-        // it would mean the supplied artwork never appears. Instead it hands
-        // over on the first Compose frame, which draws the artwork full-bleed
-        // and keeps it there until loading finishes. Both are the same maroon,
-        // so the handover has no seam.
+        // Hold the system splash through the corpus parse when it is quick — its
+        // centred-emblem-on-maroon is enough, and it avoids flashing a second
+        // splash for a few frames. Only if loading outlasts the system splash
+        // does the Compose branded screen take over (see BrandedSplash). On a
+        // fast device the user sees one splash and then content; on a slow one
+        // the branded screen bridges the wait.
+        splash.setKeepOnScreenCondition {
+            app.startup is DivyaPrabhandhamApp.Startup.Loading &&
+                android.os.SystemClock.uptimeMillis() - startedAt < SPLASH_HOLD_MS
+        }
+
         deepLink = parseDeepLink(intent)
 
         setContent {
@@ -189,7 +200,10 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * The loading screen: the supplied artwork, edge to edge.
+ * The loading screen shown only when the corpus parse outlasts the system
+ * splash — on a fast device it never appears, because the system splash is held
+ * through the quick parse and then content draws directly. On a slow device it
+ * bridges the remaining wait with the full artwork.
  *
  * Cropped rather than fitted, so it fills the screen with no letterbox bars.
  * That is only safe because the asset is pre-padded vertically to a 0.415 ratio

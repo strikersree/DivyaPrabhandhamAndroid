@@ -47,6 +47,11 @@ class YouTubeAudioController(context: Context) {
     var ended by mutableStateOf(false)
         private set
 
+    /** Non-null when the player reported it cannot play — e.g. a video that is
+     *  private, deleted, or blocks embedding. Shown in the bar. */
+    var error by mutableStateOf<String?>(null)
+        private set
+
     private var videoIds: List<String> = emptyList()
 
     @SuppressLint("StaticFieldLeak")
@@ -72,6 +77,7 @@ class YouTubeAudioController(context: Context) {
         index = startIndex.coerceIn(0, (ids.size - 1).coerceAtLeast(0))
         ended = false
         ready = false
+        error = null
         webView.loadDataWithBaseURL(
             "https://www.youtube.com",
             html(ids, index),
@@ -118,8 +124,24 @@ class YouTubeAudioController(context: Context) {
             // -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued.
             playing = state == 1
             buffering = state == 3
+            if (state == 1 || state == 3) error = null
             index = currentIndex.coerceAtLeast(0)
             if (state == 0 && currentIndex >= videoIds.size - 1) ended = true
+        }
+
+        @JavascriptInterface
+        fun onError(code: Int) = webView.post {
+            // 2 bad id, 5 HTML5 error, 100 removed/private, 101/150 embedding
+            // disallowed by the uploader. The last is the one that matters here:
+            // some music uploads simply cannot be embedded, and there is no way
+            // around that from an embedded player.
+            buffering = false
+            playing = false
+            error = when (code) {
+                101, 150 -> "embed_blocked"
+                100 -> "unavailable"
+                else -> "error"
+            }
         }
     }
 
@@ -129,24 +151,52 @@ class YouTubeAudioController(context: Context) {
             return """
 <!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>html,body{margin:0;background:transparent;height:100%}#p{width:100%;height:100%}</style>
+<style>html,body{margin:0;background:#000;height:100%}#p{width:100%;height:100%}</style>
 </head><body>
 <div id="p"></div>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-var ids=$arr, startIndex=$start, p;
-function idx(){ try { return p.getPlaylistIndex(); } catch(e){ return 0; } }
-function onYouTubeIframeAPIReady(){
-  p=new YT.Player('p',{
-    height:'100%',width:'100%',
-    playerVars:{playsinline:1,rel:0,autoplay:1,controls:0,origin:'https://www.youtube.com'},
-    events:{
-      onReady:function(e){
-        window.p=e.target;
-        e.target.loadPlaylist({playlist:ids,index:startIndex});
+var ids = $arr, startIndex = $start, p, current = startIndex;
+
+function idx() {
+  try { var i = p.getPlaylistIndex(); return (i != null && i >= 0) ? i : current; }
+  catch (e) { return current; }
+}
+
+function onYouTubeIframeAPIReady() {
+  p = new YT.Player('p', {
+    height: '100%', width: '100%',
+    // The player is built around the FIRST video rather than left empty and
+    // handed a playlist afterwards — an empty player ignores autoplay, which is
+    // the usual reason nothing is heard.
+    videoId: ids[startIndex],
+    playerVars: {
+      playsinline: 1, rel: 0, autoplay: 1, controls: 0,
+      origin: 'https://www.youtube.com'
+    },
+    events: {
+      onReady: function (e) {
+        window.p = e.target;
+        e.target.cuePlaylist({ playlist: ids, index: startIndex });
+        // A direct play call right after cue is what actually starts audio;
+        // mediaPlaybackRequiresUserGesture=false on the WebView permits it.
+        e.target.playVideo();
         Android.onReady();
       },
-      onStateChange:function(e){ Android.onState(e.data, idx()); }
+      onStateChange: function (e) {
+        current = idx();
+        Android.onState(e.data, current);
+      },
+      onError: function (e) {
+        // An un-embeddable track should not stall the whole playlist: skip to
+        // the next and keep going, and only surface the error if it was the
+        // last one.
+        Android.onError(e.data);
+        if (current < ids.length - 1) {
+          current += 1;
+          try { p.loadVideoById(ids[current]); } catch (err) {}
+        }
+      }
     }
   });
 }

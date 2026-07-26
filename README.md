@@ -190,6 +190,15 @@ IFrame API's origin check — a `null` or `file://` origin makes the player load
 its chrome but refuse to start. That base URL is set now, and since the player
 is audio-only there is no video surface to mis-render regardless.
 
+NOTE ON PLAYBACK FAILING: if a track loads but stays silent, the likely cause
+is that the specific `music.youtube.com` upload disallows embedding (IFrame
+error 101/150) — some music uploads simply cannot be played from an embedded
+player, and nothing app-side changes that. The player now reports these: it
+skips an un-embeddable track and moves to the next, and the bar shows "This
+track can't play in-app" if none can play. If every supplied track is blocked,
+the fix is to map embeddable video ids (the regular youtube.com watch id of the
+same recitation, where the uploader allows embedding) in youtube.json.
+
 ### Sync is not continuous
 
 Drive `appDataFolder` gives a small synced document with no backend of ours,

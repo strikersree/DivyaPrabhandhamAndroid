@@ -46,6 +46,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -236,11 +238,21 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
     GroupFooter(appState.ui(Ui.SYNC_FOOTER))
 
     if (appState.syncEnabled) {
+        // A slow tick so "N minutes ago" advances while the screen is open,
+        // without the user having to leave and come back.
+        var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+        LaunchedEffect(sync.lastSyncedAt) {
+            while (true) {
+                now = System.currentTimeMillis()
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
+        val syncedAt = sync.lastSyncedAt
         ListRow(
             title = appState.ui(Ui.SYNC_NOW),
             trailingText = when {
                 sync.isSyncing -> appState.ui(Ui.SYNC_SYNCING)
-                sync.lastSyncedAt != null -> appState.ui(Ui.SYNC_LAST)
+                syncedAt != null -> RelativeTime.syncedAgo(now, syncedAt, appState.scriptChoice)
                 else -> appState.ui(Ui.SYNC_NEVER)
             },
             showChevron = false,

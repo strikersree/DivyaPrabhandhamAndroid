@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -13,8 +14,10 @@ import androidx.glance.GlanceTheme
 // and reified-Activity forms, neither of which can carry the deep-link URI.
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionStartActivity
+import androidx.glance.LocalSize
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
@@ -45,6 +48,10 @@ import java.util.concurrent.TimeUnit
  * nobody is timing.
  */
 class VerseWidget : GlanceAppWidget() {
+
+    // Exact mode gives LocalSize the widget's real dimensions on every resize,
+    // which is what the type scaling below reads.
+    override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val snapshot = WidgetBridge.readSnapshot(context)
@@ -78,12 +85,20 @@ class VerseWidget : GlanceAppWidget() {
         work: String,
         deepLink: Intent,
     ) {
+        // Type scales with the widget. The height drives the body size (a taller
+        // widget can afford larger, and show more lines); everything else is
+        // derived from it so the hierarchy holds at every size. Values are
+        // clamped so a tiny widget stays legible and a huge one does not turn
+        // cartoonish.
+        val size = LocalSize.current
+        val metrics = widgetMetrics(size)
+
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
                 .cornerRadius(16.dp)
-                .padding(14.dp)
+                .padding(metrics.pad)
                 .clickable(actionStartActivity(deepLink)),
             verticalAlignment = Alignment.Top,
         ) {
@@ -91,30 +106,70 @@ class VerseWidget : GlanceAppWidget() {
                 text = pasuramLabel,
                 style = TextStyle(
                     color = GlanceTheme.colors.primary,
-                    fontSize = 12.sp,
+                    fontSize = metrics.label,
                     fontWeight = FontWeight.Medium,
                 ),
             )
-            Spacer(GlanceModifier.height(6.dp))
+            Spacer(GlanceModifier.height(metrics.gap))
             Text(
                 text = text,
-                maxLines = 4,
+                maxLines = metrics.bodyLines,
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurface,
-                    fontSize = 15.sp,
+                    fontSize = metrics.body,
                 ),
                 modifier = GlanceModifier.fillMaxWidth(),
             )
-            Spacer(GlanceModifier.height(6.dp))
+            Spacer(GlanceModifier.height(metrics.gap))
             Text(
                 text = work,
                 maxLines = 1,
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurfaceVariant,
-                    fontSize = 11.sp,
+                    fontSize = metrics.caption,
                 ),
             )
         }
+    }
+
+    private data class WidgetMetrics(
+        val body: androidx.compose.ui.unit.TextUnit,
+        val label: androidx.compose.ui.unit.TextUnit,
+        val caption: androidx.compose.ui.unit.TextUnit,
+        val pad: androidx.compose.ui.unit.Dp,
+        val gap: androidx.compose.ui.unit.Dp,
+        val bodyLines: Int,
+    )
+
+    /**
+     * Type and spacing as a function of the widget box.
+     *
+     * Body size tracks height, linearly between a 2-cell (~110dp) and a
+     * 4-cell (~250dp) tall widget, clamped at both ends: never smaller than the
+     * old fixed 15sp floor on a small widget, up to 22sp on a large one. Label
+     * and caption are fixed offsets below the body so the three-level hierarchy
+     * reads the same at every size, and the line count grows with height so a
+     * tall widget fills with verse rather than whitespace.
+     */
+    private fun widgetMetrics(size: DpSize): WidgetMetrics {
+        val h = size.height.value
+        val t = ((h - 110f) / (250f - 110f)).coerceIn(0f, 1f)
+        val body = (15f + t * 7f)             // 15 -> 22
+        val pad = (12f + t * 6f)              // 12 -> 18
+        val lines = when {
+            h < 130f -> 3
+            h < 190f -> 5
+            h < 240f -> 8
+            else -> 12
+        }
+        return WidgetMetrics(
+            body = body.sp,
+            label = (body - 3f).sp,
+            caption = (body - 4f).sp,
+            pad = pad.dp,
+            gap = (pad * 0.45f).dp,
+            bodyLines = lines,
+        )
     }
 
     @androidx.compose.runtime.Composable

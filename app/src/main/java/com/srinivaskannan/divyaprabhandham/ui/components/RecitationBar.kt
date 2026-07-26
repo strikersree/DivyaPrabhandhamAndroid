@@ -87,9 +87,16 @@ fun RecitationBar(
                     modifier = Modifier.padding(start = 4.dp, end = 4.dp),
                 )
                 Column(modifier = Modifier.weight(1f)) {
+                    val errorText = when (controller?.error) {
+                        "embed_blocked" -> appState.ui(Ui.LISTEN_EMBED_BLOCKED)
+                        "unavailable", "error" -> appState.ui(Ui.LISTEN_ERROR)
+                        else -> null
+                    }
                     Text(
-                        text = appState.ui(Ui.LISTEN),
+                        text = errorText ?: appState.ui(Ui.LISTEN),
                         style = MaterialTheme.typography.labelSmall,
+                        color = if (errorText != null) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
                         text = session.workTitle,
