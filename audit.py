@@ -254,6 +254,56 @@ def check_project_type_usage(files, declared):
                             f"(declared in {sorted(owners)[0]})")
 
 
+def check_state_read_from_ui(files):
+    """
+    Flags mutable fields the UI reads that are not snapshot-backed.
+
+    Compose only re-renders when it observes a change, and it only observes
+    state created by mutableStateOf and friends. A plain `var` read from a
+    composable registers no subscription at all, so assigning it later schedules
+    nothing — the screen silently keeps whatever it drew first.
+
+    This is written from a real failure: the Application published its four
+    startup objects into four fields, two of them plain vars. A recomposition
+    triggered by one of the snapshot-backed fields ran while the plain ones were
+    still null, read them, subscribed to nothing, and the app sat on a blank
+    screen forever.
+    """
+    ui_sources = []
+    for path in files:
+        rp = rel(path).replace(os.sep, "/")
+        if "/ui/" in rp or rp.endswith("MainActivity.kt"):
+            ui_sources.append(open(path, encoding="utf-8").read())
+    if not ui_sources:
+        return
+
+    state_factories = ("mutableStateOf", "mutableStateListOf", "mutableStateMapOf",
+                       "mutableIntStateOf", "mutableFloatStateOf", "mutableLongStateOf",
+                       "derivedStateOf")
+
+    for path in files:
+        rp = rel(path).replace(os.sep, "/")
+        if "/ui/" in rp:
+            continue
+        code = strip_code(open(path, encoding="utf-8").read())
+        # Non-private `var` declarations. Everything after the name is taken
+        # as the declaration tail, because the snapshot factory can appear
+        # either after `=` or after `by`, and an earlier version of this regex
+        # tried to split on `=` and so read every `by mutableStateOf(...)`
+        # property as unbacked.
+        for m in re.finditer(r"^\s{4}(?!private)(?:internal\s+)?var\s+(\w+)\b(.*)$",
+                             code, re.M):
+            name, tail = m.group(1), m.group(2)
+            if any(f in tail for f in state_factories):
+                continue
+            # Only a problem if the UI actually reads it.
+            if not any(re.search(r"\.%s\b" % re.escape(name), src) for src in ui_sources):
+                continue
+            fail(rel(path), f"'var {name}' is read from the UI but is not "
+                            f"snapshot-backed — Compose will not recompose when "
+                            f"it changes; wrap it in mutableStateOf")
+
+
 def check_jvm_setter_clash(files):
     """
     Catches Kotlin/JVM platform declaration clashes.
@@ -458,6 +508,7 @@ def main():
     checks = [
         ("imports", lambda: check_internal_imports(files, declared)),
         ("type usage", lambda: check_project_type_usage(files, declared)),
+        ("UI state backing", lambda: check_state_read_from_ui(files)),
         ("JVM setter clash", lambda: check_jvm_setter_clash(files)),
         ("Ui table", lambda: check_ui_keys(files)),
         ("manifest", lambda: check_manifest(files, declared)),

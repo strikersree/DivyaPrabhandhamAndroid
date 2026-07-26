@@ -24,22 +24,39 @@ import kotlinx.coroutines.launch
  * of which is expensive to build, is not a graph. What it does need is an
  * explicit async start, because parsing the corpus takes long enough that doing
  * it on the main thread would trip the ANR watchdog on a slow device.
+ *
+ * The startup result is published as a **single** [Startup] value, and that is
+ * load-bearing rather than tidiness. Publishing the four objects into four
+ * separate fields meant composition could observe a half-built app: the write
+ * to the first field scheduled a recomposition that ran while the rest were
+ * still being assigned, and any field that was not snapshot-backed registered
+ * no subscription when it was read as null — so nothing ever scheduled the
+ * recomposition that would have picked it up. One atomic write, one
+ * subscription, no torn state.
  */
 class DivyaPrabhandhamApp : Application() {
 
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    /** Null until [start] finishes. The splash screen holds until it is not. */
-    var repository by mutableStateOf<PrabandhamRepository?>(null)
-        private set
+    sealed interface Startup {
+        /** Parsing the corpus. The splash screen stays up. */
+        data object Loading : Startup
 
-    var appState by mutableStateOf<AppState?>(null)
-        private set
+        data class Ready(
+            val appState: AppState,
+            val repository: PrabandhamRepository,
+            val sync: GoogleSyncManager,
+            val tipJar: TipJar,
+        ) : Startup
 
-    var sync: GoogleSyncManager? = null
-        private set
+        /**
+         * Startup threw. Shown to the reader rather than left as a blank
+         * window — a reader app that fails to open should say so.
+         */
+        data class Failed(val message: String) : Startup
+    }
 
-    var tipJar: TipJar? = null
+    var startup by mutableStateOf<Startup>(Startup.Loading)
         private set
 
     private var widgetJob: Job? = null
@@ -51,28 +68,42 @@ class DivyaPrabhandhamApp : Application() {
     }
 
     private suspend fun start() {
-        val state = AppState.create(this, scope)
-        val repo = PrabandhamRepository.load(this)
-        val syncManager = GoogleSyncManager(this, scope)
+        val ready = try {
+            val state = AppState.create(this, scope)
+            val repo = PrabandhamRepository.load(this)
+            val syncManager = GoogleSyncManager(this, scope)
 
-        state.noteLaunch()
+            state.noteLaunch()
 
-        // One listener drives both side effects of a local change: push it to
-        // the person's other devices, and refresh what the widget shows. Both
-        // are debounced, because reading writes constantly.
-        state.onChanged = {
-            syncManager.schedulePush(state)
-            scheduleWidgetRefresh(repo, state)
+            // One listener drives both side effects of a local change: push it
+            // to the person's other devices, and refresh what the widget shows.
+            // Both are debounced, because reading writes constantly.
+            state.onChanged = {
+                syncManager.schedulePush(state)
+                scheduleWidgetRefresh(repo, state)
+            }
+
+            Startup.Ready(
+                appState = state,
+                repository = repo,
+                sync = syncManager,
+                tipJar = TipJar(this, state),
+            )
+        } catch (cancellation: kotlinx.coroutines.CancellationException) {
+            throw cancellation
+        } catch (error: Throwable) {
+            // Without this the coroutine would take the process down with it,
+            // and the reader would see a crash with nothing to act on.
+            startup = Startup.Failed(error.message ?: error::class.java.simpleName)
+            return
         }
 
-        appState = state
-        repository = repo
-        sync = syncManager
-        tipJar = TipJar(this, state)
+        // Published only once everything above is wired up.
+        startup = ready
 
-        syncManager.pull(state)
-        ReminderScheduler.reschedule(this, state)
-        scheduleWidgetRefresh(repo, state)
+        ready.sync.pull(ready.appState)
+        ReminderScheduler.reschedule(this, ready.appState)
+        scheduleWidgetRefresh(ready.repository, ready.appState)
     }
 
     private fun scheduleWidgetRefresh(repo: PrabandhamRepository, state: AppState) {

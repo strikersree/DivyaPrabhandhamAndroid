@@ -6,16 +6,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.srinivaskannan.divyaprabhandham.ui.nav.AppScaffold
 import com.srinivaskannan.divyaprabhandham.ui.nav.DeepLink
 import com.srinivaskannan.divyaprabhandham.ui.theme.DivyaPrabhandhamTheme
@@ -39,9 +51,10 @@ class MainActivity : ComponentActivity() {
     private val consentLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
     ) { result ->
-        val app = application as DivyaPrabhandhamApp
-        val state = app.appState ?: return@registerForActivityResult
-        app.sync?.onConsentResult(result.resultCode == RESULT_OK, state)
+        val ready = (application as DivyaPrabhandhamApp).startup
+        if (ready is DivyaPrabhandhamApp.Startup.Ready) {
+            ready.sync.onConsentResult(result.resultCode == RESULT_OK, ready.appState)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,55 +63,61 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val app = application as DivyaPrabhandhamApp
-        splash.setKeepOnScreenCondition { app.repository == null || app.appState == null }
+        splash.setKeepOnScreenCondition {
+            app.startup is DivyaPrabhandhamApp.Startup.Loading
+        }
 
         deepLink = parseDeepLink(intent)
 
         setContent {
-            val repository = app.repository
-            val appState = app.appState
-            val sync = app.sync
-            val tipJar = app.tipJar
-
-            if (repository == null || appState == null || sync == null || tipJar == null) {
+            when (val startup = app.startup) {
                 // The splash screen is still up; drawing anything here would
                 // only flash behind it.
-                return@setContent
-            }
+                is DivyaPrabhandhamApp.Startup.Loading -> Unit
 
-            LaunchedEffect(Unit) { tipJar.connect(this@MainActivity) }
+                is DivyaPrabhandhamApp.Startup.Failed -> StartupFailure(startup.message)
 
-            // A pending Drive grant needs an activity to launch from, so it is
-            // surfaced here rather than inside the sync manager.
-            LaunchedEffect(sync.pendingConsent) {
-                sync.pendingConsent?.let { pending ->
-                    consentLauncher.launch(
-                        androidx.activity.result.IntentSenderRequest
-                            .Builder(pending.intentSender)
-                            .build(),
-                    )
+                is DivyaPrabhandhamApp.Startup.Ready -> {
+                    val appState = startup.appState
+                    val sync = startup.sync
+
+                    LaunchedEffect(Unit) { startup.tipJar.connect(this@MainActivity) }
+
+                    // A pending Drive grant needs an activity to launch from,
+                    // so it is surfaced here rather than in the sync manager.
+                    LaunchedEffect(sync.pendingConsent) {
+                        sync.pendingConsent?.let { pending ->
+                            consentLauncher.launch(
+                                IntentSenderRequest.Builder(pending.intentSender).build(),
+                            )
+                        }
+                    }
+
+                    // Pull on resume, so a verse bookmarked on another device
+                    // is there when this one comes back to the foreground.
+                    // DisposableEffect, not LaunchedEffect: the observer has to
+                    // come back off again.
+                    val lifecycleOwner = LocalLifecycleOwner.current
+                    DisposableEffect(lifecycleOwner) {
+                        val observer = LifecycleEventObserver { _, event ->
+                            if (event == Lifecycle.Event.ON_RESUME) sync.pull(appState)
+                        }
+                        lifecycleOwner.lifecycle.addObserver(observer)
+                        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                    }
+
+                    DivyaPrabhandhamTheme(
+                        appState = appState,
+                        repository = startup.repository,
+                    ) {
+                        AppScaffold(
+                            sync = sync,
+                            tipJar = startup.tipJar,
+                            deepLink = deepLink,
+                            onDeepLinkHandled = { deepLink = null },
+                        )
+                    }
                 }
-            }
-
-            // Pull on resume, so a verse bookmarked on another device is there
-            // when this one comes back to the foreground. DisposableEffect,
-            // not LaunchedEffect: the observer has to come back off again.
-            val lifecycleOwner = LocalLifecycleOwner.current
-            DisposableEffect(lifecycleOwner) {
-                val observer = LifecycleEventObserver { _, event ->
-                    if (event == Lifecycle.Event.ON_RESUME) sync.pull(appState)
-                }
-                lifecycleOwner.lifecycle.addObserver(observer)
-                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-            }
-
-            DivyaPrabhandhamTheme(appState = appState, repository = repository) {
-                AppScaffold(
-                    sync = sync,
-                    tipJar = tipJar,
-                    deepLink = deepLink,
-                    onDeepLinkHandled = { deepLink = null },
-                )
             }
         }
     }
@@ -124,6 +143,32 @@ class MainActivity : ComponentActivity() {
                 DeepLink.OpenVerse(section, uri.getQueryParameter("key"))
             }
             else -> null
+        }
+    }
+}
+
+/**
+ * Shown when the corpus could not be loaded. Deliberately plain — no theme,
+ * no app state, nothing that depends on the thing that just failed. It exists
+ * so a startup failure reads as a failure rather than as a blank window.
+ */
+@Composable
+private fun StartupFailure(message: String) {
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "நாலாயிர திவ்ய பிரபந்தம்\n\n" +
+                        "The verses could not be loaded.\n$message",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
         }
     }
 }
