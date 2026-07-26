@@ -4,9 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialExpressiveTheme
-import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -127,15 +125,21 @@ val supportsDynamicColor: Boolean
 /**
  * The app theme.
  *
- * This is Material 3 Expressive: [MaterialExpressiveTheme] plus
- * [MotionScheme.expressive], which is what gives the springier, slightly
- * overshooting transitions the current Material guidance calls for. It needs
- * material3 1.4.0 or newer — if a sync ever pins something older, swap
- * `MaterialExpressiveTheme` for `MaterialTheme` and drop the `motionScheme`
- * argument; nothing else in the app depends on the expressive APIs directly,
- * because every screen reads motion through `MaterialTheme.motionScheme`.
+ * Material 3, with the expressive direction expressed through the parts of the
+ * system that are actually public: generated tonal palettes, wallpaper colour,
+ * the rounder shape scale in [AppShapes], and adaptive navigation.
+ *
+ * NOT `MaterialExpressiveTheme`. In material3 1.4.0 that function, the
+ * `MotionScheme` interface and the `ExperimentalMaterial3ExpressiveApi` marker
+ * are all declared `internal`, so they cannot be called from outside the
+ * library — the code has landed but the API has not been opened up. Opting in
+ * does not help; internal is not the same as experimental.
+ *
+ * To adopt it once a release makes it public, this is the only place that
+ * changes: swap [MaterialTheme] for `MaterialExpressiveTheme` and pass
+ * `motionScheme = MotionScheme.expressive()`. Nothing else in the app touches
+ * those APIs.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DivyaPrabhandhamTheme(
     appState: AppState,
@@ -160,9 +164,8 @@ fun DivyaPrabhandhamTheme(
         LocalAppState provides appState,
         LocalRepository provides repository,
     ) {
-        MaterialExpressiveTheme(
+        MaterialTheme(
             colorScheme = colorScheme,
-            motionScheme = MotionScheme.expressive(),
             typography = appTypography(),
             shapes = AppShapes,
             content = content,

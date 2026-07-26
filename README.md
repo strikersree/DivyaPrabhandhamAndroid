@@ -1,7 +1,7 @@
 # Divya Prabhandham — Android
 
 An Android port of the iOS SwiftUI reader for the நாலாயிர திவ்ய பிரபந்தம், built
-with Jetpack Compose and Material 3 Expressive.
+with Jetpack Compose and Material 3.
 
 The bundled corpus in `app/src/main/assets/` is byte-identical to the iOS
 build's `Resources/`, so the OCR pipeline and the essence-authoring tools keep
@@ -20,11 +20,19 @@ blocks getting it on a device.
 
 Every version in `gradle/libs.versions.toml` was pinned offline and **could not
 be resolved** against the Google or Maven repositories. Open the project in
-Android Studio, let it sync, and accept whatever it flags. The only version that
-carries design meaning is `material3`: **1.4.0 or newer** is where Material 3
-Expressive (`MaterialExpressiveTheme`, `MotionScheme`) became stable. If a sync
-pins something older, `ui/theme/Theme.kt` has a two-line fallback documented in
-place — nothing else in the app touches the expressive APIs directly.
+Android Studio, let it sync, and accept whatever it flags.
+
+**On Material 3 Expressive:** as of `material3:1.4.0`, `MaterialExpressiveTheme`,
+the `MotionScheme` interface and the `ExperimentalMaterial3ExpressiveApi` marker
+are all declared `internal` — the code has shipped but the API is not open, and
+opting in does not help, because internal is not experimental. The app therefore
+uses the stable `MaterialTheme` and carries the expressive direction through the
+parts that *are* public: generated tonal palettes, wallpaper colour, the rounder
+shape scale, and adaptive navigation.
+
+`ui/theme/Theme.kt` is the only file that would change when a release opens those
+APIs up — swap `MaterialTheme` for `MaterialExpressiveTheme` and pass
+`motionScheme = MotionScheme.expressive()`.
 
 ### 2. Google sync (optional)
 
@@ -95,7 +103,7 @@ byte-identical to the iOS build's values.
 
 | iOS | Android | Note |
 |---|---|---|
-| SwiftUI | Compose + Material 3 Expressive | |
+| SwiftUI | Compose + Material 3 | Expressive theme API is still `internal`; see above |
 | `@Observable` + `didSet` | `AppState` on Compose state + DataStore | Same shape; two mutation paths, local and remote |
 | iCloud key-value store | Google Drive `appDataFolder` | Last-writer-wins on one small document, as before |
 | Sign in with Apple | *(removed)* | Sync needs a Drive grant, not an identity |
