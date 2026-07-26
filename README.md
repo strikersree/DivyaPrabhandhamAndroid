@@ -57,19 +57,34 @@ the tip screen says the tip jar is unavailable rather than showing dead buttons.
 
 Nothing to do — noted here because two things about it are not obvious.
 
-**The app icon drops the wordmark.** Adaptive icons are masked by the launcher
-(circle, squircle, teardrop), so only a 66dp circle inside the 108dp canvas is
-guaranteed to survive. The supplied square art has "Naalayira Divya
-Prabhandham" running nearly edge to edge, which a round mask would slice
-through — and which is unreadable at launcher size regardless. So the icon uses
-the mandala ground as its background layer and the emblem (thiruman, chakra,
-shankha) as its foreground, sized to the safe circle. A monochrome layer is
-generated from the same silhouette for Android 13+ themed icons. The full
-artwork, wordmark and all, is used whole on the splash screen.
+**The app icon keeps the emblem only.** Adaptive icons are masked by the
+launcher (circle, squircle, teardrop), and only a 66dp *circle* inside the
+108dp canvas is guaranteed to survive. The supplied icon is a complete
+rounded-square design — decorative border, Tamil wordmark along the bottom —
+none of which survives a round mask, and none of which is legible at launcher
+size anyway.
 
-`store/play-icon-512.png` is the 512x512 Play Console icon — the complete
-artwork, with the white baked into the bottom corners of the source filled back
-to maroon. It is outside `src/` so it is not packaged into the APK.
+So the icon is split: the mandala ground as the background layer, and the
+emblem (thiruman, chakra, shankha) as the foreground. The emblem is keyed off
+the maroon by luminance, which separates cleanly here — the ground and its
+tracery sit around 50-60, while the saffron drop (152), the chakra (196) and
+the namam and shankha (251+) are all well above.
+
+Scaling is by the emblem's farthest opaque pixel, not by its bounding box.
+That distinction matters: fitting the square bounding box to 66dp put the
+chakra and shankha at 1.41x the safe radius, outside anything a circular mask
+shows. Measured after generation, the farthest opaque pixel now sits at 131px
+of a 132px safe radius, and the namam fills 61% of the visible area.
+
+One honest caveat: the chakra is fine line art — about 38% ink coverage in the
+source — so at launcher size it reads as ornamental texture flanking the namam
+rather than as a distinct wheel. Dropping the chakra and shankha would let the
+namam be about 18% larger and crisper. That is a design call, not a technical
+one, so the supplied composition was kept.
+
+`store/play-icon-512.png` is the 512x512 Play Console icon: the complete
+artwork, border and wordmark included, with the pale canvas behind its rounded
+corners flooded to maroon so the square is opaque edge to edge.
 
 **The splash is a Compose screen, not the system splash.** Android 12+ only
 lets the system splash show a centred icon on a flat colour, so a full-bleed
