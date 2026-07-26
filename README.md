@@ -164,23 +164,31 @@ byte-identical to the iOS build's values.
 
 ### Recitations
 
-Recitations now play **inside the app**, through YouTube's official IFrame
-Player in a WebView (`media/YouTubePlayer.kt`). That is the sanctioned way to
-embed YouTube on Android — there is no native playback SDK, and extracting
-stream URLs for ExoPlayer would violate the terms. The player is driven from
-`youtube.json`, keyed by work id with a per-division fallback, so a division can
-carry one pooled playlist before every work is mapped individually.
+Recitations play **audio-only, in a mini-bar**, through YouTube's official
+IFrame Player. There is no native YouTube playback SDK on Android and no legal
+way to feed its audio to ExoPlayer, so the IFrame player in a WebView is the
+interface. The WebView is parked offscreen as a 1dp sliver
+(`ui/components/RecitationHost.kt`) — attached to the window so it produces
+sound, but never given room to show video. The entire visible UI is the
+`RecitationBar`: title, play/pause, skip, buffering spinner, close.
 
-Two consequences of the embed terms, both deliberate: the player stays **on
-screen** (it cannot play hidden or in the background), and leaving the screen
-disposes the WebView, so there is **no background audio**. This differs from the
-iOS build, where MusicKit drove audio-only playback under the listener's Apple
-Music subscription. `media/RecitationLauncher.kt` (hand-off to the YouTube Music
-app) remains as a fallback but is no longer the primary path.
+The bar is app-wide and survives navigation: one `RecitationSession` held above
+the nav graph (`media/RecitationSession.kt`), so a recitation started from the
+browser keeps playing as you move around. It stops when the last track ends,
+when closed, or when the app is finished (not on rotation). This is the deepest
+divergence from the iOS build, where MusicKit drove true background audio under
+the listener's Apple Music subscription; embedded YouTube may not play with the
+app gone.
 
-To map a specific work, add its id to `youtube.json` under `works` with a list
-of video ids; that wins over the division fallback. The old `yt_playlist` /
-`yt_video` fields on the Recitation model are retained for the hand-off path.
+Playback is driven by `youtube.json`, keyed by work id with a per-division
+fallback. To map a specific work, add its id under `works` with a list of video
+ids; that wins over the division pool.
+
+NOTE ON THE BLACK SCREEN: the earlier full-video player rendered black because
+`loadDataWithBaseURL` needs a real `https://www.youtube.com` base URL for the
+IFrame API's origin check — a `null` or `file://` origin makes the player load
+its chrome but refuse to start. That base URL is set now, and since the player
+is audio-only there is no video surface to mis-render regardless.
 
 ### Sync is not continuous
 

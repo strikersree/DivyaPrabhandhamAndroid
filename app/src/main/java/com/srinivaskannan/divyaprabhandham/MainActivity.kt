@@ -131,6 +131,7 @@ class MainActivity : ComponentActivity() {
                         AppScaffold(
                             sync = sync,
                             tipJar = startup.tipJar,
+                            recitation = startup.recitation,
                             deepLink = deepLink,
                             onDeepLinkHandled = { deepLink = null },
                         )
@@ -154,6 +155,18 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         parseDeepLink(intent)?.let { deepLink = it }
+    }
+
+    override fun onDestroy() {
+        // Only tear the player down on a real finish, not on a rotation or
+        // other config change — otherwise the recitation would stop every time
+        // the screen turned.
+        if (isFinishing) {
+            (application as DivyaPrabhandhamApp).let { app ->
+                (app.startup as? DivyaPrabhandhamApp.Startup.Ready)?.recitation?.stop()
+            }
+        }
+        super.onDestroy()
     }
 
     /**

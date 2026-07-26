@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,15 +22,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
+import com.srinivaskannan.divyaprabhandham.media.RecitationSession
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
 import com.srinivaskannan.divyaprabhandham.ui.browse.DivisionBrowserScreen
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
+import com.srinivaskannan.divyaprabhandham.ui.components.RecitationBar
+import com.srinivaskannan.divyaprabhandham.ui.components.RecitationHost
 import com.srinivaskannan.divyaprabhandham.ui.components.ResumePill
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamDetailScreen
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamsScreen
 import com.srinivaskannan.divyaprabhandham.ui.home.HomeScreen
 import com.srinivaskannan.divyaprabhandham.ui.reader.ReaderScreen
-import com.srinivaskannan.divyaprabhandham.ui.reader.RecitationScreen
 import com.srinivaskannan.divyaprabhandham.ui.saved.SavedScreen
 import com.srinivaskannan.divyaprabhandham.ui.search.SearchScreen
 import com.srinivaskannan.divyaprabhandham.ui.settings.AboutScreen
@@ -54,6 +57,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 fun AppScaffold(
     sync: GoogleSyncManager,
     tipJar: TipJar,
+    recitation: RecitationSession,
     deepLink: DeepLink?,
     onDeepLinkHandled: () -> Unit,
     modifier: Modifier = Modifier,
@@ -118,6 +122,10 @@ fun AppScaffold(
             }
         },
     ) {
+        // The IFrame player, parked offscreen. It must be attached to the
+        // window to play, but it is a 1px sliver behind everything else.
+        key(recitation.controller) { RecitationHost(session = recitation) }
+
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
                 NavHost(
@@ -125,7 +133,13 @@ fun AppScaffold(
                     startDestination = Routes.HOME,
                 ) {
                     val openRecitation: (String) -> Unit = { workId ->
-                        navController.navigate(Routes.recitation(workId))
+                        val work = repository.work(workId)
+                        recitation.start(
+                            workId = workId,
+                            title = work?.title(appState.scriptChoice).orEmpty(),
+                            author = work?.author(appState.scriptChoice).orEmpty(),
+                            ids = repository.videoIds(workId),
+                        )
                     }
 
                     composable(Routes.HOME) {
@@ -227,22 +241,13 @@ fun AppScaffold(
                             onBack = { navController.popBackStack() },
                         )
                     }
-
-                    composable(
-                        route = Routes.RECITATION,
-                        arguments = listOf(navArgument("workId") { type = NavType.StringType }),
-                    ) { entry ->
-                        RecitationScreen(
-                            workId = entry.arguments?.getString("workId").orEmpty(),
-                            onBack = { navController.popBackStack() },
-                        )
-                    }
                 }
             }
 
-            // Continue Reading sits above the navigation bar, app-wide — but
-            // not over the reader, where it would offer to take you where you
-            // already are.
+            // The recitation bar and Continue Reading stack above the nav bar,
+            // app-wide. The bar shows only while something is playing; the pill
+            // hides on the reader, where it would offer the current screen.
+            RecitationBar(session = recitation)
             if (!isReader) {
                 ResumePill(onOpen = openSection)
             }
