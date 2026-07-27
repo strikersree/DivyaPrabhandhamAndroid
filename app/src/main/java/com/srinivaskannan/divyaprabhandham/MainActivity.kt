@@ -42,14 +42,17 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.DivyaPrabhandhamTheme
 /**
  * The single activity.
  *
- * The splash screen is held until the corpus has finished parsing, which is the
- * honest thing to do: showing an empty Home for a second and then popping five
- * divisions into it looks broken, and there is genuinely nothing to display
- * until the JSON is in memory.
+ * The system splash is held through a quick corpus parse (up to
+ * [SPLASH_HOLD_MS]); if parsing runs longer, a full-bleed Compose splash takes
+ * over until the JSON is in memory. Either way nothing half-built is shown —
+ * an empty Home that then pops five divisions into place looks broken.
  */
 class MainActivity : ComponentActivity() {
 
     private var deepLink by mutableStateOf<DeepLink?>(null)
+
+    /** When the activity started, for bounding how long the system splash is held. */
+    private val startedAt = android.os.SystemClock.uptimeMillis()
 
     /**
      * Google's consent screen for the Drive scope. Registered here because the
