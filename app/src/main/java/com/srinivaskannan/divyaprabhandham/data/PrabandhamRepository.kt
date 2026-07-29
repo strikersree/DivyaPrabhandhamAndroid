@@ -120,7 +120,18 @@ class PrabandhamRepository private constructor(
         return youtube.divisions[divisionId].orEmpty()
     }
 
-    fun hasRecitation(workId: String): Boolean = videoIds(workId).isNotEmpty()
+    /**
+     * A YouTube *playlist* id for a work's recitation, if one is mapped for its
+     * division. Preferred over [videoIds] when present, because a playlist
+     * follows the uploader's own ordering and grows without our editing ids.
+     */
+    fun playlistId(workId: String): String? {
+        val divisionId = divisionForWork(workId)?.id ?: return null
+        return youtube.playlists[divisionId]?.takeIf { it.isNotBlank() }
+    }
+
+    fun hasRecitation(workId: String): Boolean =
+        playlistId(workId) != null || videoIds(workId).isNotEmpty()
 
     // MARK: - Lookups
 

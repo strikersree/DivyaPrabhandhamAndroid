@@ -171,6 +171,7 @@ data class Stanza(
 @Serializable
 data class YouTubeCatalogue(
     val works: Map<String, List<String>> = emptyMap(),
+    val playlists: Map<String, String> = emptyMap(),
     val divisions: Map<String, List<String>> = emptyMap(),
 )
 

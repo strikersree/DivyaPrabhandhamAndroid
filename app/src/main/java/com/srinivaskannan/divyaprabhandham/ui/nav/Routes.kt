@@ -72,10 +72,31 @@ enum class TopLevel(
  * Switches top-level destination the way a navigation bar should: pop back to
  * the graph's start, keep each tab's own state, and never stack duplicates.
  */
+/**
+ * Switches to a top-level tab from the navigation bar.
+ *
+ * All screens live in one flat graph whose start destination is HOME. Tapping a
+ * tab pops back to HOME and opens the tab, and the reported bug was that Home
+ * itself did nothing when the current screen was pushed from Home (a division
+ * browser or reader): the naive popUpTo(start, saveState) + restoreState=true
+ * pattern would pop to Home and then restore the saved stack, landing back on
+ * the detail screen.
+ *
+ * The fix is restoreState = (destination != HOME): every tab restores its own
+ * saved stack except Home, which always lands on a fresh top. See the case
+ * analysis in the commit — from a detail screen, from another tab, and after
+ * saving a Home sub-stack, all four paths land on Home.
+ */
 fun NavController.switchTopLevel(destination: TopLevel) {
+    val startId = graph.findStartDestination().id
     navigate(destination.route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
+        popUpTo(startId) {
+            // Home is the root: land on it. Other tabs sit alongside it and
+            // keep their own state across switches.
+            inclusive = false
+            saveState = destination != TopLevel.HOME
+        }
         launchSingleTop = true
-        restoreState = true
+        restoreState = destination != TopLevel.HOME
     }
 }

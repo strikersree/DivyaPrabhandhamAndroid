@@ -33,11 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.Division
+import com.srinivaskannan.divyaprabhandham.media.RecitationLauncher
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
@@ -58,10 +60,10 @@ fun DivisionBrowserScreen(
     division: Division,
     onBack: () -> Unit,
     onOpenSection: (String) -> Unit,
-    onListen: (workId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appState = LocalAppState.current
+    val context = LocalContext.current
     val repository = LocalRepository.current
     val works = repository.works(division)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -124,13 +126,17 @@ fun DivisionBrowserScreen(
                             }
                             scope.launch { snackbars.showSnackbar(message) }
                         },
-                        // In-app player when a recitation is mapped for this
-                        // work; otherwise say so rather than opening an empty
-                        // player.
                         hasRecitation = repository.hasRecitation(work.id),
                         onListen = {
-                            if (repository.hasRecitation(work.id)) onListen(work.id)
-                            else scope.launch {
+                            // Hand off to YouTube Music / YouTube / browser.
+                            val ok = RecitationLauncher.launch(
+                                context = context,
+                                work = work,
+                                playlistId = repository.playlistId(work.id),
+                                videoIds = repository.videoIds(work.id),
+                                script = appState.scriptChoice,
+                            )
+                            if (!ok) scope.launch {
                                 snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
                             }
                         },

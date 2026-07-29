@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.PrabandhamRepository
-import com.srinivaskannan.divyaprabhandham.media.RecitationSession
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
@@ -48,7 +47,6 @@ class DivyaPrabhandhamApp : Application() {
             val repository: PrabandhamRepository,
             val sync: GoogleSyncManager,
             val tipJar: TipJar,
-            val recitation: RecitationSession,
         ) : Startup
 
         /**
@@ -90,7 +88,6 @@ class DivyaPrabhandhamApp : Application() {
                 repository = repo,
                 sync = syncManager,
                 tipJar = TipJar(this, state),
-                recitation = RecitationSession(this),
             )
         } catch (cancellation: kotlinx.coroutines.CancellationException) {
             throw cancellation

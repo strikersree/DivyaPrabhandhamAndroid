@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,12 +21,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
-import com.srinivaskannan.divyaprabhandham.media.RecitationSession
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
 import com.srinivaskannan.divyaprabhandham.ui.browse.DivisionBrowserScreen
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
-import com.srinivaskannan.divyaprabhandham.ui.components.RecitationBar
-import com.srinivaskannan.divyaprabhandham.ui.components.RecitationHost
 import com.srinivaskannan.divyaprabhandham.ui.components.ResumePill
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamDetailScreen
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamsScreen
@@ -57,7 +53,6 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 fun AppScaffold(
     sync: GoogleSyncManager,
     tipJar: TipJar,
-    recitation: RecitationSession,
     deepLink: DeepLink?,
     onDeepLinkHandled: () -> Unit,
     modifier: Modifier = Modifier,
@@ -106,7 +101,20 @@ fun AppScaffold(
         modifier = modifier,
         navigationSuiteItems = {
             TopLevel.entries.forEach { destination ->
-                val selected = currentRoute == destination.route
+                // A detail screen pushed from a tab should keep that tab lit.
+                // Division and Reader are reached from Home, Desam from Desams;
+                // map those back so the highlight does not blank out on a
+                // pushed screen (which also made Home look inactive there).
+                val ownerRoute = when {
+                    currentRoute == null -> Routes.HOME
+                    currentRoute.startsWith("division/") ||
+                        currentRoute.startsWith("reader/") -> Routes.HOME
+                    currentRoute.startsWith("desam/") -> Routes.DESAMS
+                    currentRoute == Routes.ABOUT ||
+                        currentRoute == Routes.TIP_JAR -> Routes.SETTINGS
+                    else -> currentRoute
+                }
+                val selected = ownerRoute == destination.route
                 item(
                     selected = selected,
                     onClick = { navController.switchTopLevel(destination) },
@@ -124,24 +132,12 @@ fun AppScaffold(
     ) {
         // The IFrame player, parked offscreen. It must be attached to the
         // window to play, but it is a 1px sliver behind everything else.
-        key(recitation.controller) { RecitationHost(session = recitation) }
-
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
                 NavHost(
                     navController = navController,
                     startDestination = Routes.HOME,
                 ) {
-                    val openRecitation: (String) -> Unit = { workId ->
-                        val work = repository.work(workId)
-                        recitation.start(
-                            workId = workId,
-                            title = work?.title(appState.scriptChoice).orEmpty(),
-                            author = work?.author(appState.scriptChoice).orEmpty(),
-                            ids = repository.videoIds(workId),
-                        )
-                    }
-
                     composable(Routes.HOME) {
                         HomeScreen(
                             onOpenDivision = { navController.navigate(Routes.division(it)) },
@@ -183,7 +179,6 @@ fun AppScaffold(
                                 division = division,
                                 onBack = { navController.popBackStack() },
                                 onOpenSection = { openSection(it, null) },
-                                onListen = openRecitation,
                             )
                         }
                     }
@@ -244,10 +239,8 @@ fun AppScaffold(
                 }
             }
 
-            // The recitation bar and Continue Reading stack above the nav bar,
-            // app-wide. The bar shows only while something is playing; the pill
-            // hides on the reader, where it would offer the current screen.
-            RecitationBar(session = recitation)
+            // Continue Reading sits above the nav bar, app-wide — but not on
+            // the reader, where it would offer to open the current screen.
             if (!isReader) {
                 ResumePill(onOpen = openSection)
             }

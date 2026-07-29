@@ -1,21 +1,23 @@
 {
-  "_comment": "YouTube video ids for in-app recitation playback. 'works' is keyed by work id and wins when present; 'divisions' is the fallback for every work in that division.",
+  "_comment": "Recitation sources. Precedence per work: works[id] video-id list > playlists[division] playlist-id > divisions[division] video-id list. music.youtube.com art-track ids were embed-blocked (IFrame 150); replaced with a standard youtube.com playlist.",
   "works": {},
-  "divisions": {
-    "d1": [
-      "HsC_yvzYLVo",
-      "rVmLQ4pdpy4",
-      "od5nieKJEdY",
-      "NUJiQlFD7OQ",
-      "DE-HvYJZ7Zw",
-      "tqrJueDJ1II",
-      "uKn6jYwQLrA",
-      "pdXdlu4ET1c",
-      "2GY4JxlyBAM",
-      "RdtIuAR4LsM",
-      "bYYKM9oueqg",
-      "rxRY8aUcg7Y",
-      "xir40o5DRpE"
-    ]
-  }
+  "divisions": {},
+  "playlists": {
+    "d1": "PLDJF96khF2cA0KA9AOhfYpLo7wy50vizq"
+  },
+  "_blocked_music_ids_d1": [
+    "HsC_yvzYLVo",
+    "rVmLQ4pdpy4",
+    "od5nieKJEdY",
+    "NUJiQlFD7OQ",
+    "DE-HvYJZ7Zw",
+    "tqrJueDJ1II",
+    "uKn6jYwQLrA",
+    "pdXdlu4ET1c",
+    "2GY4JxlyBAM",
+    "RdtIuAR4LsM",
+    "bYYKM9oueqg",
+    "rxRY8aUcg7Y",
+    "xir40o5DRpE"
+  ]
 }

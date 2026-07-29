@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import com.srinivaskannan.divyaprabhandham.data.Recitation
 import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import java.net.URLEncoder
@@ -48,16 +47,21 @@ object RecitationLauncher {
     fun launch(
         context: Context,
         work: Work,
-        recitation: Recitation?,
+        playlistId: String?,
+        videoIds: List<String>,
         script: ScriptChoice,
     ): Boolean {
         val uri = when {
-            recitation?.youtubePlaylist != null ->
-                "https://music.youtube.com/playlist?list=${recitation.youtubePlaylist}"
+            // A mapped playlist is the best target: YouTube Music opens it as a
+            // queue and plays in order.
+            !playlistId.isNullOrBlank() ->
+                "https://music.youtube.com/playlist?list=$playlistId"
 
-            recitation?.youtubeVideo != null ->
-                "https://music.youtube.com/watch?v=${recitation.youtubeVideo}"
+            // Otherwise the first mapped video id.
+            videoIds.isNotEmpty() ->
+                "https://music.youtube.com/watch?v=${videoIds.first()}"
 
+            // Nothing mapped: search for the recitation by name.
             else -> searchUri(work, script)
         }
         return open(context, Uri.parse(uri))
