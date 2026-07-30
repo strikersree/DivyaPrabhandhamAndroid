@@ -12,6 +12,11 @@ import java.net.URLEncoder
 /**
  * Hands recitation playback to YouTube Music, or YouTube, or the browser.
  *
+ * The link host follows the target: listeners with YouTube Music get a
+ * music.youtube.com link; those with only the YouTube app, or neither, get
+ * youtube.com (in the app or the browser). The ids are the same either way —
+ * a plain YouTube video id resolves on both hosts.
+ *
  * WHY A HANDOFF AND NOT A PLAYER: the iOS build uses MusicKit, which lets an
  * app drive playback of the Apple Music catalogue inside its own UI under the
  * listener's subscription. YouTube has no equivalent for Android apps. The
@@ -51,20 +56,45 @@ object RecitationLauncher {
         videoIds: List<String>,
         script: ScriptChoice,
     ): Boolean {
-        val uri = when {
-            // A mapped playlist is the best target: YouTube Music opens it as a
-            // queue and plays in order.
-            !playlistId.isNullOrBlank() ->
-                "https://music.youtube.com/playlist?list=$playlistId"
-
-            // Otherwise the first mapped video id.
-            videoIds.isNotEmpty() ->
-                "https://music.youtube.com/watch?v=${videoIds.first()}"
-
-            // Nothing mapped: search for the recitation by name.
-            else -> searchUri(work, script)
+        // Choose the target app first, then build a URL for *that* host. The
+        // host and the app have to agree: a music.youtube.com link handed to
+        // the plain YouTube app does not open cleanly, and a www.youtube.com
+        // link sent to YouTube Music loses the Music queue. So a listener with
+        // YouTube Music gets a music.youtube.com link; one with only YouTube
+        // gets youtube.com; one with neither gets youtube.com in the browser.
+        val targets = buildList {
+            if (isInstalled(context, YT_MUSIC)) add(YT_MUSIC to Host.MUSIC)
+            if (isInstalled(context, YT)) add(YT to Host.WWW)
+            // Browser last, on the standard host.
+            add(null to Host.WWW)
         }
-        return open(context, Uri.parse(uri))
+        for ((pkg, host) in targets) {
+            val uri = Uri.parse(targetUri(host, playlistId, videoIds, work, script))
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                if (pkg != null) setPackage(pkg)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (tryStart(context, intent)) return true
+        }
+        return false
+    }
+
+    private enum class Host(val base: String) {
+        MUSIC("https://music.youtube.com"),
+        WWW("https://www.youtube.com"),
+    }
+
+    /** Builds the best URL for a host: playlist, else first video, else search. */
+    private fun targetUri(
+        host: Host,
+        playlistId: String?,
+        videoIds: List<String>,
+        work: Work,
+        script: ScriptChoice,
+    ): String = when {
+        !playlistId.isNullOrBlank() -> "${host.base}/playlist?list=$playlistId"
+        videoIds.isNotEmpty() -> "${host.base}/watch?v=${videoIds.first()}"
+        else -> searchUri(host, work, script)
     }
 
     /**
@@ -72,7 +102,7 @@ object RecitationLauncher {
      * Tamil title (always, even when the app is in English — that is what the
      * uploads are titled), the author, and the word for recitation.
      */
-    private fun searchUri(work: Work, script: ScriptChoice): String {
+    private fun searchUri(host: Host, work: Work, script: ScriptChoice): String {
         val terms = buildString {
             append(work.title)
             append(' ')
@@ -81,27 +111,7 @@ object RecitationLauncher {
             append(if (script == ScriptChoice.TAMIL) "பாராயணம்" else "paarayanam")
         }
         val query = URLEncoder.encode(terms, "UTF-8")
-        return "https://music.youtube.com/search?q=$query"
-    }
-
-    /**
-     * Prefers YouTube Music, then YouTube, then whatever handles the link.
-     * Explicitly naming the package matters: a plain VIEW intent on a
-     * music.youtube.com URL usually lands in a browser tab even when the app is
-     * installed, which is a worse place to listen from.
-     */
-    private fun open(context: Context, uri: Uri): Boolean {
-        for (pkg in listOf(YT_MUSIC, YT)) {
-            if (!isInstalled(context, pkg)) continue
-            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                setPackage(pkg)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            if (tryStart(context, intent)) return true
-        }
-        val fallback = Intent(Intent.ACTION_VIEW, uri)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        return tryStart(context, fallback)
+        return "${host.base}/search?q=$query"
     }
 
     private fun tryStart(context: Context, intent: Intent): Boolean = try {

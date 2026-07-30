@@ -1,9 +1,46 @@
 {
-  "_comment": "Recitation sources. Precedence per work: works[id] video-id list > playlists[division] playlist-id > divisions[division] video-id list. music.youtube.com art-track ids were embed-blocked (IFrame 150); replaced with a standard youtube.com playlist.",
-  "works": {},
-  "divisions": {},
-  "playlists": {
-    "d1": "PLDJF96khF2cA0KA9AOhfYpLo7wy50vizq"
+  "_comment": "Recitation sources for the in-app Listen hand-off. Resolution per work: works[id] (if non-empty) wins; else playlists[division]; else divisions[division] pooled ids. Ids are plain YouTube video ids and work in both music.youtube.com and youtube.com — the launcher picks the host based on which app the listener has installed.",
+  "_todo": "works[] entries are placeholders to fill later: put each work's own recitation video id(s) there and it overrides the division pool. The 24 ids below are muthalayiram (d1) recitations pooled at division level until that per-work mapping is done.",
+  "works": {
+    "w1": [],
+    "w2": [],
+    "w3": [],
+    "w4": [],
+    "w5": [],
+    "w6": [],
+    "w7": [],
+    "w8": [],
+    "w9": [],
+    "w10": []
+  },
+  "playlists": {},
+  "divisions": {
+    "d1": [
+      "-5N6_4IrFGA",
+      "jMQz42f8D5I",
+      "yE_sPgfBbFU",
+      "6kqze2UVofA",
+      "dYWZYYk6Up4",
+      "bxGZWmzIGXs",
+      "mb9sBxneC_U",
+      "cYoXRhg2hFs",
+      "zJHLGyZWFaQ",
+      "-y8__0dy_Tc",
+      "MC9hbPRW0pc",
+      "xir40o5DRpE",
+      "ivNKeBzvP08",
+      "9uDQrKmiGls",
+      "BKC2ZZ8xiSc",
+      "SUdnpV2Z2Rk",
+      "WuRRUWyTin8",
+      "fcyUNvmQRB8",
+      "_MFqzrgGKNc",
+      "Gu4IReN3k5E",
+      "qeHVstdoXNQ",
+      "GKo21NkPho8",
+      "PW_ilUBOkQs",
+      "u7_NKhPDFHo"
+    ]
   },
   "_blocked_music_ids_d1": [
     "HsC_yvzYLVo",
