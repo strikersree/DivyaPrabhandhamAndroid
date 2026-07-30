@@ -24,6 +24,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,7 +85,13 @@ fun SearchScreen(
                 SearchBarDefaults.InputField(
                     query = query,
                     onQueryChange = { query = it },
-                    onSearch = {},
+                    onSearch = {
+                        // Record only genuine text searches; a bare number is a
+                        // jump-to-pasuram, not a search worth remembering.
+                        if (trimmed.isNotEmpty() && trimmed.toIntOrNull() == null) {
+                            appState.noteSearch(trimmed)
+                        }
+                    },
                     expanded = false,
                     onExpandedChange = {},
                     placeholder = { Text(appState.ui(Ui.SEARCH_OR_NUMBER)) },
@@ -92,10 +105,19 @@ fun SearchScreen(
         ) {}
 
         if (trimmed.isEmpty()) {
-            EmptyState(
-                title = appState.ui(Ui.SEARCH),
-                message = appState.ui(Ui.SEARCH_OR_NUMBER),
-            )
+            val recents = appState.recentSearches
+            if (recents.isEmpty()) {
+                EmptyState(
+                    title = appState.ui(Ui.SEARCH),
+                    message = appState.ui(Ui.SEARCH_OR_NUMBER),
+                )
+            } else {
+                RecentSearches(
+                    searches = recents,
+                    onPick = { query = it },
+                    onClear = { appState.clearRecentSearches() },
+                )
+            }
             return@Column
         }
 
@@ -134,9 +156,68 @@ fun SearchScreen(
                             "${appState.ui(Ui.PASURAM)} ${it.first}–${it.last}"
                         },
                         showChevron = false,
-                        onClick = { onOpenSection(section.id, null) },
+                        onClick = {
+                            // Opening a result is a strong signal the query was
+                            // meaningful — record it even if the person never
+                            // pressed the keyboard's search key. Bare numbers
+                            // are jumps, so they are still excluded.
+                            if (trimmed.toIntOrNull() == null) appState.noteSearch(trimmed)
+                            onOpenSection(section.id, null)
+                        },
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * The search tab's resting state once the person has searched before: their
+ * last few queries as tappable chips, newest first, with a clear action.
+ * Tapping a chip refills the field and re-runs the search.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun RecentSearches(
+    searches: List<String>,
+    onPick: (String) -> Unit,
+    onClear: () -> Unit,
+) {
+    val appState = LocalAppState.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = appState.ui(Ui.RECENT_SEARCHES),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            TextButton(onClick = onClear) {
+                Text(appState.ui(Ui.CLEAR))
+            }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            searches.forEach { term ->
+                AssistChip(
+                    onClick = { onPick(term) },
+                    label = { Text(term, maxLines = 1) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.History,
+                            contentDescription = null,
+                            modifier = Modifier.padding(0.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                )
             }
         }
     }

@@ -77,6 +77,9 @@ class AppState private constructor(
         internal set
 
     var recentlyViewed: List<String> by mutableStateOf(snapshot.recentlyViewed)
+
+    /** The last few text search queries, most-recent-first. Device-local. */
+    var recentSearches: List<String> by mutableStateOf(snapshot.recentSearches)
         internal set
 
     /** Works pinned to Home (up to [MAX_PINNED_WORKS]). */
@@ -229,6 +232,29 @@ class AppState private constructor(
         commit { it[Keys.RECENT] = encodeList(list) }
     }
 
+    /**
+     * Records a text search query, keeping the last [MAX_SEARCHES],
+     * most-recent-first, no duplicates. Device-local (persist, not commit): a
+     * search history is personal scratch and has no business syncing between
+     * devices. Blank queries and bare pasuram numbers are not recorded — the
+     * caller filters those, since a number is a jump, not a search.
+     */
+    fun noteSearch(query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) return
+        if (recentSearches.firstOrNull() == q) return
+        val list = recentSearches.filter { it != q }.toMutableList()
+        list.add(0, q)
+        while (list.size > MAX_SEARCHES) list.removeAt(list.size - 1)
+        recentSearches = list
+        persist { it[Keys.SEARCHES] = encodeList(list) }
+    }
+
+    fun clearRecentSearches() {
+        recentSearches = emptyList()
+        persist { it[Keys.SEARCHES] = "" }
+    }
+
     fun updateTheme(value: ReaderThemeChoice) {
         theme = value
         commit { it[Keys.THEME] = value.key }
@@ -369,6 +395,7 @@ class AppState private constructor(
         val lastRead: LastRead?,
         val bookmarks: List<String>,
         val recentlyViewed: List<String>,
+        val recentSearches: List<String>,
         val pinnedWorks: List<String>,
         val theme: ReaderThemeChoice,
         val fontSize: Float,
@@ -391,6 +418,7 @@ class AppState private constructor(
         val LAST_READ = stringPreferencesKey("dp.lastRead")
         val BOOKMARKS = stringPreferencesKey("dp.bookmarks")
         val RECENT = stringPreferencesKey("dp.recentlyViewed")
+        val SEARCHES = stringPreferencesKey("dp.recentSearches")
         val PINNED = stringPreferencesKey("dp.pinnedWorks")
         val THEME = stringPreferencesKey("dp.theme")
         val FONT_SIZE = doublePreferencesKey("dp.fontSize")
@@ -413,6 +441,7 @@ class AppState private constructor(
         const val MAX_PINNED_WORKS = 6
         const val MAX_REMINDERS = 3
         const val MAX_RECENT = 8
+        const val MAX_SEARCHES = 5
         const val MIN_FONT_SIZE = 15f
         const val MAX_FONT_SIZE = 34f
         const val DEFAULT_FONT_SIZE = 20f
@@ -440,6 +469,7 @@ class AppState private constructor(
                 },
                 bookmarks = decodeList(prefs[Keys.BOOKMARKS]),
                 recentlyViewed = decodeList(prefs[Keys.RECENT]),
+                recentSearches = decodeList(prefs[Keys.SEARCHES]),
                 pinnedWorks = decodeList(prefs[Keys.PINNED]),
                 theme = ReaderThemeChoice.from(prefs[Keys.THEME]),
                 fontSize = if (storedFontSize >= MIN_FONT_SIZE) storedFontSize else DEFAULT_FONT_SIZE,

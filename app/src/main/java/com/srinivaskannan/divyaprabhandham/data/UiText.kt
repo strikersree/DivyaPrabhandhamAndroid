@@ -154,6 +154,8 @@ enum class Ui {
     CANCEL,
     BACK,
     NO_RESULTS,
+    RECENT_SEARCHES,
+    CLEAR,
 }
 
 object UiText {
@@ -381,5 +383,7 @@ object UiText {
         Ui.CANCEL to ("ரத்து" to "Cancel"),
         Ui.BACK to ("பின்" to "Back"),
         Ui.NO_RESULTS to ("முடிவுகள் இல்லை" to "No results"),
+        Ui.RECENT_SEARCHES to ("சமீபத்திய தேடல்கள்" to "Recent searches"),
+        Ui.CLEAR to ("அழி" to "Clear"),
     )
 }
