@@ -58,3 +58,50 @@ with the YouTube hand-off (current).
 If an in-app mini-player is genuinely wanted, self-hosting is the path worth
 planning — starting with the recitations the project can already license
 (the credited reciters' own recordings are the natural first source).
+
+---
+
+## Addendum: Deezer and Tidal (also ruled out)
+
+**Deezer — abandoned SDKs.** Same story as Apple. Deezer's own developer FAQ
+confirms the Native (Android/iOS) SDK is *deprecated and no longer supported*,
+and the JavaScript SDK likewise. Login on the old SDK already fails. A "brand
+new SDK" has been promised with, in Deezer's own words, *no ETA*. Not usable.
+
+**Tidal — actively opening up, but not there yet, and Premium-gated.** Tidal is
+the most promising of any provider — they are deliberately opening the same SDK
+their own apps use, with iOS/Android SDKs and third-party login on the roadmap.
+But two hard blocks today:
+- **Third-party playback is preview-only.** Tidal's own developer terms state:
+  "Full-length Playbacks are only available through the TIDAL Embed Player, and
+  only TIDAL subscribers may access such full-length Playbacks. Non-subscribers
+  may access only up to 30-second Playbacks." The `playback` scope needed for
+  full tracks via the SDK returns "Coming Soon!" — developers testing with valid
+  HiFi accounts still get clipped to 30 seconds. Full-length playback in a
+  third-party app "does not have a fixed date."
+- **No production path yet.** Developers report there is still no way to submit
+  a third-party app for review / production, so even the preview integration
+  cannot ship to the public.
+- When it does open, full playback will require the **user's own Tidal
+  subscription** — the same subscription gate as Spotify/Apple, and Tidal's
+  audience is far smaller, especially in India.
+
+So Tidal is one to *watch* — if they ship full-length third-party playback with
+an Android SDK and a production flow, it would be the first genuinely open
+option — but today it is preview-only with no path to release.
+
+## Final position (all providers)
+
+| Provider | Verdict |
+|---|---|
+| YouTube | hand-off works (current); embed blocked |
+| Apple Music | abandoned Android SDK |
+| Spotify | 250k-MAU business wall |
+| Amazon Music | closed beta, partner + DRM gated |
+| Deezer | SDKs deprecated, no replacement ETA |
+| Tidal | preview-only today, no production path; watch for full playback later |
+| JioSaavn/Gaana/Wynk | no official SDK (Wynk shut down) |
+
+Every licensed provider is blocked today, for the structural reasons above. The
+only routes that put a real player inside the app are **self-hosted rights-clear
+audio** (works for everyone, no provider) or the **YouTube hand-off** (current).
