@@ -1,6 +1,6 @@
 {
-  "_comment": "Recitation sources for the in-app Listen hand-off. Resolution per work: works[id] (if non-empty) wins; else playlists[division]; else divisions[division] pooled ids. Ids are plain YouTube video ids and work in both music.youtube.com and youtube.com — the launcher picks the host based on which app the listener has installed.",
-  "_todo": "Remaining unmapped works fall back to their division pool if one exists, else the Listen button runs a titled search.",
+  "_comment": "Recitation sources for the Listen hand-off. Resolution per work: works[id] video ids > workPlaylists[id] > playlists[division] > divisions[division] pool. Ids are plain YouTube video ids and work on both music.youtube.com and youtube.com; the launcher picks the host by which app is installed.",
+  "_todo": "Unmapped: b5w19 ஆகாரநியமம் (no track yet) — Listen falls back to a titled search. Playlist ids for w2 and b2w1 are only 13 chars and may be truncated share links; verify on device.",
   "works": {
     "w1": [
       "EHu7eLkvzHs"
@@ -35,54 +35,103 @@
     ],
     "b2w3": [
       "jAeCl6JJC00"
+    ],
+    "b3w1": [
+      "_0Lk8mPoKeg"
+    ],
+    "b3w2": [
+      "7Txpu73ie2Y"
+    ],
+    "b3w3": [
+      "xtUjZd0W6Oo"
+    ],
+    "b3w4": [
+      "1R7wtSW9OAk"
+    ],
+    "b3w5": [
+      "FMSaMlvKr2k"
+    ],
+    "b3w6": [
+      "LnqWsik804A"
+    ],
+    "b3w7": [
+      "lIRM5u9DQdY"
+    ],
+    "b3w8": [
+      "5MPUwn8JafE"
+    ],
+    "b3w9": [
+      "OHzzOGhSihc"
+    ],
+    "b3w10": [
+      "D3QBIJRLqDE"
+    ],
+    "b4w2": [
+      "8u8yfPgNMeU"
+    ],
+    "b5w1": [
+      "lH3qYbDN_7E"
+    ],
+    "b5w2": [
+      "HArjuc4zkPs"
+    ],
+    "b5w3": [
+      "n9NsKtYSspA"
+    ],
+    "b5w4": [
+      "BmQbraevTHY"
+    ],
+    "b5w5": [
+      "wJ2AOTnLzzk"
+    ],
+    "b5w6": [
+      "fv3cNTJAc_Q"
+    ],
+    "b5w7": [
+      "0v2QxDExoAU"
+    ],
+    "b5w8": [
+      "rbgrJ87uJWk"
+    ],
+    "b5w9": [
+      "wW08-hGrcXg"
+    ],
+    "b5w10": [
+      "Pdh5ZKQ6fig"
+    ],
+    "b5w11": [
+      "mlABjUmT4W4"
+    ],
+    "b5w12": [
+      "Fru703Ab-TM"
+    ],
+    "b5w13": [
+      "YD4HFVJcAZo"
+    ],
+    "b5w14": [
+      "nGYIVxgxigw"
+    ],
+    "b5w15": [
+      "WPsYUlcG534"
+    ],
+    "b5w16": [
+      "_S8ixInldNY"
+    ],
+    "b5w17": [
+      "4DDb2q5e6HM"
+    ],
+    "b5w18": [
+      "XkY70KPUXLk"
+    ],
+    "b5w20": [
+      "sH7wntS7kS4"
     ]
   },
   "playlists": {},
-  "divisions": {
-    "d1": [
-      "-5N6_4IrFGA",
-      "jMQz42f8D5I",
-      "yE_sPgfBbFU",
-      "6kqze2UVofA",
-      "dYWZYYk6Up4",
-      "bxGZWmzIGXs",
-      "mb9sBxneC_U",
-      "cYoXRhg2hFs",
-      "zJHLGyZWFaQ",
-      "-y8__0dy_Tc",
-      "MC9hbPRW0pc",
-      "xir40o5DRpE",
-      "ivNKeBzvP08",
-      "9uDQrKmiGls",
-      "BKC2ZZ8xiSc",
-      "SUdnpV2Z2Rk",
-      "WuRRUWyTin8",
-      "fcyUNvmQRB8",
-      "_MFqzrgGKNc",
-      "Gu4IReN3k5E",
-      "qeHVstdoXNQ",
-      "GKo21NkPho8",
-      "PW_ilUBOkQs",
-      "u7_NKhPDFHo"
-    ]
-  },
-  "_blocked_music_ids_d1": [
-    "HsC_yvzYLVo",
-    "rVmLQ4pdpy4",
-    "od5nieKJEdY",
-    "NUJiQlFD7OQ",
-    "DE-HvYJZ7Zw",
-    "tqrJueDJ1II",
-    "uKn6jYwQLrA",
-    "pdXdlu4ET1c",
-    "2GY4JxlyBAM",
-    "RdtIuAR4LsM",
-    "bYYKM9oueqg",
-    "rxRY8aUcg7Y",
-    "xir40o5DRpE"
-  ],
+  "divisions": {},
   "workPlaylists": {
     "w2": "PLPsAl4sCQIGw",
-    "b2w1": "PLRihaciLQKJc"
+    "b2w1": "PLRihaciLQKJc",
+    "b4w1": "OLAK5uy_ku_W0DiBWYssxMiwJayMVlYPVz9f4LZsg"
   }
 }
