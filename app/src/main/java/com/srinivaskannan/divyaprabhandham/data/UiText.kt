@@ -361,8 +361,8 @@ object UiText {
             "Thank you to the friends and family who tested early builds and pointed out what needed fixing."
         ),
         Ui.VERSE_RIGHTS_NOTE to (
-            "பாசுரங்கள் பொது உரிமையில் உள்ளவை. இச்செயலி முழுவதும் இணையம் இல்லாமல் இயங்கும்." to
-            "The verses are in the public domain. The app works entirely offline."
+            "பாசுரங்கள் பொது உரிமையில் உள்ளவை. படித்தல் முழுவதும் இணையம் இல்லாமல் இயங்கும்; பாராயணங்கள் YouTube வழியாக இயக்கப்படுகின்றன, அவை இச்செயலியில் சேமிக்கப்படுவதில்லை." to
+            "The verses are in the public domain. Reading works entirely offline; recitations are played through YouTube and are never stored in this app."
         ),
         Ui.SUPPORTER_SINCE to ("ஆதரவாளர்" to "Supporter since"),
         Ui.TIP_UNAVAILABLE to ("இப்போது கிடைக்கவில்லை" to "Not available right now"),

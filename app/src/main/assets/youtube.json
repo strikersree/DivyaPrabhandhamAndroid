@@ -1,8 +1,10 @@
 {
   "_comment": "Recitation sources for the in-app Listen hand-off. Resolution per work: works[id] (if non-empty) wins; else playlists[division]; else divisions[division] pooled ids. Ids are plain YouTube video ids and work in both music.youtube.com and youtube.com — the launcher picks the host based on which app the listener has installed.",
-  "_todo": "Remaining placeholders: w1 (Thiruppallandu) and w2 (Periyaazhwar Thirumozhi — a playlist is coming, will go in playlists.d1_w2 or works.w2). Both currently fall back to the divisions.d1 pool.",
+  "_todo": "Remaining unmapped works fall back to their division pool if one exists, else the Listen button runs a titled search.",
   "works": {
-    "w1": [],
+    "w1": [
+      "EHu7eLkvzHs"
+    ],
     "w2": [],
     "w3": [
       "tqrJueDJ1II"
@@ -27,6 +29,12 @@
     ],
     "w10": [
       "xir40o5DRpE"
+    ],
+    "b2w2": [
+      "pPbJ3CvPp9o"
+    ],
+    "b2w3": [
+      "jAeCl6JJC00"
     ]
   },
   "playlists": {},
@@ -72,5 +80,9 @@
     "bYYKM9oueqg",
     "rxRY8aUcg7Y",
     "xir40o5DRpE"
-  ]
+  ],
+  "workPlaylists": {
+    "w2": "PLPsAl4sCQIGw",
+    "b2w1": "PLRihaciLQKJc"
+  }
 }
