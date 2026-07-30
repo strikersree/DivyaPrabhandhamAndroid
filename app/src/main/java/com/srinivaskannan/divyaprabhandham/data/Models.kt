@@ -171,8 +171,19 @@ data class Stanza(
 @Serializable
 data class YouTubeCatalogue(
     val works: Map<String, List<String>> = emptyMap(),
+    val workPlaylists: Map<String, String> = emptyMap(),
     val playlists: Map<String, String> = emptyMap(),
     val divisions: Map<String, List<String>> = emptyMap(),
+)
+
+/**
+ * A resolved recitation target: either a playlist id or a list of video ids
+ * (at most one of them set). Empty means nothing is mapped for the work.
+ * Precedence lives in PrabandhamRepository.recitationTarget.
+ */
+data class RecitationTarget(
+    val playlistId: String? = null,
+    val videoIds: List<String> = emptyList(),
 )
 
 @Immutable

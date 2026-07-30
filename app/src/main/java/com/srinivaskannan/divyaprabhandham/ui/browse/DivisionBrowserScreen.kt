@@ -129,11 +129,12 @@ fun DivisionBrowserScreen(
                         hasRecitation = repository.hasRecitation(work.id),
                         onListen = {
                             // Hand off to YouTube Music / YouTube / browser.
+                            val target = repository.recitationTarget(work.id)
                             val ok = RecitationLauncher.launch(
                                 context = context,
                                 work = work,
-                                playlistId = repository.playlistId(work.id),
-                                videoIds = repository.videoIds(work.id),
+                                playlistId = target.playlistId,
+                                videoIds = target.videoIds,
                                 script = appState.scriptChoice,
                             )
                             if (!ok) scope.launch {

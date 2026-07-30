@@ -1,17 +1,33 @@
 {
   "_comment": "Recitation sources for the in-app Listen hand-off. Resolution per work: works[id] (if non-empty) wins; else playlists[division]; else divisions[division] pooled ids. Ids are plain YouTube video ids and work in both music.youtube.com and youtube.com — the launcher picks the host based on which app the listener has installed.",
-  "_todo": "works[] entries are placeholders to fill later: put each work's own recitation video id(s) there and it overrides the division pool. The 24 ids below are muthalayiram (d1) recitations pooled at division level until that per-work mapping is done.",
+  "_todo": "Remaining placeholders: w1 (Thiruppallandu) and w2 (Periyaazhwar Thirumozhi — a playlist is coming, will go in playlists.d1_w2 or works.w2). Both currently fall back to the divisions.d1 pool.",
   "works": {
     "w1": [],
     "w2": [],
-    "w3": [],
-    "w4": [],
-    "w5": [],
-    "w6": [],
-    "w7": [],
-    "w8": [],
-    "w9": [],
-    "w10": []
+    "w3": [
+      "tqrJueDJ1II"
+    ],
+    "w4": [
+      "uKn6jYwQLrA"
+    ],
+    "w5": [
+      "pdXdlu4ET1c"
+    ],
+    "w6": [
+      "2GY4JxlyBAM"
+    ],
+    "w7": [
+      "RdtIuAR4LsM"
+    ],
+    "w8": [
+      "bYYKM9oueqg"
+    ],
+    "w9": [
+      "rxRY8aUcg7Y"
+    ],
+    "w10": [
+      "xir40o5DRpE"
+    ]
   },
   "playlists": {},
   "divisions": {

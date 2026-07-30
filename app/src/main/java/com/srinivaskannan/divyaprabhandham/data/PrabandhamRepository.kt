@@ -110,28 +110,32 @@ class PrabandhamRepository private constructor(
     fun recitation(workId: String): Recitation? = recitations[workId]
 
     /**
-     * YouTube video ids for a work's recitation, for the in-app player. Falls
-     * back to the work's division pool, so a division can carry one playlist
-     * before each work has its own. Empty when nothing is mapped.
+     * What to play for a work's recitation, with precedence resolved in one
+     * place so callers do not have to. Order, most specific first:
+     *   1. the work's own video ids       (works[workId])
+     *   2. the work's own playlist         (workPlaylists[workId])
+     *   3. the division's playlist         (playlists[division])
+     *   4. the division's pooled video ids (divisions[division])
+     * A work mapped to its own recitation is therefore never shadowed by a
+     * division-level pool or playlist.
      */
-    fun videoIds(workId: String): List<String> {
-        youtube.works[workId]?.takeIf { it.isNotEmpty() }?.let { return it }
-        val divisionId = divisionForWork(workId)?.id ?: return emptyList()
-        return youtube.divisions[divisionId].orEmpty()
-    }
-
-    /**
-     * A YouTube *playlist* id for a work's recitation, if one is mapped for its
-     * division. Preferred over [videoIds] when present, because a playlist
-     * follows the uploader's own ordering and grows without our editing ids.
-     */
-    fun playlistId(workId: String): String? {
-        val divisionId = divisionForWork(workId)?.id ?: return null
-        return youtube.playlists[divisionId]?.takeIf { it.isNotBlank() }
+    fun recitationTarget(workId: String): RecitationTarget {
+        youtube.works[workId]?.takeIf { it.isNotEmpty() }
+            ?.let { return RecitationTarget(videoIds = it) }
+        youtube.workPlaylists[workId]?.takeIf { it.isNotBlank() }
+            ?.let { return RecitationTarget(playlistId = it) }
+        val divisionId = divisionForWork(workId)?.id
+        if (divisionId != null) {
+            youtube.playlists[divisionId]?.takeIf { it.isNotBlank() }
+                ?.let { return RecitationTarget(playlistId = it) }
+            youtube.divisions[divisionId]?.takeIf { it.isNotEmpty() }
+                ?.let { return RecitationTarget(videoIds = it) }
+        }
+        return RecitationTarget()
     }
 
     fun hasRecitation(workId: String): Boolean =
-        playlistId(workId) != null || videoIds(workId).isNotEmpty()
+        with(recitationTarget(workId)) { playlistId != null || videoIds.isNotEmpty() }
 
     // MARK: - Lookups
 
