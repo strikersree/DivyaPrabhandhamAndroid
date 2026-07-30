@@ -1,0 +1,20 @@
+{
+  "name": "ndp-ask-proxy",
+  "version": "1.0.0",
+  "description": "Serverless proxy that fronts the Gemini API for the Naalayira Divya Prabhandham app's Ask feature. Holds the API key and guardrail server-side.",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "firebase-admin": "^12.6.0"
+  },
+  "scripts": {
+    "start": "functions-framework --target=ask",
+    "dev": "GEMINI_API_KEY=$GEMINI_API_KEY functions-framework --target=ask"
+  },
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^3.4.0"
+  }
+}
