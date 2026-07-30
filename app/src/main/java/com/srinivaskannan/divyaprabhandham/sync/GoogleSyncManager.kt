@@ -57,6 +57,15 @@ class GoogleSyncManager(
         private set
 
     /**
+     * The outcome of the last sync attempt, for the Settings row. Distinguishes
+     * "signed in but the sync never actually completed" — previously invisible,
+     * because every failure resolved to null and was swallowed. [SyncStatus.Idle]
+     * until the first attempt.
+     */
+    var status by mutableStateOf<SyncStatus>(SyncStatus.Idle)
+        private set
+
+    /**
      * Set when Google needs the person to approve the Drive scope. The UI
      * launches this and calls [onConsentResult] with the outcome.
      */
@@ -122,20 +131,41 @@ class GoogleSyncManager(
         scope.launch {
             isSyncing = true
             try {
-                val token = accessToken(interactive) ?: return@launch
+                val token = accessToken(interactive)
+                if (token == null) {
+                    // No token and no error means consent is pending; the UI
+                    // shows that via pendingConsent. Otherwise the grant is
+                    // unusable — most often an OAuth client / SHA-1 that is not
+                    // registered for this build — and that must be visible
+                    // rather than looking like an idle "signed in" state.
+                    status = if (pendingConsent != null) SyncStatus.NeedsConsent
+                    else SyncStatus.Failed
+                    return@launch
+                }
                 val fileId = cachedFileId ?: DriveAppData.findFileId(token)?.also {
                     cachedFileId = it
                 } ?: run {
                     // Nothing remote yet: seed it from this device.
-                    cachedFileId = DriveAppData.create(token, snapshot(appState))
+                    val created = DriveAppData.create(token, snapshot(appState))
+                    if (created == null) {
+                        status = SyncStatus.Failed
+                        return@launch
+                    }
+                    cachedFileId = created
                     lastSyncedAt = System.currentTimeMillis()
+                    status = SyncStatus.Synced
                     return@launch
                 }
-                val remote = DriveAppData.download(token, fileId) ?: return@launch
+                val remote = DriveAppData.download(token, fileId)
+                if (remote == null) {
+                    status = SyncStatus.Failed
+                    return@launch
+                }
                 if (remote.updatedAt > appState.changedAt) {
                     apply(remote, appState)
                 }
                 lastSyncedAt = System.currentTimeMillis()
+                status = SyncStatus.Synced
             } finally {
                 isSyncing = false
             }
@@ -171,6 +201,7 @@ class GoogleSyncManager(
         cachedFileId = null
         pushJob?.cancel()
         lastSyncedAt = null
+        status = SyncStatus.Idle
     }
 
     private fun snapshot(appState: AppState) = SyncPayload(
@@ -218,7 +249,6 @@ class GoogleSyncManager(
 
     companion object {
         const val DRIVE_APPDATA_SCOPE = "https://www.googleapis.com/auth/drive.appdata"
-
         /**
          * Long enough that a reading session produces one push rather than
          * hundreds, short enough that closing the app right after bookmarking
@@ -226,4 +256,28 @@ class GoogleSyncManager(
          */
         private const val PUSH_DEBOUNCE_MS = 4_000L
     }
+}
+
+/**
+ * The visible outcome of the last sync attempt. Exists so that "signed in but
+ * nothing happened" — the failure mode where an unregistered OAuth client or an
+ * unusable grant made every call quietly return null — is no longer
+ * indistinguishable from a healthy idle state.
+ */
+enum class SyncStatus {
+    /** No attempt yet, or sync disabled. */
+    Idle,
+
+    /** Waiting for the person to approve the Drive scope. */
+    NeedsConsent,
+
+    /** Last attempt completed; lastSyncedAt holds when. */
+    Synced,
+
+    /**
+     * Signed in, but the sync itself failed — most often an OAuth client or
+     * SHA-1 fingerprint not registered in the Cloud project for this build, or
+     * the Drive scope not granted. Distinct from Idle so the UI can say so.
+     */
+    Failed,
 }

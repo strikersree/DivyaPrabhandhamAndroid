@@ -69,6 +69,7 @@ import com.srinivaskannan.divyaprabhandham.prefs.ReminderTime
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import com.srinivaskannan.divyaprabhandham.prefs.WidgetAayiram
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
+import com.srinivaskannan.divyaprabhandham.sync.SyncStatus
 import com.srinivaskannan.divyaprabhandham.ui.components.BackButton
 import com.srinivaskannan.divyaprabhandham.ui.components.GroupFooter
 import com.srinivaskannan.divyaprabhandham.ui.components.GroupHeader
@@ -252,6 +253,8 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
             title = appState.ui(Ui.SYNC_NOW),
             trailingText = when {
                 sync.isSyncing -> appState.ui(Ui.SYNC_SYNCING)
+                sync.status == SyncStatus.Failed -> appState.ui(Ui.SYNC_FAILED)
+                sync.status == SyncStatus.NeedsConsent -> appState.ui(Ui.SYNC_NEEDS_CONSENT)
                 syncedAt != null -> RelativeTime.syncedAgo(now, syncedAt, appState.scriptChoice)
                 else -> appState.ui(Ui.SYNC_NEVER)
             },
