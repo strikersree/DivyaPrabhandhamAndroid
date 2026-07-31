@@ -230,6 +230,68 @@ class PrabandhamRepository private constructor(
         }
     }
 
+    /**
+     * Builds grounding context for an Ask question: corpus text the model should
+     * rely on rather than invent. Assembled from what the app actually has —
+     * matching verse text, section/decad essences, and Divya Desam facts — and
+     * capped so the proxy call stays small.
+     *
+     * This is the "R" in RAG. Where the corpus has no data for a question
+     * (word meanings, commentary), context comes back thinner or empty and the
+     * model answers from its own knowledge under the disclaimer — a deliberate
+     * choice, since a padavurai corpus does not yet exist.
+     */
+    fun askContext(query: String, script: ScriptChoice, maxChars: Int = 6000): String {
+        val q = query.trim()
+        if (q.isEmpty()) return ""
+        val parts = mutableListOf<String>()
+
+        // A bare number: attach that pasuram's text and essence directly.
+        q.toIntOrNull()?.let { number ->
+            location(number)?.let { (sectionId, _) ->
+                section(sectionId)?.let { section ->
+                    parts += "Pasuram $number (${section.title(script)}):\n" +
+                        section.content(script)
+                    essence(number, sectionId)?.let { parts += "Essence: ${it.text}" }
+                }
+            }
+        }
+
+        // Text matches: the first few matching sections, with their essences.
+        if (parts.isEmpty()) {
+            val works = filteredWorks(q, script).take(3)
+            for (work in works) {
+                for (section in work.sections.take(2)) {
+                    parts += "${work.title(script)} — ${section.title(script)}:\n" +
+                        section.content(script).take(1200)
+                    decadEssence(section.id)?.let { parts += "Essence: ${it.text}" }
+                    if (parts.sumOf { it.length } > maxChars) break
+                }
+                if (parts.sumOf { it.length } > maxChars) break
+            }
+        }
+
+        // Divya Desam matches: temple facts are strong grounding for place
+        // questions and cheap to include.
+        divyaDesams.asSequence()
+            .filter {
+                it.name(script).contains(q, ignoreCase = true) ||
+                    it.place(script).contains(q, ignoreCase = true)
+            }
+            .take(3)
+            .forEach { desam ->
+                parts += buildString {
+                    append("Divya Desam: ${desam.name(script)}")
+                    append(" (${desam.place(script)})")
+                    desam.perumal(script)?.let { append("; Perumal: $it") }
+                    desam.thaayar(script)?.let { append("; Thaayar: $it") }
+                    append("; ${desam.pasurams.size} pasurams")
+                }
+            }
+
+        return parts.joinToString("\n\n").take(maxChars)
+    }
+
     // MARK: - Thiruppavai / Margazhi daily verse
 
     /**

@@ -52,7 +52,6 @@ enum class Ui {
     GO_TO_BOOKMARK,
     SHARE,
     FONT_SIZE,
-    SEARCH_OR_NUMBER,
     TODAY_THIRUPPAVAI,
     TODAY_THIRUPPAVAI_HINT,
     PASURAMS,
@@ -156,8 +155,16 @@ enum class Ui {
     CANCEL,
     BACK,
     NO_RESULTS,
-    RECENT_SEARCHES,
-    CLEAR,
+    ASK_PLACEHOLDER,
+    ASK_INTRO_TITLE,
+    ASK_INTRO_BODY,
+    ASK_DISCLAIMER,
+    ASK_LOCAL_MATCHES,
+    ASK_THINKING,
+    ASK_ERR_OFFLINE,
+    ASK_ERR_TIMEOUT,
+    ASK_ERR_RATE,
+    ASK_ERR_SERVER,
 }
 
 object UiText {
@@ -229,7 +236,6 @@ object UiText {
         Ui.GO_TO_BOOKMARK to ("நினைவுக்குறிக்குச் செல்" to "Go to bookmark"),
         Ui.SHARE to ("பாசுரத்தைப் பகிர்" to "Share pasuram"),
         Ui.FONT_SIZE to ("எழுத்து அளவு" to "Font size"),
-        Ui.SEARCH_OR_NUMBER to ("தேடுக அல்லது பாசுர எண்" to "Search or pasuram number"),
         Ui.TODAY_THIRUPPAVAI to (
             "இன்றைய திருப்பாவை பாசுரத்தைப் படிக்க" to
             "Read today's Thiruppavai pasuram"
@@ -387,7 +393,15 @@ object UiText {
         Ui.CANCEL to ("ரத்து" to "Cancel"),
         Ui.BACK to ("பின்" to "Back"),
         Ui.NO_RESULTS to ("முடிவுகள் இல்லை" to "No results"),
-        Ui.RECENT_SEARCHES to ("சமீபத்திய தேடல்கள்" to "Recent searches"),
-        Ui.CLEAR to ("அழி" to "Clear"),
+        Ui.ASK_PLACEHOLDER to ("பாசுரம், கோயில் அல்லது கேள்வி…" to "Ask about a pasuram, temple, or verse…"),
+        Ui.ASK_INTRO_TITLE to ("கேளுங்கள்" to "Ask"),
+        Ui.ASK_INTRO_BODY to ("பாசுரங்கள், ஆழ்வார்கள், திவ்ய தேசங்கள் குறித்து கேளுங்கள். எண்ணைத் தட்டச்சு செய்தால் நேரடியாகச் செல்லலாம்." to "Ask about pasurams, Azhwars, and Divya Desams. Type a number to jump straight there."),
+        Ui.ASK_DISCLAIMER to ("AI-உருவாக்கியது — முக்கியமான விவரங்களைச் சரிபார்க்கவும்." to "AI-generated — please verify important details."),
+        Ui.ASK_LOCAL_MATCHES to ("பாசுரத் தொகுப்பில் கிடைத்தவை:" to "Found in the corpus:"),
+        Ui.ASK_THINKING to ("சிந்திக்கிறது…" to "Thinking…"),
+        Ui.ASK_ERR_OFFLINE to ("இணைப்பு இல்லை. இணையத்தைச் சரிபார்க்கவும்." to "You're offline. Check your connection and try again."),
+        Ui.ASK_ERR_TIMEOUT to ("பதில் தாமதமானது. மீண்டும் முயற்சிக்கவும்." to "That took too long. Please try again."),
+        Ui.ASK_ERR_RATE to ("சற்று பொறுத்து மீண்டும் கேளுங்கள்." to "A lot of questions just now — please wait a moment and try again."),
+        Ui.ASK_ERR_SERVER to ("பதிலளிக்க முடியவில்லை. பிறகு முயற்சிக்கவும்." to "Couldn't get an answer right now. Please try again later."),
     )
 }
