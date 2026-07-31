@@ -55,3 +55,30 @@ Response: `200 { "answer": string }`
 The app must send `context` (retrieved pasuram/essence/temple text) when it has
 it, and must treat every non-200 as a graceful, human-readable error — this is
 the one feature that needs the network.
+
+## Troubleshooting
+
+### `403 Method doesn't allow unregistered callers`
+This comes from **Gemini**, and it means the request reached Gemini with **no
+API key attached** — the function's `GEMINI_API_KEY` env var is empty or unset.
+It is a config problem, not a code bug. The proxy now catches this and returns
+`500 server_misconfigured` with an explanatory log line, rather than a generic
+502. Check, in order:
+
+1. **Was the secret set on deploy?** The deploy command needs
+   `--set-secrets=GEMINI_API_KEY=ndp-gemini-key:latest` (or
+   `--set-env-vars=GEMINI_API_KEY=...` for a plain var while testing).
+2. **Does the secret exist and have a version?**
+   `gcloud secrets versions list ndp-gemini-key`
+3. **Can the function's runtime service account read it?** Grant
+   `roles/secretmanager.secretAccessor` to the function's service account on
+   that secret. Missing this permission makes the var resolve to empty at
+   runtime — the exact cause of this 403.
+4. **Is the key itself valid?** Once attached, a *bad* key returns
+   `400 API key not valid` (a different error) — that means the value is wrong,
+   not missing.
+5. Confirm with `gcloud functions describe ndp-ask --gen2` and check the
+   env/secret bindings.
+
+### `500 server_misconfigured`
+The proxy's own signal that `GEMINI_API_KEY` is missing. Same fix as above.

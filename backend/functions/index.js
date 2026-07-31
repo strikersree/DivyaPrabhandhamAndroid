@@ -111,7 +111,22 @@ exports.ask = async (req, res) => {
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      // Missing key is a deploy/config problem, not a bad request or an upstream
+      // outage — the SDK would otherwise send no key and Gemini returns a
+      // confusing "unregistered callers" 403. Say so plainly in the logs and
+      // return a distinct status so it is not mistaken for a Gemini failure.
+      console.error(
+        "GEMINI_API_KEY is not set in the function environment. " +
+        "Check the deploy's --set-secrets / --set-env-vars and that the " +
+        "runtime service account can read the secret."
+      );
+      res.status(500).json({ error: "server_misconfigured" });
+      return;
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: MODEL,
       systemInstruction: SYSTEM_INSTRUCTION,
