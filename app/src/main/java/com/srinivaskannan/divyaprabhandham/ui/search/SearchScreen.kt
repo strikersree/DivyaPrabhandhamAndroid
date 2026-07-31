@@ -120,10 +120,10 @@ fun SearchScreen(
 
         val context = repository.askContext(q, appState.scriptChoice)
         query = ""
-        conversation.setPending(true)
+        conversation.updatePending(true)
         scope.launch {
             val result = AskClient.ask(question = q, context = context)
-            conversation.setPending(false)
+            conversation.updatePending(false)
             when (result) {
                 is AskResult.Answer -> conversation.addAnswer(result.text)
                 is AskResult.Error -> conversation.addFailure(result.kind)

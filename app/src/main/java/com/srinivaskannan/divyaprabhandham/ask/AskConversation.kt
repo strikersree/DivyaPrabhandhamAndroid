@@ -68,7 +68,7 @@ class AskConversation {
         messages.add(AskMessage.Failure(kind = kind))
     }
 
-    fun setPending(value: Boolean) {
+    fun updatePending(value: Boolean) {
         pending = value
     }
 

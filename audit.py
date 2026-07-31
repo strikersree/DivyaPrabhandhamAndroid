@@ -389,7 +389,9 @@ def check_jvm_setter_clash(files):
     """
     for path in files:
         code = strip_code(open(path, encoding="utf-8").read())
-        properties = set(re.findall(r"^\s*(?:private\s+|internal\s+)?var\s+(\w+)\s*:", code, re.M))
+        properties = set(re.findall(
+            r"^\s*(?:private\s+|internal\s+)?var\s+(\w+)\s*(?::|=|\bby\b)",
+            code, re.M))
         functions = set(re.findall(r"^\s*(?:private\s+|internal\s+)?fun\s+(set[A-Z]\w*)\s*\(", code, re.M))
         for prop in sorted(properties):
             generated = "set" + prop[0].upper() + prop[1:]
