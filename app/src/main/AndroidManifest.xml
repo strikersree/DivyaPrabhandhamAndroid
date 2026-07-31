@@ -9,6 +9,7 @@
       simply never worked.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Daily reading reminders (API 33+ asks at runtime). -->
@@ -24,6 +25,9 @@
       than bouncing the listener into a browser tab.
     -->
     <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
         <package android:name="com.google.android.apps.youtube.music" />
         <package android:name="com.google.android.youtube" />
         <intent>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dharma chakra, authored as a vector so it scales, takes the theme tint, and
+  rotates smoothly. Used as the Ask assistant mark and the thinking/listening
+  animation (rotated via Compose). 16 spokes, hub and rim. White strokes,
+  tinted at the use site.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48"
+    android:tint="?attr/colorPrimary">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.0"
+        android:fillColor="#00000000"
+        android:pathData="M3.00,24.0 a21.00,21.00 0 1,0 42.00,0 a21.00,21.00 0 1,0 -42.00,0z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:fillColor="#00000000"
+        android:pathData="M19.00,24.0 a5.00,5.00 0 1,0 10.00,0 a5.00,5.00 0 1,0 -10.00,0z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M29.00,24.00 L42.50,24.00" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M28.62,25.91 L41.09,31.08" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M27.54,27.54 L37.08,37.08" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M25.91,28.62 L31.08,41.09" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M24.00,29.00 L24.00,42.50" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M22.09,28.62 L16.92,41.09" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M20.46,27.54 L10.92,37.08" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M19.38,25.91 L6.91,31.08" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M19.00,24.00 L5.50,24.00" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M19.38,22.09 L6.91,16.92" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M20.46,20.46 L10.92,10.92" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M22.09,19.38 L16.92,6.91" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M24.00,19.00 L24.00,5.50" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M25.91,19.38 L31.08,6.91" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M27.54,20.46 L37.08,10.92" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:pathData="M28.62,22.09 L41.09,16.92" />
+</vector>

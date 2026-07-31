@@ -1,6 +1,20 @@
 package com.srinivaskannan.divyaprabhandham.ui.search
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.srinivaskannan.divyaprabhandham.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +37,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,7 +54,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -82,8 +94,30 @@ fun SearchScreen(
     val scope = rememberCoroutineScope()
 
     val conversation = remember { AskConversation() }
+    val context = LocalContext.current
+    val voice = remember { com.srinivaskannan.divyaprabhandham.ask.VoiceRecognizer(context) }
+    // Release the recognizer when the screen leaves composition.
+    DisposableEffect(Unit) { onDispose { voice.release() } }
     var query by remember { mutableStateOf("") }
     val trimmed = query.trim()
+
+    // Live transcript flows into the text field as the person speaks.
+    LaunchedEffect(voice.transcript) {
+        if (voice.transcript.isNotBlank()) query = voice.transcript
+    }
+
+    // Microphone permission: ask on first mic tap, start listening once granted.
+    val micPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) voice.start { query = it } }
+
+    fun startVoice() {
+        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+            context, android.Manifest.permission.RECORD_AUDIO,
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (granted) voice.start { query = it }
+        else micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+    }
 
     val jumpTarget = remember(trimmed) {
         trimmed.toIntOrNull()?.let { number -> repository.location(number)?.let { number to it } }
@@ -173,6 +207,10 @@ fun SearchScreen(
             onValueChange = { query = it },
             onSend = ::submit,
             sending = conversation.pending,
+            listening = voice.listening,
+            level = voice.level,
+            onMicStart = ::startVoice,
+            onMicStop = { voice.stop() },
         )
     }
 }
@@ -198,7 +236,7 @@ private fun AnswerBubble(text: String, isError: Boolean = false) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         Column(Modifier.widthIn(max = 320.dp)) {
             Row(verticalAlignment = Alignment.Top) {
-                AiSpark()
+                Chakra(size = 24.dp)
                 Spacer(Modifier.width(8.dp))
                 Surface(
                     shape = RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp),
@@ -227,39 +265,55 @@ private fun AnswerBubble(text: String, isError: Boolean = false) {
 private fun ThinkingBubble() {
     val appState = LocalAppState.current
     Row(verticalAlignment = Alignment.CenterVertically) {
-        AiSpark()
+        Chakra(size = 24.dp, spinning = true)
         Spacer(Modifier.width(8.dp))
         Surface(
             shape = RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
-            Row(
+            Text(
+                appState.ui(Ui.ASK_THINKING),
                 Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
-                Spacer(Modifier.width(8.dp))
-                Text(appState.ui(Ui.ASK_THINKING), style = MaterialTheme.typography.bodyMedium)
-            }
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
 
-/** The small gradient mark standing in for the assistant — a tasteful nod to a
- *  Gemini-style accent, not a copy of any brand. */
+/**
+ * The dharma chakra that stands in for the assistant. Rotates when [spinning]
+ * (the "thinking" and "listening" states), still otherwise. Tinted to the theme
+ * primary. Replaces the old gradient dot with something on-brand and alive.
+ */
 @Composable
-private fun AiSpark() {
-    Box(
-        Modifier
-            .size(24.dp)
-            .background(
-                brush = Brush.linearGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.tertiary,
-                    ),
-                ),
-                shape = RoundedCornerShape(50),
+private fun Chakra(
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = 24.dp,
+    spinning: Boolean = false,
+    scale: Float = 1f,
+) {
+    val angle = if (spinning) {
+        val transition = rememberInfiniteTransition(label = "chakra")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2400, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "chakra-angle",
+        ).value
+    } else 0f
+
+    Image(
+        painter = painterResource(R.drawable.ic_chakra),
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+        modifier = modifier
+            .size(size)
+            .rotate(angle)
+            .then(
+                if (scale != 1f) Modifier.size(size * scale) else Modifier,
             ),
     )
 }
@@ -361,7 +415,7 @@ private fun AskIntro(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AiSpark()
+        Chakra(size = 56.dp)
         Spacer(Modifier.size(12.dp))
         Text(appState.ui(Ui.ASK_INTRO_TITLE),
             style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -392,8 +446,13 @@ private fun InputBar(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     sending: Boolean,
+    listening: Boolean,
+    level: Float,
+    onMicStart: () -> Unit,
+    onMicStop: () -> Unit,
 ) {
     val appState = LocalAppState.current
+    val hasText = value.isNotBlank()
     Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
@@ -403,7 +462,13 @@ private fun InputBar(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f),
-                placeholder = { Text(appState.ui(Ui.ASK_PLACEHOLDER), maxLines = 1) },
+                placeholder = {
+                    Text(
+                        if (listening) appState.ui(Ui.ASK_LISTENING)
+                        else appState.ui(Ui.ASK_PLACEHOLDER),
+                        maxLines = 1,
+                    )
+                },
                 shape = RoundedCornerShape(24.dp),
                 maxLines = 4,
                 colors = TextFieldDefaults.colors(
@@ -415,15 +480,29 @@ private fun InputBar(
                 keyboardActions = KeyboardActions(onSend = { onSend() }),
             )
             Spacer(Modifier.width(8.dp))
-            IconButton(
-                onClick = onSend,
-                enabled = value.isNotBlank() && !sending,
-            ) {
-                Icon(Icons.AutoMirrored.Filled.Send,
-                    contentDescription = appState.ui(Ui.SEARCH),
-                    tint = if (value.isNotBlank() && !sending)
-                        MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant)
+            when {
+                // Listening: a pulsing chakra that scales with the mic level,
+                // tapping stops and uses whatever was heard.
+                listening -> IconButton(onClick = onMicStop) {
+                    Chakra(size = 26.dp, spinning = true, scale = 1f + level * 0.5f)
+                }
+                // Text present: send.
+                hasText -> IconButton(onClick = onSend, enabled = !sending) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Send,
+                        contentDescription = appState.ui(Ui.SEARCH),
+                        tint = if (!sending) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                // Empty: mic to start talking.
+                else -> IconButton(onClick = onMicStart) {
+                    Icon(
+                        Icons.Filled.Mic,
+                        contentDescription = appState.ui(Ui.ASK_VOICE),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     }

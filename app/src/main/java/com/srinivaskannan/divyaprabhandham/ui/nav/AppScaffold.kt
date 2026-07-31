@@ -96,6 +96,10 @@ fun AppScaffold(
     // on a detail screen reads as the app losing its footing — the platform
     // convention is that it persists.
     val isReader = currentRoute?.startsWith("reader/") == true
+    // The Ask tab is a chat: its input bar sits exactly where the Continue
+    // Reading pill would, so the pill is hidden there too — both to avoid the
+    // collision and because "continue reading" is out of place mid-conversation.
+    val isAsk = currentRoute == Routes.SEARCH
 
     NavigationSuiteScaffold(
         modifier = modifier,
@@ -252,7 +256,7 @@ fun AppScaffold(
 
             // Continue Reading sits above the nav bar, app-wide — but not on
             // the reader, where it would offer to open the current screen.
-            if (!isReader) {
+            if (!isReader && !isAsk) {
                 ResumePill(onOpen = openSection)
             }
         }
