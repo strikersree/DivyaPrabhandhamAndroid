@@ -125,7 +125,18 @@ fun AppScaffold(
                             contentDescription = null,
                         )
                     },
-                    label = { Text(appState.ui(destination.label)) },
+                    label = {
+                        Text(
+                            appState.ui(destination.label),
+                            // Long Tamil labels (e.g. "திவ்ய தேசங்கள்") wrapped
+                            // to two lines and unbalanced the bar. Keep every
+                            // label on one line; the nav item ellipsizes rather
+                            // than wraps if it truly cannot fit.
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                    },
                 )
             }
         },

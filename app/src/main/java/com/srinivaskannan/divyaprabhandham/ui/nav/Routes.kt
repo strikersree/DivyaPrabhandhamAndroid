@@ -62,7 +62,7 @@ enum class TopLevel(
     val icon: ImageVector,
 ) {
     HOME(Routes.HOME, Ui.HOME, Icons.Filled.Home, Icons.Outlined.Home),
-    DESAMS(Routes.DESAMS, Ui.DIVYA_DESAMS, Icons.Filled.AccountBalance, Icons.Outlined.AccountBalance),
+    DESAMS(Routes.DESAMS, Ui.DIVYA_DESAMS_TAB, Icons.Filled.AccountBalance, Icons.Outlined.AccountBalance),
     SAVED(Routes.SAVED, Ui.SAVED, Icons.Filled.Star, Icons.Outlined.StarOutline),
     SEARCH(Routes.SEARCH, Ui.SEARCH, Icons.Filled.Search, Icons.Outlined.Search),
     SETTINGS(Routes.SETTINGS, Ui.SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings),
