@@ -17,7 +17,7 @@ const { SYSTEM_INSTRUCTION } = require("./guardrail");
 // Model + generation config. Flash-Lite is the cheap workhorse; low temperature
 // keeps answers grounded and on-scope. maxOutputTokens caps runaway responses
 // (and cost) per call.
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
 const GENERATION_CONFIG = {
   temperature: 0.2,
   maxOutputTokens: 1024,
