@@ -252,7 +252,7 @@ class PrabandhamRepository private constructor(
                 section(sectionId)?.let { section ->
                     parts += "Pasuram $number (${section.title(script)}):\n" +
                         section.content(script)
-                    essence(number, sectionId)?.let { parts += "Essence: ${it.text}" }
+                    essence(number, sectionId)?.let { parts += "Essence: ${it.text(script)}" }
                 }
             }
         }
@@ -264,7 +264,7 @@ class PrabandhamRepository private constructor(
                 for (section in work.sections.take(2)) {
                     parts += "${work.title(script)} — ${section.title(script)}:\n" +
                         section.content(script).take(1200)
-                    decadEssence(section.id)?.let { parts += "Essence: ${it.text}" }
+                    decadEssence(section.id)?.let { parts += "Essence: ${it.text(script)}" }
                     if (parts.sumOf { it.length } > maxChars) break
                 }
                 if (parts.sumOf { it.length } > maxChars) break
