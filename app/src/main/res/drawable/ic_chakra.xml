@@ -9,8 +9,7 @@
     android:width="48dp"
     android:height="48dp"
     android:viewportWidth="48"
-    android:viewportHeight="48"
-    android:tint="?attr/colorPrimary">
+    android:viewportHeight="48">
     <path
         android:strokeColor="#FFFFFF"
         android:strokeWidth="2.0"
