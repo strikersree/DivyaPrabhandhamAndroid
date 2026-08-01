@@ -41,6 +41,10 @@ data class SyncPayload(
     val widgetAayiram: String? = null,
     val supporterSince: Long? = null,
     val tipPromptSilenced: Boolean = false,
+    // Pilgrimage progress: visited Divya Desams as "id:year" strings, so a map
+    // survives the JSON round-trip without a custom serializer. Additive and
+    // defaulted, so older payloads decode fine.
+    val visitedDesams: List<String> = emptyList(),
 ) {
     companion object {
         const val CURRENT_VERSION = 1

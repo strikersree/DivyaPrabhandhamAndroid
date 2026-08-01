@@ -228,6 +228,7 @@ class GoogleSyncManager(
         widgetAayiram = appState.widgetAayiram.key,
         supporterSince = appState.supporterSince,
         tipPromptSilenced = appState.tipPromptSilenced,
+        visitedDesams = appState.visitedDesams.entries.map { "${it.key}:${it.value}" },
     )
 
     /**
@@ -239,6 +240,12 @@ class GoogleSyncManager(
             bookmarks = payload.bookmarks
             recentlyViewed = payload.recentlyViewed
             pinnedWorks = payload.pinnedWorks
+            visitedDesams = payload.visitedDesams.mapNotNull { line ->
+                val i = line.lastIndexOf(':')
+                if (i <= 0) return@mapNotNull null
+                val year = line.substring(i + 1).toIntOrNull() ?: return@mapNotNull null
+                line.substring(0, i) to year
+            }.toMap()
             lastRead = payload.lastReadSectionId?.let {
                 LastRead(it, payload.lastReadStanzaKey)
             }

@@ -84,6 +84,10 @@ class AppState private constructor(
 
     /** Works pinned to Home (up to [MAX_PINNED_WORKS]). */
     var pinnedWorks: List<String> by mutableStateOf(snapshot.pinnedWorks)
+
+    /** Divya Desams the user has visited, mapped to the year of the visit. */
+    var visitedDesams: Map<String, Int> by mutableStateOf(snapshot.visitedDesams)
+        internal set
         internal set
 
     // MARK: - Appearance
@@ -199,6 +203,25 @@ class AppState private constructor(
         bookmarks = list
         commit { it[Keys.BOOKMARKS] = encodeList(list) }
     }
+
+    fun isVisited(desamId: String): Boolean = desamId in visitedDesams
+
+    fun visitYear(desamId: String): Int? = visitedDesams[desamId]
+
+    /** Marks a desam visited in [year]; overwrites the year if already visited. */
+    fun markVisited(desamId: String, year: Int) {
+        visitedDesams = visitedDesams + (desamId to year)
+        commit { it[Keys.VISITED] = encodeVisited(visitedDesams) }
+    }
+
+    fun clearVisited(desamId: String) {
+        if (desamId !in visitedDesams) return
+        visitedDesams = visitedDesams - desamId
+        commit { it[Keys.VISITED] = encodeVisited(visitedDesams) }
+    }
+
+    /** How many physical Divya Desams have been visited (drives the levels). */
+    val visitedCount: Int get() = visitedDesams.size
 
     fun removeBookmark(key: String) {
         if (key in bookmarks) toggleBookmark(key)
@@ -373,6 +396,7 @@ class AppState private constructor(
         prefs[Keys.BOOKMARKS] = encodeList(bookmarks)
         prefs[Keys.RECENT] = encodeList(recentlyViewed)
         prefs[Keys.PINNED] = encodeList(pinnedWorks)
+        prefs[Keys.VISITED] = encodeVisited(visitedDesams)
         prefs[Keys.THEME] = theme.key
         prefs[Keys.FONT_SIZE] = fontSize.toDouble()
         prefs[Keys.ACCENT] = accentChoice.key
@@ -397,6 +421,7 @@ class AppState private constructor(
         val recentlyViewed: List<String>,
         val recentSearches: List<String>,
         val pinnedWorks: List<String>,
+        val visitedDesams: Map<String, Int>,
         val theme: ReaderThemeChoice,
         val fontSize: Float,
         val accent: AccentChoice,
@@ -417,6 +442,7 @@ class AppState private constructor(
     private object Keys {
         val LAST_READ = stringPreferencesKey("dp.lastRead")
         val BOOKMARKS = stringPreferencesKey("dp.bookmarks")
+        val VISITED = stringPreferencesKey("dp.visitedDesams")
         val RECENT = stringPreferencesKey("dp.recentlyViewed")
         val SEARCHES = stringPreferencesKey("dp.recentSearches")
         val PINNED = stringPreferencesKey("dp.pinnedWorks")
@@ -458,6 +484,19 @@ class AppState private constructor(
         private fun decodeList(raw: String?): List<String> =
             raw?.split("\n")?.filter { it.isNotBlank() } ?: emptyList()
 
+        // Visited desams are stored one per line as "id:year".
+        private fun encodeVisited(map: Map<String, Int>) =
+            map.entries.joinToString("\n") { "${it.key}:${it.value}" }
+
+        private fun decodeVisited(raw: String?): Map<String, Int> =
+            raw?.split("\n")?.mapNotNull { line ->
+                val i = line.lastIndexOf(':')
+                if (i <= 0) return@mapNotNull null
+                val id = line.substring(0, i)
+                val year = line.substring(i + 1).toIntOrNull() ?: return@mapNotNull null
+                id to year
+            }?.toMap() ?: emptyMap()
+
         suspend fun create(context: Context, scope: CoroutineScope): AppState {
             val store = context.applicationContext.dataStore
             val prefs = store.data.first()
@@ -471,6 +510,7 @@ class AppState private constructor(
                 recentlyViewed = decodeList(prefs[Keys.RECENT]),
                 recentSearches = decodeList(prefs[Keys.SEARCHES]),
                 pinnedWorks = decodeList(prefs[Keys.PINNED]),
+                visitedDesams = decodeVisited(prefs[Keys.VISITED]),
                 theme = ReaderThemeChoice.from(prefs[Keys.THEME]),
                 fontSize = if (storedFontSize >= MIN_FONT_SIZE) storedFontSize else DEFAULT_FONT_SIZE,
                 accent = AccentChoice.from(prefs[Keys.ACCENT]),

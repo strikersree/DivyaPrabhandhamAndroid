@@ -6,6 +6,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TextButton
+import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -57,6 +69,43 @@ fun DesamsScreen(
 
     var query by rememberSaveable { mutableStateOf("") }
     var region by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Long-press status flow: the temple whose status sheet is open, and a
+    // one-shot celebration trigger (the desam id just marked visited, and
+    // whether that visit crossed a level threshold).
+    var statusTarget by remember { mutableStateOf<DivyaDesam?>(null) }
+    var celebration by remember { mutableStateOf<Celebration?>(null) }
+
+    statusTarget?.let { target ->
+        DesamStatusSheet(
+            desam = target,
+            visited = appState.isVisited(target.id),
+            visitedYear = appState.visitYear(target.id),
+            onVisited = { year ->
+                val before = appState.visitedCount
+                appState.markVisited(target.id, year)
+                val after = appState.visitedCount
+                val leveledUp = com.srinivaskannan.divyaprabhandham.data.Pilgrimage
+                    .currentLevel(after)?.takeIf {
+                        com.srinivaskannan.divyaprabhandham.data.Pilgrimage.currentLevel(before) != it
+                    }
+                statusTarget = null
+                celebration = Celebration(leveledUp = leveledUp != null)
+            },
+            onClear = {
+                appState.clearVisited(target.id)
+                statusTarget = null
+            },
+            onDismiss = { statusTarget = null },
+        )
+    }
+
+    celebration?.let {
+        ConfettiCelebration(
+            big = it.leveledUp,
+            onFinished = { celebration = null },
+        )
+    }
 
     val regions = remember(script) {
         repository.divyaDesams.map { it.region(script) }.distinct()
@@ -147,7 +196,17 @@ fun DesamsScreen(
                         )
                     }
                     items(desams, key = { it.id }) { desam ->
-                        DesamRow(desam) { onOpenDesam(desam.id) }
+                        // The two Eternal Abodes (Thirupparkadal, Paramapadam)
+                        // are not places one visits, so they get no status menu.
+                        val visitable = desam.regionEn != "Eternal Abodes"
+                        DesamRow(
+                            desam = desam,
+                            visited = appState.isVisited(desam.id),
+                            onClick = { onOpenDesam(desam.id) },
+                            onLongPress = if (visitable) {
+                                { statusTarget = desam }
+                            } else null,
+                        )
                     }
                 }
             }
@@ -165,15 +224,31 @@ fun DesamsScreen(
  * same line as the name, sharing the title's baseline, so the name gets almost
  * the full width and wraps only when it genuinely must.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DesamRow(desam: DivyaDesam, onClick: () -> Unit) {
+private fun DesamRow(
+    desam: DivyaDesam,
+    visited: Boolean,
+    onClick: () -> Unit,
+    onLongPress: (() -> Unit)?,
+) {
     val appState = LocalAppState.current
     val script = appState.scriptChoice
     val subtitle = buildString {
         append(desam.place(script))
         desam.perumal(script)?.let { append(" · ").append(it) }
     }
-    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface) {
+    // Visited temples are tinted to stand out in the list — the "highlight the
+    // places you've been" the feature asks for.
+    val rowColor = if (visited) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+    else MaterialTheme.colorScheme.surface
+    Surface(
+        color = rowColor,
+        modifier = Modifier.combinedClickable(
+            onClick = onClick,
+            onLongClick = onLongPress,
+        ),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -185,20 +260,28 @@ private fun DesamRow(desam: DivyaDesam, onClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(
-                    text = desam.name(script),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (visited) {
+                        Icon(
+                            Icons.Filled.Place,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                    Text(
+                        text = desam.name(script),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            // Just the number in the pill; the word "பாசுரங்கள்" is what made
-            // the old trailing column wide, and the pill's context makes it
-            // redundant.
             Surface(
                 shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -209,6 +292,109 @@ private fun DesamRow(desam: DivyaDesam, onClick: () -> Unit) {
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                )
+            }
+        }
+    }
+}
+
+/** One-shot celebration request: whether the visit crossed a level threshold. */
+private data class Celebration(val leveledUp: Boolean)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DesamStatusSheet(
+    desam: DivyaDesam,
+    visited: Boolean,
+    visitedYear: Int?,
+    onVisited: (Int) -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val appState = LocalAppState.current
+    val script = appState.scriptChoice
+    var pickingYear by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 28.dp)) {
+            Text(
+                desam.name(script),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                desam.place(script),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(20.dp))
+
+            if (!pickingYear) {
+                // Visited (with the year) and, when already visited, a clear.
+                Surface(
+                    onClick = { pickingYear = true },
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(Icons.Filled.Place, contentDescription = null)
+                        Text(
+                            if (visited && visitedYear != null)
+                                "${appState.ui(Ui.DESAM_VISITED)} · $visitedYear"
+                            else appState.ui(Ui.DESAM_VISITED),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+                if (visited) {
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = onClear) {
+                        Text(appState.ui(Ui.DESAM_CLEAR_VISIT))
+                    }
+                }
+            } else {
+                Text(
+                    appState.ui(Ui.DESAM_PICK_YEAR),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(8.dp))
+                YearPicker(
+                    initial = visitedYear,
+                    onPick = onVisited,
+                )
+            }
+        }
+    }
+}
+
+/** A scrollable year list, 1900..current, newest first. */
+@Composable
+private fun YearPicker(initial: Int?, onPick: (Int) -> Unit) {
+    val currentYear = remember {
+        java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+    }
+    val years = remember(currentYear) { (currentYear downTo 1900).toList() }
+    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 320.dp)) {
+        items(years, key = { it }) { year ->
+            Surface(
+                onClick = { onPick(year) },
+                color = if (year == initial) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    "$year",
+                    Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (year == initial) FontWeight.Bold else FontWeight.Normal,
                 )
             }
         }

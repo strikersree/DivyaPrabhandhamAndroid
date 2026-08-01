@@ -102,6 +102,13 @@ fun HomeScreen(
             }
         }
 
+        item(key = "pilgrimage") {
+            PilgrimageProgressCard(
+                visited = appState.visitedCount,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+
         if (appState.pinnedWorks.isNotEmpty()) {
             item(key = "pinned") {
                 PinnedSection(
