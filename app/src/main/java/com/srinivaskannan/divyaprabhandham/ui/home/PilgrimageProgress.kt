@@ -1,6 +1,13 @@
 package com.srinivaskannan.divyaprabhandham.ui.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -84,7 +90,8 @@ fun PilgrimageProgressCard(visited: Int, modifier: Modifier = Modifier) {
                         Image(
                             painter = painterResource(tierBadgeRes(current.index)),
                             contentDescription = null,
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(32.dp).clip(androidx.compose.foundation.shape.CircleShape),
+                            contentScale = ContentScale.Crop,
                         )
                     }
                     Text(
@@ -134,24 +141,42 @@ fun PilgrimageProgressCard(visited: Int, modifier: Modifier = Modifier) {
 private fun PilgrimageCardsSheet(visited: Int, onDismiss: () -> Unit) {
     val appState = LocalAppState.current
     val tamil = appState.scriptChoice == ScriptChoice.TAMIL
+    val current = Pilgrimage.currentLevel(visited)
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-            Text(
-                appState.ui(Ui.PILGRIMAGE_CARDS_TITLE),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                appState.ui(Ui.PILGRIMAGE_CARDS_BODY),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Column(Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
+            Column(Modifier.padding(horizontal = 20.dp)) {
+                Text(
+                    appState.ui(Ui.PILGRIMAGE_CARDS_TITLE),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    appState.ui(Ui.PILGRIMAGE_CARDS_BODY),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Spacer(Modifier.height(16.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // The tiers as a swipeable row of collectible cards — earned ones in
+            // full colour, still-locked ones desaturated behind a lock.
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
                 items(Pilgrimage.levels, key = { it.index }) { level ->
-                    LevelCard(level = level, unlocked = Pilgrimage.isUnlocked(level, visited), tamil = tamil)
+                    TierCard(level = level, unlocked = Pilgrimage.isUnlocked(level, visited), tamil = tamil)
                 }
+            }
+            // The meaning of the tier the pilgrim currently stands at.
+            if (current != null) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    current.description(tamil),
+                    Modifier.padding(horizontal = 20.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -164,69 +189,71 @@ private fun PilgrimageCardsSheet(visited: Int, onDismiss: () -> Unit) {
  * into the art slot once supplied.
  */
 @Composable
-private fun LevelCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean) {
+private fun TierCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean) {
     val appState = LocalAppState.current
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (unlocked) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth(),
+    Box(
+        Modifier
+            .width(190.dp)
+            .height(320.dp)
+            .clip(RoundedCornerShape(18.dp)),
     ) {
-        Row(
-            Modifier.padding(16.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        Image(
+            painter = painterResource(tierCardRes(level.index)),
+            contentDescription = level.title,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            // Locked tiers are desaturated — the colour returns when earned.
+            colorFilter = if (unlocked) null
+            else ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }),
+        )
+        // A dimming veil over still-locked tiers.
+        if (!unlocked) {
+            Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.45f)))
+        }
+        // Bottom scrim carrying the label, so text stays legible over the art.
+        Column(
+            Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            androidx.compose.ui.graphics.Color.Transparent,
+                            androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.82f),
+                        ),
+                    ),
+                )
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            // The tier's element badge — full colour when earned, dimmed and
-            // desaturated with a lock until then, so the art itself is the
-            // reward for reaching the tier.
-            Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(tierBadgeRes(level.index)),
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    alpha = if (unlocked) 1f else 0.30f,
-                    colorFilter = if (unlocked) null
-                    else ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }),
-                )
-                if (!unlocked) {
-                    Icon(
-                        Icons.Filled.Lock,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "${appState.ui(Ui.PILGRIMAGE_TIER)} ${level.index} · ${level.threshold} ${appState.ui(Ui.PILGRIMAGE_TEMPLES)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (unlocked) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    level.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+            Text(
+                "${appState.ui(Ui.PILGRIMAGE_TIER)} ${level.index} · ${level.threshold} ${appState.ui(Ui.PILGRIMAGE_TEMPLES)}",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
+            )
+            Text(
+                level.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = androidx.compose.ui.graphics.Color.White,
+            )
+            // The meaning is revealed only once the tier is earned.
+            if (unlocked) {
                 Text(
                     level.subtitle(tamil),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
                 )
-                // The significance is revealed only once the tier is earned —
-                // there is something to look forward to behind the lock.
-                if (unlocked) {
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        level.description(tamil),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
+        }
+        if (!unlocked) {
+            Icon(
+                Icons.Filled.Lock,
+                contentDescription = null,
+                tint = androidx.compose.ui.graphics.Color.White,
+                modifier = Modifier.align(Alignment.Center).size(40.dp),
+            )
         }
     }
 }
@@ -238,4 +265,13 @@ private fun tierBadgeRes(index: Int): Int = when (index) {
     3 -> R.drawable.ic_tier_3
     4 -> R.drawable.ic_tier_4
     else -> R.drawable.ic_tier_5
+}
+
+/** Maps a tier index (1..5) to its portrait card art. */
+private fun tierCardRes(index: Int): Int = when (index) {
+    1 -> R.drawable.ic_tier_card_1
+    2 -> R.drawable.ic_tier_card_2
+    3 -> R.drawable.ic_tier_card_3
+    4 -> R.drawable.ic_tier_card_4
+    else -> R.drawable.ic_tier_card_5
 }
