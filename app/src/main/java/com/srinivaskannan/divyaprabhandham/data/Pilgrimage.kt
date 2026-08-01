@@ -12,21 +12,61 @@ package com.srinivaskannan.divyaprabhandham.data
 data class PilgrimageLevel(
     val index: Int,
     val threshold: Int,
-    val nameTa: String,
-    val nameEn: String,
+    val title: String,
+    val subtitleTa: String,
+    val subtitleEn: String,
+    val descriptionTa: String,
+    val descriptionEn: String,
 ) {
-    fun name(tamil: Boolean) = if (tamil) nameTa else nameEn
+    fun subtitle(tamil: Boolean) = if (tamil) subtitleTa else subtitleEn
+    fun description(tamil: Boolean) = if (tamil) descriptionTa else descriptionEn
 }
 
 object Pilgrimage {
     // Level 5 is 106 (all visitable temples), not 108 — the two celestial
-    // abodes cannot be visited. Confirmed with the owner.
+    // abodes cannot be visited. The final tier's meaning still honours the full
+    // 108 / the twelve Azhwars. Names and meanings supplied by the owner.
     val levels: List<PilgrimageLevel> = listOf(
-        PilgrimageLevel(1, 10, "நிலை 1", "Level 1"),
-        PilgrimageLevel(2, 18, "நிலை 2", "Level 2"),
-        PilgrimageLevel(3, 28, "நிலை 3", "Level 3"),
-        PilgrimageLevel(4, 58, "நிலை 4", "Level 4"),
-        PilgrimageLevel(5, 106, "நிலை 5", "Level 5"),
+        PilgrimageLevel(
+            index = 1, threshold = 10,
+            title = "Anbukku Adiyar",
+            subtitleTa = "அன்பின் தொண்டர்",
+            subtitleEn = "Devotee of Love",
+            descriptionTa = "அன்பின் விளக்கை ஏற்றிய முதல் ஆழ்வார்கள் (பொய்கை, பூதத், பேய்) அருளியது.",
+            descriptionEn = "Inspired by the first Azhwars (Poygai, Bhoothath, Pey) who light the lamp of love.",
+        ),
+        PilgrimageLevel(
+            index = 2, threshold = 18,
+            title = "Pasuram Padhan",
+            subtitleTa = "பாசுரம் பயில்பவர்",
+            subtitleEn = "Learner of Divine Songs",
+            descriptionTa = "ஆழ்வார்கள் பாடிய அடிப்படைக் கோயில் தொகுதிகளைத் திறத்தல்.",
+            descriptionEn = "Unlocking the foundational temple clusters sung by the saints.",
+        ),
+        PilgrimageLevel(
+            index = 3, threshold = 28,
+            title = "Kshetra Sevakar",
+            subtitleTa = "க்ஷேத்திர சேவகர்",
+            subtitleEn = "Servant of Sacred Lands",
+            descriptionTa = "தெய்வீகத் தலங்களை முனைந்து தரிசிக்கும் அர்ப்பணிப்புள்ள யாத்ரீகராக அங்கீகரிக்கப்படுதல்.",
+            descriptionEn = "Recognized as a dedicated pilgrim actively visiting divine shrines.",
+        ),
+        PilgrimageLevel(
+            index = 4, threshold = 58,
+            title = "Divya Desam Sadhak",
+            subtitleTa = "திவ்ய தேச சாதகர்",
+            subtitleEn = "Practitioner of Shrines",
+            descriptionTa = "பாதி வழியைக் கடந்து — ஆழ்ந்த ஆன்மீக நெறியைக் காட்டுதல்.",
+            descriptionEn = "Past the halfway mark — showing deep spiritual discipline.",
+        ),
+        PilgrimageLevel(
+            index = 5, threshold = 106,
+            title = "Azhwar Thondar",
+            subtitleTa = "ஆழ்வார் தொண்டர்",
+            subtitleEn = "Eternal Servant of Azhwars",
+            descriptionTa = "பன்னிரு ஆழ்வார்களின் அடிச்சுவடுகளில் முழு யாத்திரையையும் நிறைவு செய்தல்.",
+            descriptionEn = "Completing the entire Yatra in the footsteps of the 12 Azhwars.",
+        ),
     )
 
     /** The highest level whose threshold the count has reached, or null. */

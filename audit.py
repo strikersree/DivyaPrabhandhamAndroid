@@ -127,6 +127,19 @@ def check_doubled_accessors(path, code):
                             f"(previous line is identical) — syntax error")
 
 
+def check_duplicate_imports(path, code):
+    """The same import line appearing twice. Harmless to Kotlin but flagged by
+    lint as a redundant/duplicate import and easy to introduce when injecting
+    imports programmatically."""
+    seen = set()
+    for i, line in enumerate(code.split("\n"), start=1):
+        st = line.strip()
+        if st.startswith("import "):
+            if st in seen:
+                fail(rel(path), f"duplicate import '{st}' at line {i}")
+            seen.add(st)
+
+
 def rel(path):
     return os.path.relpath(path, ROOT)
 
@@ -617,6 +630,7 @@ def main():
         check_package(path, text)
         check_delimiters(path, strip_code(text))
         check_doubled_accessors(path, strip_code(text))
+        check_duplicate_imports(path, text)
 
     declared = collect_declarations(files)
 

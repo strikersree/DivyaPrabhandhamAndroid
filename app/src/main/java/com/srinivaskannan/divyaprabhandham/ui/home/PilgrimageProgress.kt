@@ -98,9 +98,9 @@ fun PilgrimageProgressCard(visited: Int, modifier: Modifier = Modifier) {
             Text(
                 text = when {
                     current != null && next != null ->
-                        "${current.name(tamil)} · ${next.threshold - visited} ${appState.ui(Ui.PILGRIMAGE_TO_NEXT)}"
+                        "${current.title} · ${next.threshold - visited} ${appState.ui(Ui.PILGRIMAGE_TO_NEXT)}"
                     current != null ->
-                        current.name(tamil)
+                        current.title
                     next != null ->
                         "${next.threshold - visited} ${appState.ui(Ui.PILGRIMAGE_TO_FIRST)}"
                     else -> ""
@@ -141,9 +141,10 @@ private fun PilgrimageCardsSheet(visited: Int, onDismiss: () -> Unit) {
 }
 
 /**
- * One level card — revealed when earned, a locked silhouette until then. Art is
- * a placeholder gradient block for now; the final per-level artwork drops in
- * here once supplied.
+ * One level card — revealed when earned, a locked silhouette until then. Shows
+ * the tier's title, its meaning, the temple threshold, and the significance.
+ * The art is a placeholder gradient block for now; final per-level artwork drops
+ * into the art slot once supplied.
  */
 @Composable
 private fun LevelCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean) {
@@ -156,19 +157,16 @@ private fun LevelCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean)
     ) {
         Row(
             Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Placeholder art slot.
-            Box(
-                Modifier.size(56.dp),
-                contentAlignment = Alignment.Center,
-            ) {
+            // Placeholder art slot — final artwork replaces the coloured block.
+            Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = if (unlocked) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(56.dp),
+                    modifier = Modifier.size(64.dp),
                 ) {}
                 if (!unlocked) {
                     Icon(
@@ -178,17 +176,35 @@ private fun LevelCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean)
                     )
                 }
             }
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    level.name(tamil),
+                    "${appState.ui(Ui.PILGRIMAGE_TIER)} ${level.index} · ${level.threshold} ${appState.ui(Ui.PILGRIMAGE_TEMPLES)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (unlocked) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    level.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    "${level.threshold} ${appState.ui(Ui.PILGRIMAGE_TEMPLES)}",
-                    style = MaterialTheme.typography.bodySmall,
+                    level.subtitle(tamil),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
                 )
+                // The significance is revealed only once the tier is earned —
+                // there is something to look forward to behind the lock.
+                if (unlocked) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        level.description(tamil),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
