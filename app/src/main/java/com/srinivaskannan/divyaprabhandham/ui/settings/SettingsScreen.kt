@@ -249,12 +249,21 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
             }
         }
         val syncedAt = sync.lastSyncedAt
+        val isProblem = sync.status == SyncStatus.Failed ||
+            sync.status == SyncStatus.NeedsConsent
         ListRow(
             title = appState.ui(Ui.SYNC_NOW),
+            // A long status ("Sync failed — tap to retry") goes in the subtitle,
+            // which wraps to two lines cleanly; the trailing slot keeps only
+            // short states so it can never be squeezed into vertical text.
+            subtitle = when (sync.status) {
+                SyncStatus.Failed -> appState.ui(Ui.SYNC_FAILED)
+                SyncStatus.NeedsConsent -> appState.ui(Ui.SYNC_NEEDS_CONSENT)
+                else -> null
+            },
             trailingText = when {
                 sync.isSyncing -> appState.ui(Ui.SYNC_SYNCING)
-                sync.status == SyncStatus.Failed -> appState.ui(Ui.SYNC_FAILED)
-                sync.status == SyncStatus.NeedsConsent -> appState.ui(Ui.SYNC_NEEDS_CONSENT)
+                isProblem -> null
                 syncedAt != null -> RelativeTime.syncedAgo(now, syncedAt, appState.scriptChoice)
                 else -> appState.ui(Ui.SYNC_NEVER)
             },

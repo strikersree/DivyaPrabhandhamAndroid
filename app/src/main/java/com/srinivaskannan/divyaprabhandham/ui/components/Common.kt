@@ -132,6 +132,13 @@ fun ListRow(
                     text = trailingText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // Never let a long trailing label wrap — squeezed against
+                    // the weighted title it would break one glyph per line.
+                    // It stays on one line; genuinely long status text belongs
+                    // in the subtitle, not here.
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             if (showChevron && onClick != null) {

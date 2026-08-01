@@ -8,7 +8,10 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.draw.rotate
@@ -98,8 +101,15 @@ fun SearchScreen(
     val askHistory = com.srinivaskannan.divyaprabhandham.ui.theme.LocalAskHistory.current
     val context = LocalContext.current
     val voice = remember { com.srinivaskannan.divyaprabhandham.ask.VoiceRecognizer(context) }
-    // Release the recognizer when the screen leaves composition.
-    DisposableEffect(Unit) { onDispose { voice.release() } }
+    val speaker = remember { com.srinivaskannan.divyaprabhandham.ask.TtsSpeaker(context) }
+    var voiceMode by remember { mutableStateOf(false) }
+    // Release both engines when the screen leaves composition.
+    DisposableEffect(Unit) {
+        onDispose {
+            voice.release()
+            speaker.shutdown()
+        }
+    }
     var query by remember { mutableStateOf("") }
     val trimmed = query.trim()
 
@@ -164,6 +174,10 @@ fun SearchScreen(
                 is AskResult.Answer -> {
                     conversation.addAnswer(result.text)
                     askHistory.record(q, result.text)
+                    // Voice mode: read the answer aloud (script-matched, English
+                    // fallback when no Tamil voice). Strip markdown first so it
+                    // does not speak "asterisk asterisk".
+                    if (voiceMode) speaker.speak(plainSpeech(result.text))
                 }
                 is AskResult.Error -> conversation.addFailure(result.kind)
             }
@@ -187,6 +201,13 @@ fun SearchScreen(
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         AskTopBar(
             signedIn = appState.syncEnabled,
+            voiceMode = voiceMode,
+            speaking = speaker.speaking,
+            onToggleVoice = {
+                voiceMode = !voiceMode
+                if (!voiceMode) speaker.stop()
+            },
+            onStopSpeaking = { speaker.stop() },
             onHistory = {
                 askHistory.load()
                 showHistory = true
@@ -271,8 +292,15 @@ private fun AnswerBubble(text: String, isError: Boolean = false) {
                     contentColor = if (isError) MaterialTheme.colorScheme.onErrorContainer
                     else MaterialTheme.colorScheme.onSurface,
                 ) {
-                    Text(text, Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        style = MaterialTheme.typography.bodyLarge)
+                    if (isError) {
+                        Text(text, Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            style = MaterialTheme.typography.bodyLarge)
+                    } else {
+                        MarkdownText(
+                            text,
+                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        )
+                    }
                 }
             }
             if (!isError) {
@@ -544,11 +572,34 @@ private fun errorText(appState: AppState, kind: AskError): String =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AskTopBar(signedIn: Boolean, onHistory: () -> Unit) {
+private fun AskTopBar(
+    signedIn: Boolean,
+    voiceMode: Boolean,
+    speaking: Boolean,
+    onToggleVoice: () -> Unit,
+    onStopSpeaking: () -> Unit,
+    onHistory: () -> Unit,
+) {
     val appState = LocalAppState.current
     androidx.compose.material3.TopAppBar(
         title = { Text(appState.ui(Ui.ASK_INTRO_TITLE)) },
         actions = {
+            // Stop button appears only while actually speaking.
+            if (speaking) {
+                IconButton(onClick = onStopSpeaking) {
+                    Icon(Icons.Filled.Stop, contentDescription = appState.ui(Ui.ASK_VOICE_STOP))
+                }
+            }
+            // Voice-mode toggle: speak answers aloud.
+            IconButton(onClick = onToggleVoice) {
+                Icon(
+                    if (voiceMode) Icons.Filled.VolumeUp
+                    else Icons.Filled.VolumeOff,
+                    contentDescription = appState.ui(Ui.ASK_VOICE_MODE),
+                    tint = if (voiceMode) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             // History lives in the user's Google account, so the button is only
             // meaningful when signed in — hidden otherwise rather than dangling.
             if (signedIn) {
@@ -562,6 +613,13 @@ private fun AskTopBar(signedIn: Boolean, onHistory: () -> Unit) {
         },
     )
 }
+
+/** Strips light Markdown to plain prose for speech, so TTS never reads "**". */
+private fun plainSpeech(text: String): String =
+    text.replace(Regex("""[*#`_]+"""), "")
+        .replace(Regex("""\n{2,}"""), ". ")
+        .replace("\n", ". ")
+        .trim()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -616,7 +674,7 @@ private fun AskHistorySheet(
                                     maxLines = 2,
                                 )
                                 Text(
-                                    entry.answer,
+                                    plainSpeech(entry.answer),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 2,
