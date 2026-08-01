@@ -23,6 +23,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,6 +108,10 @@ class MainActivity : ComponentActivity() {
                 is DivyaPrabhandhamApp.Startup.Ready -> {
                     val appState = startup.appState
                     val sync = startup.sync
+                    val historyScope = rememberCoroutineScope()
+                    val askHistory = remember(sync) {
+                        com.srinivaskannan.divyaprabhandham.ask.AskHistoryStore(sync, historyScope)
+                    }
 
                     // System bar icons follow the app's own light/dark choice,
                     // not just the device's — the two can disagree.
@@ -141,6 +147,7 @@ class MainActivity : ComponentActivity() {
                     DivyaPrabhandhamTheme(
                         appState = appState,
                         repository = startup.repository,
+                        askHistory = askHistory,
                     ) {
                         AppScaffold(
                             sync = sync,

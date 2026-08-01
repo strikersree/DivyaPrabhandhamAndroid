@@ -32,6 +32,9 @@ val LocalAppState = staticCompositionLocalOf<AppState> {
 val LocalRepository = staticCompositionLocalOf<PrabandhamRepository> {
     error("PrabandhamRepository not provided")
 }
+val LocalAskHistory = staticCompositionLocalOf<com.srinivaskannan.divyaprabhandham.ask.AskHistoryStore> {
+    error("AskHistoryStore not provided")
+}
 
 /**
  * Material 3 shapes.
@@ -144,6 +147,7 @@ val supportsDynamicColor: Boolean
 fun DivyaPrabhandhamTheme(
     appState: AppState,
     repository: PrabandhamRepository,
+    askHistory: com.srinivaskannan.divyaprabhandham.ask.AskHistoryStore,
     content: @Composable () -> Unit,
 ) {
     val systemDark = isSystemInDarkTheme()
@@ -163,6 +167,7 @@ fun DivyaPrabhandhamTheme(
     CompositionLocalProvider(
         LocalAppState provides appState,
         LocalRepository provides repository,
+        LocalAskHistory provides askHistory,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

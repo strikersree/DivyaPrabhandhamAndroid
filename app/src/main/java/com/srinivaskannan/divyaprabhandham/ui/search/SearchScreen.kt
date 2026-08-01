@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.draw.rotate
@@ -94,6 +95,7 @@ fun SearchScreen(
     val scope = rememberCoroutineScope()
 
     val conversation = remember { AskConversation() }
+    val askHistory = com.srinivaskannan.divyaprabhandham.ui.theme.LocalAskHistory.current
     val context = LocalContext.current
     val voice = remember { com.srinivaskannan.divyaprabhandham.ask.VoiceRecognizer(context) }
     // Release the recognizer when the screen leaves composition.
@@ -159,13 +161,37 @@ fun SearchScreen(
             val result = AskClient.ask(question = q, context = context)
             conversation.updatePending(false)
             when (result) {
-                is AskResult.Answer -> conversation.addAnswer(result.text)
+                is AskResult.Answer -> {
+                    conversation.addAnswer(result.text)
+                    askHistory.record(q, result.text)
+                }
                 is AskResult.Error -> conversation.addFailure(result.kind)
             }
         }
     }
 
+    var showHistory by remember { mutableStateOf(false) }
+
+    if (showHistory) {
+        AskHistorySheet(
+            store = askHistory,
+            onDismiss = { showHistory = false },
+            onReopen = { entry ->
+                conversation.addUser(entry.question)
+                conversation.addAnswer(entry.answer)
+                showHistory = false
+            },
+        )
+    }
+
     Column(modifier = modifier.fillMaxSize().imePadding()) {
+        AskTopBar(
+            signedIn = appState.syncEnabled,
+            onHistory = {
+                askHistory.load()
+                showHistory = true
+            },
+        )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             if (conversation.messages.isEmpty()) {
                 AskIntro(
@@ -515,3 +541,91 @@ private fun errorText(appState: AppState, kind: AskError): String =
         AskError.RATE_LIMITED -> appState.ui(Ui.ASK_ERR_RATE)
         AskError.UNAUTHORIZED, AskError.SERVER, AskError.EMPTY -> appState.ui(Ui.ASK_ERR_SERVER)
     }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AskTopBar(signedIn: Boolean, onHistory: () -> Unit) {
+    val appState = LocalAppState.current
+    androidx.compose.material3.TopAppBar(
+        title = { Text(appState.ui(Ui.ASK_INTRO_TITLE)) },
+        actions = {
+            // History lives in the user's Google account, so the button is only
+            // meaningful when signed in — hidden otherwise rather than dangling.
+            if (signedIn) {
+                IconButton(onClick = onHistory) {
+                    Icon(
+                        Icons.Filled.History,
+                        contentDescription = appState.ui(Ui.ASK_HISTORY),
+                    )
+                }
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AskHistorySheet(
+    store: com.srinivaskannan.divyaprabhandham.ask.AskHistoryStore,
+    onDismiss: () -> Unit,
+    onReopen: (com.srinivaskannan.divyaprabhandham.ask.AskEntry) -> Unit,
+) {
+    val appState = LocalAppState.current
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    appState.ui(Ui.ASK_HISTORY),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (store.history.entries.isNotEmpty()) {
+                    androidx.compose.material3.TextButton(onClick = { store.clear() }) {
+                        Text(appState.ui(Ui.ASK_HISTORY_CLEAR))
+                    }
+                }
+            }
+
+            when {
+                store.loading -> Text(
+                    appState.ui(Ui.ASK_THINKING),
+                    Modifier.padding(20.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                store.history.entries.isEmpty() -> Text(
+                    appState.ui(Ui.ASK_HISTORY_EMPTY),
+                    Modifier.padding(20.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 460.dp)) {
+                    items(store.history.entries, key = { it.askedAt }) { entry ->
+                        Surface(
+                            onClick = { onReopen(entry) },
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+                                Text(
+                                    entry.question,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 2,
+                                )
+                                Text(
+                                    entry.answer,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

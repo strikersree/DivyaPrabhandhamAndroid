@@ -91,6 +91,14 @@ class GoogleSyncManager(
      * missing. Without that split, every return to the app threw up a sign-in
      * sheet, over and over, whether or not they had already signed in.
      */
+    /**
+     * A Drive access token for a signed-in user, or null when not signed in or
+     * the grant is not yet usable. Non-interactive: used by the Ask history
+     * store, which should quietly do nothing when signed out rather than pop a
+     * consent dialog of its own.
+     */
+    suspend fun currentToken(): String? = accessToken(interactive = false)
+
     private suspend fun accessToken(interactive: Boolean): String? {
         cachedToken?.let { return it }
         val result = authorize() ?: return null

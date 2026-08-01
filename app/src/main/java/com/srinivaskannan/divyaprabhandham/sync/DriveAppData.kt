@@ -2,6 +2,7 @@ package com.srinivaskannan.divyaprabhandham.sync
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.srinivaskannan.divyaprabhandham.ask.AskHistory
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.OutputStreamWriter
@@ -117,6 +118,57 @@ internal object DriveAppData {
                 token = token,
                 contentType = "application/json; charset=UTF-8",
                 payload = json.encodeToString(payload),
+            ) != null
+        }
+
+    // --- Ask history -------------------------------------------------------
+    // A second appDataFolder file, kept apart from reading-state.json so a
+    // growing history never bloats the state that syncs on every bookmark.
+
+    suspend fun findHistoryFileId(token: String): String? = withContext(Dispatchers.IO) {
+        val query = URLEncoder.encode("name = '${AskHistory.FILE_NAME}'", "UTF-8")
+        val url = "$FILES?spaces=appDataFolder&q=$query&fields=files(id)&pageSize=1"
+        val body = request(url, "GET", token) ?: return@withContext null
+        runCatching { json.decodeFromString<FileList>(body).files.firstOrNull()?.id }.getOrNull()
+    }
+
+    suspend fun downloadHistory(token: String, fileId: String): AskHistory? =
+        withContext(Dispatchers.IO) {
+            val body = request("$FILES/$fileId?alt=media", "GET", token) ?: return@withContext null
+            runCatching { json.decodeFromString<AskHistory>(body) }.getOrNull()
+        }
+
+    suspend fun createHistory(token: String, history: AskHistory): String? =
+        withContext(Dispatchers.IO) {
+            val metadata = """{"name":"${AskHistory.FILE_NAME}","parents":["appDataFolder"]}"""
+            val content = json.encodeToString(history)
+            val multipart = buildString {
+                append("--$BOUNDARY\r\n")
+                append("Content-Type: application/json; charset=UTF-8\r\n\r\n")
+                append(metadata).append("\r\n")
+                append("--$BOUNDARY\r\n")
+                append("Content-Type: application/json; charset=UTF-8\r\n\r\n")
+                append(content).append("\r\n")
+                append("--$BOUNDARY--")
+            }
+            val body = request(
+                url = "$UPLOAD?uploadType=multipart&fields=id",
+                method = "POST",
+                token = token,
+                contentType = "multipart/related; boundary=$BOUNDARY",
+                payload = multipart,
+            ) ?: return@withContext null
+            runCatching { json.decodeFromString<FileRef>(body).id }.getOrNull()
+        }
+
+    suspend fun updateHistory(token: String, fileId: String, history: AskHistory): Boolean =
+        withContext(Dispatchers.IO) {
+            request(
+                url = "$UPLOAD/$fileId?uploadType=media",
+                method = "PATCH",
+                token = token,
+                contentType = "application/json; charset=UTF-8",
+                payload = json.encodeToString(history),
             ) != null
         }
 
