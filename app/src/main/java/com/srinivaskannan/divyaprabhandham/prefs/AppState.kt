@@ -88,7 +88,6 @@ class AppState private constructor(
     /** Divya Desams the user has visited, mapped to the year of the visit. */
     var visitedDesams: Map<String, Int> by mutableStateOf(snapshot.visitedDesams)
         internal set
-        internal set
 
     // MARK: - Appearance
 

@@ -114,6 +114,19 @@ def check_delimiters(path, code):
         fail(rel(path), f"unclosed '{open_ch}' opened at line {open_line}")
 
 
+def check_doubled_accessors(path, code):
+    """Two identical accessor lines in a row — e.g. a duplicated 'internal set'
+    from a careless insertion — are a member-declaration syntax error the Kotlin
+    compiler reports as 'Expecting member declaration'. Cheap to catch here."""
+    accessor_lines = {"internal set", "private set", "protected set", "set", "get()"}
+    lines = code.split("\n")
+    for i in range(1, len(lines)):
+        cur = lines[i].strip()
+        if cur in accessor_lines and lines[i - 1].strip() == cur:
+            fail(rel(path), f"duplicated accessor '{cur}' at line {i + 1} "
+                            f"(previous line is identical) — syntax error")
+
+
 def rel(path):
     return os.path.relpath(path, ROOT)
 
@@ -603,6 +616,7 @@ def main():
         text = open(path, encoding="utf-8").read()
         check_package(path, text)
         check_delimiters(path, strip_code(text))
+        check_doubled_accessors(path, strip_code(text))
 
     declared = collect_declarations(files)
 
