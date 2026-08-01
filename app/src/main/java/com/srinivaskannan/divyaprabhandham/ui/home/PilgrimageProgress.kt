@@ -1,5 +1,6 @@
 package com.srinivaskannan.divyaprabhandham.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.srinivaskannan.divyaprabhandham.R
 import com.srinivaskannan.divyaprabhandham.data.Pilgrimage
 import com.srinivaskannan.divyaprabhandham.data.PilgrimageLevel
 import com.srinivaskannan.divyaprabhandham.data.Ui
@@ -71,11 +76,23 @@ fun PilgrimageProgressCard(visited: Int, modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    appState.ui(Ui.PILGRIMAGE_TITLE),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // The current tier's earned badge sits beside the title once
+                    // the first level is reached.
+                    if (current != null) {
+                        Image(
+                            painter = painterResource(tierBadgeRes(current.index)),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
+                    Text(
+                        appState.ui(Ui.PILGRIMAGE_TITLE),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Filled.Place, contentDescription = null,
@@ -160,14 +177,18 @@ private fun LevelCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean)
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Placeholder art slot — final artwork replaces the coloured block.
+            // The tier's element badge — full colour when earned, dimmed and
+            // desaturated with a lock until then, so the art itself is the
+            // reward for reaching the tier.
             Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (unlocked) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceVariant,
+                Image(
+                    painter = painterResource(tierBadgeRes(level.index)),
+                    contentDescription = null,
                     modifier = Modifier.size(64.dp),
-                ) {}
+                    alpha = if (unlocked) 1f else 0.30f,
+                    colorFilter = if (unlocked) null
+                    else ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }),
+                )
                 if (!unlocked) {
                     Icon(
                         Icons.Filled.Lock,
@@ -208,4 +229,13 @@ private fun LevelCard(level: PilgrimageLevel, unlocked: Boolean, tamil: Boolean)
             }
         }
     }
+}
+
+/** Maps a tier index (1..5) to its element badge drawable. */
+private fun tierBadgeRes(index: Int): Int = when (index) {
+    1 -> R.drawable.ic_tier_1
+    2 -> R.drawable.ic_tier_2
+    3 -> R.drawable.ic_tier_3
+    4 -> R.drawable.ic_tier_4
+    else -> R.drawable.ic_tier_5
 }
