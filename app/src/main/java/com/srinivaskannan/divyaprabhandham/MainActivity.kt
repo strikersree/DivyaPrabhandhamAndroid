@@ -149,12 +149,23 @@ class MainActivity : ComponentActivity() {
                         repository = startup.repository,
                         askHistory = askHistory,
                     ) {
-                        AppScaffold(
-                            sync = sync,
-                            tipJar = startup.tipJar,
-                            deepLink = deepLink,
-                            onDeepLinkHandled = { deepLink = null },
-                        )
+                        androidx.compose.foundation.layout.Box(
+                            androidx.compose.ui.Modifier.fillMaxSize(),
+                        ) {
+                            AppScaffold(
+                                sync = sync,
+                                tipJar = startup.tipJar,
+                                deepLink = deepLink,
+                                onDeepLinkHandled = { deepLink = null },
+                            )
+                            // First run: the onboarding sits over the app until
+                            // the person finishes or skips it.
+                            if (!appState.onboardingComplete) {
+                                com.srinivaskannan.divyaprabhandham.ui.onboarding.OnboardingHost(
+                                    onFinish = { appState.completeOnboarding() },
+                                )
+                            }
+                        }
                     }
                 }
             }

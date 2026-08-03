@@ -133,6 +133,11 @@ class AppState private constructor(
     var tipPromptSilenced: Boolean by mutableStateOf(snapshot.tipPromptSilenced)
         internal set
 
+    /** Whether the first-run onboarding has been completed or skipped. Device-
+     *  local: not synced, so a new device still onboards. */
+    var onboardingComplete: Boolean by mutableStateOf(snapshot.onboardingComplete)
+        private set
+
     var launchCount: Int by mutableStateOf(snapshot.launchCount)
         private set
 
@@ -333,6 +338,12 @@ class AppState private constructor(
         commit { it[Keys.TIP_SILENCED] = true }
     }
 
+    fun completeOnboarding() {
+        if (onboardingComplete) return
+        onboardingComplete = true
+        commit { it[Keys.ONBOARDING] = true }
+    }
+
     // Device-local only. Reminders are per-device (both the permission and the
     // scheduling are), and the launch/prompt counters describe this install.
     // None of these stamp changedAt or reach the network.
@@ -404,6 +415,7 @@ class AppState private constructor(
         prefs[Keys.FONT_FAMILY] = fontChoice.key
         prefs[Keys.WIDGET_AAYIRAM] = widgetAayiram.key
         prefs[Keys.TIP_SILENCED] = tipPromptSilenced
+        prefs[Keys.ONBOARDING] = onboardingComplete
         prefs[Keys.CHANGED_AT] = changedAt
         supporterSince?.let { prefs[Keys.SUPPORTER_SINCE] = it }
         val read = lastRead
@@ -434,6 +446,7 @@ class AppState private constructor(
         val supporterSince: Long?,
         val lastTipPrompt: Long?,
         val tipPromptSilenced: Boolean,
+        val onboardingComplete: Boolean,
         val launchCount: Int,
         val changedAt: Long,
     )
@@ -458,6 +471,7 @@ class AppState private constructor(
         val SUPPORTER_SINCE = longPreferencesKey("dp.supporterSince")
         val LAST_TIP_PROMPT = longPreferencesKey("dp.lastTipPrompt")
         val TIP_SILENCED = booleanPreferencesKey("dp.tipSilenced")
+        val ONBOARDING = booleanPreferencesKey("dp.onboardingComplete")
         val LAUNCH_COUNT = intPreferencesKey("dp.launchCount")
         val CHANGED_AT = longPreferencesKey("dp.changedAt")
     }
@@ -525,6 +539,7 @@ class AppState private constructor(
                 supporterSince = prefs[Keys.SUPPORTER_SINCE],
                 lastTipPrompt = prefs[Keys.LAST_TIP_PROMPT],
                 tipPromptSilenced = prefs[Keys.TIP_SILENCED] ?: false,
+                onboardingComplete = prefs[Keys.ONBOARDING] ?: false,
                 launchCount = prefs[Keys.LAUNCH_COUNT] ?: 0,
                 changedAt = prefs[Keys.CHANGED_AT] ?: 0L,
             )
