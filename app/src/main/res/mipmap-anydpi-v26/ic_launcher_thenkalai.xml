@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Thenkalai app-icon variant. The full supplied artwork sits as the
+  foreground on a matching blue background; the naamam and gopurams stay within
+  the safe circle so no launcher mask clips the emblem. Selected at runtime from
+  onboarding / Settings by toggling the activity-alias.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_thenkalai_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_thenkalai_foreground" />
+</adaptive-icon>

@@ -464,7 +464,24 @@ def check_manifest(files, declared):
     path = os.path.join(APP, "AndroidManifest.xml")
     xml = open(path, encoding="utf-8").read()
 
+    # activity-alias android:name values are aliases, not classes — their real
+    # target is targetActivity. Collect alias names to skip, and validate the
+    # targetActivity instead.
+    alias_names = set()
+    for m in re.finditer(r"<activity-alias\b(.*?)</activity-alias>", xml, re.S):
+        block = m.group(1)
+        nm = re.search(r'android:name="(\.[\w.]+)"', block)
+        if nm:
+            alias_names.add(nm.group(1))
+        tgt = re.search(r'android:targetActivity="(\.[\w.]+)"', block)
+        if tgt:
+            cls = PKG_ROOT + tgt.group(1)
+            if cls not in declared:
+                fail("AndroidManifest.xml", f"activity-alias targetActivity '{cls}' is not defined")
+
     for m in re.finditer(r'android:name="(\.[\w.]+)"', xml):
+        if m.group(1) in alias_names:
+            continue
         cls = PKG_ROOT + m.group(1)
         if cls not in declared:
             fail("AndroidManifest.xml", f"declares '{cls}', which is not defined")

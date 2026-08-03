@@ -148,6 +148,10 @@ enum class Ui {
     ONB_REMINDER_TITLE,
     ONB_REMINDER_BODY,
     ONB_REMINDER_ENABLE,
+    ONB_ICON_TITLE,
+    ONB_ICON_BODY,
+    ONB_ICON_VADAKALAI,
+    ONB_ICON_THENKALAI,
     ONB_PREVIEW,
     ONB_SETTINGS_NOTE,
     DESAM_VERSES,
@@ -415,6 +419,10 @@ object UiText {
         Ui.ONB_REMINDER_TITLE to ("தினசரி நினைவூட்டல்கள்" to "Daily reminders"),
         Ui.ONB_REMINDER_BODY to ("தினமும் பாராயணத்திற்கு மெல்லிய நினைவூட்டல் பெறுங்கள்." to "Get a gentle daily nudge to recite."),
         Ui.ONB_REMINDER_ENABLE to ("தினசரி நினைவூட்டலை இயக்கு" to "Enable daily reminder"),
+        Ui.ONB_ICON_TITLE to ("செயலி சின்னம்" to "App icon"),
+        Ui.ONB_ICON_BODY to ("உங்கள் சம்பிரதாயத்திற்கு ஏற்ற சின்னத்தைத் தேர்ந்தெடுக்கவும்." to "Choose the icon that matches your tradition."),
+        Ui.ONB_ICON_VADAKALAI to ("வடகலை" to "Vadakalai"),
+        Ui.ONB_ICON_THENKALAI to ("தென்கலை" to "Thenkalai"),
         Ui.ONB_PREVIEW to ("முன்னோட்டம்" to "Preview"),
         Ui.ONB_SETTINGS_NOTE to (
             "குறிப்பு: இந்த விருப்பங்களை எப்போது வேண்டுமானாலும் அமைப்புகள் பட்டியிலிருந்து மாற்றலாம்." to

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -71,17 +72,19 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
  */
 @Composable
 fun OnboardingHost(onFinish: () -> Unit) {
-    val steps = remember { listOf(Step.WELCOME, Step.FONT, Step.SCRIPT, Step.THEME, Step.REMINDER) }
+    val steps = remember { listOf(Step.WELCOME, Step.FONT, Step.SCRIPT, Step.THEME, Step.ICON, Step.REMINDER) }
     var index by remember { mutableIntStateOf(0) }
     val appState = LocalAppState.current
     val step = steps[index]
     val isLast = index == steps.lastIndex
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(Modifier.fillMaxSize().padding(24.dp)) {
-            StepDots(current = index, total = steps.size)
-            Spacer(Modifier.height(20.dp))
-
+        Column(
+            Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(24.dp),
+        ) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 AnimatedContent(
                     targetState = step,
@@ -93,10 +96,15 @@ fun OnboardingHost(onFinish: () -> Unit) {
                         Step.FONT -> FontStep(appState)
                         Step.SCRIPT -> ScriptStep(appState)
                         Step.THEME -> ThemeStep(appState)
+                        Step.ICON -> IconStep(appState)
                         Step.REMINDER -> ReminderStep(appState)
                     }
                 }
             }
+
+            // Progress dots sit at the bottom, clear of the camera cutout.
+            StepDots(current = index, total = steps.size)
+            Spacer(Modifier.height(12.dp))
 
             // Reassurance that nothing here is permanent.
             Text(
@@ -128,7 +136,7 @@ fun OnboardingHost(onFinish: () -> Unit) {
     }
 }
 
-private enum class Step { WELCOME, FONT, SCRIPT, THEME, REMINDER }
+private enum class Step { WELCOME, FONT, SCRIPT, THEME, ICON, REMINDER }
 
 @Composable
 private fun StepDots(current: Int, total: Int) {
@@ -318,6 +326,64 @@ private fun themeLabel(appState: AppState, theme: ReaderThemeChoice): String = w
     ReaderThemeChoice.SEPIA -> appState.ui(Ui.THEME_SEPIA)
     ReaderThemeChoice.NIGHT -> appState.ui(Ui.THEME_NIGHT)
     else -> appState.ui(Ui.THEME_LIGHT)
+}
+
+@Composable
+private fun IconStep(appState: AppState) {
+    val context = LocalContext.current
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        StepHeader(appState.ui(Ui.ONB_ICON_TITLE), appState.ui(Ui.ONB_ICON_BODY))
+        Spacer(Modifier.height(28.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            IconChoice(
+                label = appState.ui(Ui.ONB_ICON_VADAKALAI),
+                art = R.drawable.ic_icon_vadakalai,
+                selected = appState.appIconKey == "vadakalai",
+                onPick = {
+                    appState.updateAppIconKey("vadakalai")
+                    com.srinivaskannan.divyaprabhandham.ui.settings.AppIconSwitcher.apply(
+                        context, com.srinivaskannan.divyaprabhandham.ui.settings.AppIcon.VADAKALAI,
+                    )
+                },
+            )
+            IconChoice(
+                label = appState.ui(Ui.ONB_ICON_THENKALAI),
+                art = R.drawable.ic_icon_thenkalai,
+                selected = appState.appIconKey == "thenkalai",
+                onPick = {
+                    appState.updateAppIconKey("thenkalai")
+                    com.srinivaskannan.divyaprabhandham.ui.settings.AppIconSwitcher.apply(
+                        context, com.srinivaskannan.divyaprabhandham.ui.settings.AppIcon.THENKALAI,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun IconChoice(label: String, art: Int, selected: Boolean, onPick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            onClick = onPick,
+            shape = RoundedCornerShape(24.dp),
+            color = Color.Transparent,
+            border = androidx.compose.foundation.BorderStroke(
+                width = if (selected) 3.dp else 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outlineVariant,
+            ),
+        ) {
+            Image(
+                painter = painterResource(art),
+                contentDescription = label,
+                modifier = Modifier.size(96.dp).padding(6.dp),
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+    }
 }
 
 @Composable
