@@ -10,7 +10,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.srinivaskannan.divyaprabhandham.R
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.UiText
-import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import com.srinivaskannan.divyaprabhandham.widget.WidgetBridge
 
 /**
@@ -25,9 +24,9 @@ class ReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val snapshot = WidgetBridge.readSnapshot(context)
-        val script = snapshot?.script?.let { ScriptChoice.from(it) } ?: ScriptChoice.TAMIL
+        val english = snapshot?.uiEnglish ?: false
 
-        val title = UiText.string(Ui.REMINDER_MESSAGE, script)
+        val title = UiText.string(Ui.REMINDER_MESSAGE, english)
         val body = snapshot?.lastReadTitle
 
         val deepLink = Uri.parse("divyaprabhandham://resume")

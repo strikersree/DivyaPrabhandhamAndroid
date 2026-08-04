@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.srinivaskannan.divyaprabhandham.R
 import com.srinivaskannan.divyaprabhandham.data.Ui
+import com.srinivaskannan.divyaprabhandham.data.UiText
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.ReminderTime
@@ -172,7 +173,6 @@ private fun StepHeader(title: String, body: String) {
 
 @Composable
 private fun WelcomeStep() {
-    val appState = LocalAppState.current
     Column(
         Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -184,16 +184,33 @@ private fun WelcomeStep() {
             modifier = Modifier.size(120.dp),
         )
         Spacer(Modifier.height(16.dp))
+        // The welcome greets in both languages, whatever the UI language will be.
         Text(
-            appState.ui(Ui.ONB_WELCOME_TITLE),
+            UiText.english(Ui.ONB_WELCOME_TITLE),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
-            appState.ui(Ui.ONB_WELCOME_BODY),
+            UiText.tamil(Ui.ONB_WELCOME_TITLE),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            UiText.english(Ui.ONB_WELCOME_BODY),
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            UiText.tamil(Ui.ONB_WELCOME_BODY),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 8.dp),

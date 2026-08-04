@@ -47,6 +47,7 @@ data class WidgetSnapshot(
     val lastReadStanzaKey: String? = null,
     val uiContinueReading: String = "",
     val uiPasuram: String = "",
+    val uiEnglish: Boolean = false,
 ) {
     /** The pool to draw from for a given widget configuration. */
     fun verses(choice: WidgetAayiram): List<WidgetVerse> {
@@ -147,8 +148,9 @@ object WidgetBridge {
             },
             lastReadSectionId = lastRead?.sectionId,
             lastReadStanzaKey = lastRead?.stanzaKey,
-            uiContinueReading = UiText.string(Ui.CONTINUE_READING, script),
-            uiPasuram = UiText.string(Ui.PASURAM, script),
+            uiContinueReading = UiText.string(Ui.CONTINUE_READING, appState.uiEnglish),
+            uiPasuram = UiText.string(Ui.PASURAM, appState.uiEnglish),
+            uiEnglish = appState.uiEnglish,
         )
 
         runCatching { file(context).writeText(json.encodeToString(snapshot)) }

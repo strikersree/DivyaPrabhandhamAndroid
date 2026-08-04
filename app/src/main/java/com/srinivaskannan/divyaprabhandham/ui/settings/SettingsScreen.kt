@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Delete
@@ -62,6 +63,7 @@ import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
 import com.srinivaskannan.divyaprabhandham.prefs.AccentChoice
+import com.srinivaskannan.divyaprabhandham.prefs.UiLanguage
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.AppearanceChoice
 import com.srinivaskannan.divyaprabhandham.prefs.FontChoice
@@ -86,7 +88,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.supportsDynamicColor
  * them on the back stack would only mean seven more routes to keep in step with
  * the widget's URI scheme for no gain.
  */
-private enum class Pane { NONE, SYNC, SCRIPT, APPEARANCE, FONT, ACCENT, NOTIFICATIONS, WIDGET }
+private enum class Pane { NONE, SYNC, SCRIPT, APPEARANCE, APP_ICON, FONT, ACCENT, NOTIFICATIONS, WIDGET }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,6 +129,7 @@ fun SettingsScreen(
                 Pane.SYNC -> SyncPane(appState, sync)
                 Pane.SCRIPT -> ScriptPane(appState)
                 Pane.APPEARANCE -> AppearancePane(appState)
+                Pane.APP_ICON -> AppIconPane(appState)
                 Pane.FONT -> FontPane(appState)
                 Pane.ACCENT -> AccentPane(appState)
                 Pane.NOTIFICATIONS -> NotificationsPane(appState)
@@ -164,6 +167,12 @@ private fun RootList(
         leading = Icons.Filled.Contrast,
         trailingText = appearanceLabel(appState, appState.appearance),
         onClick = { onPane(Pane.APPEARANCE) },
+    )
+    ListRow(
+        title = appState.ui(Ui.APP_ICON_HEADER),
+        leading = Icons.Filled.Apps,
+        trailingText = appIconLabel(appState),
+        onClick = { onPane(Pane.APP_ICON) },
     )
     ListRow(
         title = appState.ui(Ui.FONT_HEADER),
@@ -276,6 +285,21 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
 
 @Composable
 private fun ScriptPane(appState: AppState) {
+    // App language: the chrome (menus, labels), independent of the verses.
+    GroupHeader(appState.ui(Ui.APP_LANGUAGE_HEADER))
+    ChoiceRow(
+        title = appState.ui(Ui.LANG_ENGLISH),
+        selected = appState.uiLanguage == UiLanguage.ENGLISH,
+        onClick = { appState.updateUiLanguage(UiLanguage.ENGLISH) },
+    )
+    ChoiceRow(
+        title = appState.ui(Ui.LANG_TAMIL),
+        selected = appState.uiLanguage == UiLanguage.TAMIL,
+        onClick = { appState.updateUiLanguage(UiLanguage.TAMIL) },
+    )
+
+    // Content language: how the pasurams themselves are rendered.
+    GroupHeader(appState.ui(Ui.CONTENT_LANGUAGE_HEADER))
     ScriptChoice.entries.forEach { choice ->
         ChoiceRow(
             title = choice.label,
@@ -286,6 +310,32 @@ private fun ScriptPane(appState: AppState) {
     }
     GroupFooter(appState.ui(Ui.SCRIPT_FOOTER))
 }
+
+@Composable
+private fun AppIconPane(appState: AppState) {
+    val context = LocalContext.current
+    ChoiceRow(
+        title = appState.ui(Ui.ONB_ICON_VADAKALAI),
+        selected = appState.appIconKey == "vadakalai",
+        onClick = {
+            appState.updateAppIconKey("vadakalai")
+            AppIconSwitcher.apply(context, AppIcon.VADAKALAI)
+        },
+    )
+    ChoiceRow(
+        title = appState.ui(Ui.ONB_ICON_THENKALAI),
+        selected = appState.appIconKey == "thenkalai",
+        onClick = {
+            appState.updateAppIconKey("thenkalai")
+            AppIconSwitcher.apply(context, AppIcon.THENKALAI)
+        },
+    )
+    GroupFooter(appState.ui(Ui.APP_ICON_FOOTER))
+}
+
+private fun appIconLabel(appState: AppState): String =
+    if (appState.appIconKey == "thenkalai") appState.ui(Ui.ONB_ICON_THENKALAI)
+    else appState.ui(Ui.ONB_ICON_VADAKALAI)
 
 @Composable
 private fun AppearancePane(appState: AppState) {
@@ -560,6 +610,7 @@ private fun paneTitle(appState: AppState, pane: Pane): String = when (pane) {
     Pane.NONE -> appState.ui(Ui.SETTINGS)
     Pane.SYNC -> appState.ui(Ui.SYNC_TITLE)
     Pane.SCRIPT -> appState.ui(Ui.SCRIPT_HEADER)
+    Pane.APP_ICON -> appState.ui(Ui.APP_ICON_HEADER)
     Pane.APPEARANCE -> appState.ui(Ui.APPEARANCE_HEADER)
     Pane.FONT -> appState.ui(Ui.FONT_HEADER)
     Pane.ACCENT -> appState.ui(Ui.ACCENT_HEADER)

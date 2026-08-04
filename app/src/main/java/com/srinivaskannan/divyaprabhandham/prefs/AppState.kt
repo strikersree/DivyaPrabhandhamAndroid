@@ -106,6 +106,11 @@ class AppState private constructor(
     var scriptChoice: ScriptChoice by mutableStateOf(snapshot.script)
         internal set
 
+    /** Language of the app chrome (menus/labels), independent of the content
+     *  script. */
+    var uiLanguage: UiLanguage by mutableStateOf(snapshot.uiLanguage)
+        internal set
+
     var fontChoice: FontChoice by mutableStateOf(snapshot.font)
         internal set
 
@@ -172,7 +177,9 @@ class AppState private constructor(
     val isHighContrast: Boolean get() = appearance == AppearanceChoice.HIGH_CONTRAST
 
     /** UI-chrome string for the current script. */
-    fun ui(key: Ui): String = UiText.string(key, scriptChoice)
+    fun ui(key: Ui): String = UiText.string(key, uiLanguage.isEnglish)
+
+    val uiEnglish: Boolean get() = uiLanguage.isEnglish
 
     fun isBookmarked(key: String): Boolean = key in bookmarks
 
@@ -308,6 +315,12 @@ class AppState private constructor(
         commit { it[Keys.APPEARANCE] = value.key }
     }
 
+    fun updateUiLanguage(value: UiLanguage) {
+        if (uiLanguage == value) return
+        uiLanguage = value
+        commit { it[Keys.UI_LANG] = value.key }
+    }
+
     fun updateScript(value: ScriptChoice) {
         scriptChoice = value
         commit { it[Keys.SCRIPT] = value.key }
@@ -424,6 +437,7 @@ class AppState private constructor(
         prefs[Keys.ACCENT] = accentChoice.key
         prefs[Keys.APPEARANCE] = appearance.key
         prefs[Keys.SCRIPT] = scriptChoice.key
+        prefs[Keys.UI_LANG] = uiLanguage.key
         prefs[Keys.FONT_FAMILY] = fontChoice.key
         prefs[Keys.WIDGET_AAYIRAM] = widgetAayiram.key
         prefs[Keys.TIP_SILENCED] = tipPromptSilenced
@@ -451,6 +465,7 @@ class AppState private constructor(
         val accent: AccentChoice,
         val appearance: AppearanceChoice,
         val script: ScriptChoice,
+        val uiLanguage: UiLanguage,
         val font: FontChoice,
         val notificationsEnabled: Boolean,
         val reminderTimes: List<ReminderTime>,
@@ -487,6 +502,7 @@ class AppState private constructor(
         val TIP_SILENCED = booleanPreferencesKey("dp.tipSilenced")
         val ONBOARDING = booleanPreferencesKey("dp.onboardingComplete")
         val APP_ICON = stringPreferencesKey("dp.appIcon")
+        val UI_LANG = stringPreferencesKey("dp.uiLanguage")
         val LAUNCH_COUNT = intPreferencesKey("dp.launchCount")
         val CHANGED_AT = longPreferencesKey("dp.changedAt")
     }
@@ -544,6 +560,15 @@ class AppState private constructor(
                 accent = AccentChoice.from(prefs[Keys.ACCENT]),
                 appearance = AppearanceChoice.from(prefs[Keys.APPEARANCE]),
                 script = ScriptChoice.from(prefs[Keys.SCRIPT]),
+                uiLanguage = UiLanguage.from(prefs[Keys.UI_LANG]) ?: run {
+                    val freshInstall = prefs.asMap().isEmpty()
+                    val script = ScriptChoice.from(prefs[Keys.SCRIPT])
+                    when {
+                        freshInstall -> UiLanguage.ENGLISH
+                        script == ScriptChoice.TAMIL -> UiLanguage.TAMIL
+                        else -> UiLanguage.ENGLISH
+                    }
+                },
                 font = FontChoice.from(prefs[Keys.FONT_FAMILY]),
                 notificationsEnabled = prefs[Keys.NOTIFY_ENABLED] ?: false,
                 reminderTimes = prefs[Keys.NOTIFY_TIMES]?.let {

@@ -152,6 +152,12 @@ enum class Ui {
     ONB_ICON_BODY,
     ONB_ICON_VADAKALAI,
     ONB_ICON_THENKALAI,
+    APP_LANGUAGE_HEADER,
+    CONTENT_LANGUAGE_HEADER,
+    LANG_ENGLISH,
+    LANG_TAMIL,
+    APP_ICON_HEADER,
+    APP_ICON_FOOTER,
     ONB_PREVIEW,
     ONB_SETTINGS_NOTE,
     DESAM_VERSES,
@@ -208,11 +214,17 @@ enum class Ui {
 }
 
 object UiText {
-    /** Pick the Tamil or English string for the current script. */
-    fun string(key: Ui, script: ScriptChoice): String {
+    /** Pick the Tamil or English string for the current UI language. */
+    fun string(key: Ui, english: Boolean): String {
         val pair = table.getValue(key)
-        return if (script.usesEnglishUi) pair.second else pair.first
+        return if (english) pair.second else pair.first
     }
+
+    /** The Tamil side of a string, regardless of UI language. */
+    fun tamil(key: Ui): String = table.getValue(key).first
+
+    /** The English side of a string, regardless of UI language. */
+    fun english(key: Ui): String = table.getValue(key).second
 
     private val table: Map<Ui, Pair<String, String>> = mapOf(
         Ui.HOME to ("முகப்பு" to "Home"),
@@ -423,6 +435,12 @@ object UiText {
         Ui.ONB_ICON_BODY to ("உங்கள் சம்பிரதாயத்திற்கு ஏற்ற சின்னத்தைத் தேர்ந்தெடுக்கவும்." to "Choose the icon that matches your tradition."),
         Ui.ONB_ICON_VADAKALAI to ("வடகலை" to "Vadakalai"),
         Ui.ONB_ICON_THENKALAI to ("தென்கலை" to "Thenkalai"),
+        Ui.APP_LANGUAGE_HEADER to ("செயலி மொழி" to "App Language"),
+        Ui.CONTENT_LANGUAGE_HEADER to ("உள்ளடக்க மொழி" to "Content Language"),
+        Ui.LANG_ENGLISH to ("English" to "English"),
+        Ui.LANG_TAMIL to ("தமிழ்" to "தமிழ்"),
+        Ui.APP_ICON_HEADER to ("செயலி சின்னம்" to "App Icon"),
+        Ui.APP_ICON_FOOTER to ("முகப்புத் திரையில் தோன்றும் சின்னம்." to "The icon shown on your home screen."),
         Ui.ONB_PREVIEW to ("முன்னோட்டம்" to "Preview"),
         Ui.ONB_SETTINGS_NOTE to (
             "குறிப்பு: இந்த விருப்பங்களை எப்போது வேண்டுமானாலும் அமைப்புகள் பட்டியிலிருந்து மாற்றலாம்." to

@@ -140,3 +140,22 @@ enum class WidgetAayiram(val key: String) {
         fun from(key: String?) = entries.firstOrNull { it.key == key } ?: ALL
     }
 }
+
+/**
+ * The language of the app's chrome — menus, labels, buttons — chosen
+ * independently of the content script. Decoupling these lets someone read the
+ * verses in Tamil while navigating an English interface, or vice versa.
+ *
+ * New installs default to English menus; existing users keep whatever their
+ * content script implied before this setting existed (migration preserves them).
+ */
+enum class UiLanguage(val key: String) {
+    ENGLISH("english"),
+    TAMIL("tamil");
+
+    val isEnglish: Boolean get() = this == ENGLISH
+
+    companion object {
+        fun from(key: String?): UiLanguage? = entries.firstOrNull { it.key == key }
+    }
+}
