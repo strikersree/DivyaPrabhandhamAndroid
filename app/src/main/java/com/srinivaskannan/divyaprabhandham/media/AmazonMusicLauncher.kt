@@ -3,7 +3,6 @@ package com.srinivaskannan.divyaprabhandham.media
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 
 /**
@@ -43,6 +42,14 @@ object AmazonMusicLauncher {
      * given. Targets the Amazon Music package directly (skipping the app
      * chooser); if it isn't installed, falls back to its Play Store listing so
      * the listener can install it and try again.
+     *
+     * Deliberately does not pre-check whether Amazon Music is installed via
+     * PackageManager: on Android 11+, that query requires the package to be
+     * declared in the manifest's `<queries>` block, and a missing declaration
+     * makes an installed app look absent (this happened once — see commit
+     * history). An explicit setPackage() intent needs no such declaration to
+     * be *sent*; it simply fails with ActivityNotFoundException if the target
+     * truly isn't there, which is what we actually want to react to.
      */
     fun launch(context: Context, albumAsin: String, trackAsin: String? = null): Result {
         val url = buildString {
@@ -55,7 +62,7 @@ object AmazonMusicLauncher {
             setPackage(PKG)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        if (isInstalled(context) && tryStart(context, toAmazon)) return Result.OpenedApp
+        if (tryStart(context, toAmazon)) return Result.OpenedApp
 
         val toStore = Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_URL)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -67,13 +74,6 @@ object AmazonMusicLauncher {
         context.startActivity(intent)
         true
     } catch (_: ActivityNotFoundException) {
-        false
-    }
-
-    private fun isInstalled(context: Context): Boolean = try {
-        context.packageManager.getPackageInfo(PKG, PackageManager.GET_ACTIVITIES)
-        true
-    } catch (_: PackageManager.NameNotFoundException) {
         false
     }
 }
