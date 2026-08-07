@@ -177,6 +177,27 @@ data class YouTubeCatalogue(
 )
 
 /**
+ * Amazon Music track/album identifiers for the hand-off experiment (Thiruppavai
+ * first). Unlike YouTube, Amazon Music plays properly in the background once
+ * handed off, so this is being trialled as a better "Listen" destination where
+ * mapped — see media/AmazonMusicLauncher.kt.
+ *
+ * [album] alone plays the whole album from its first track; [tracks], when
+ * present, are per-pasuram track ASINs in pasuram order, letting a specific
+ * pasuram jump straight to its track.
+ */
+@Serializable
+data class AmazonWork(
+    val album: String,
+    val tracks: List<String> = emptyList(),
+)
+
+@Serializable
+data class AmazonCatalogue(
+    val works: Map<String, AmazonWork> = emptyMap(),
+)
+
+/**
  * A resolved recitation target: either a playlist id or a list of video ids
  * (at most one of them set). Empty means nothing is mapped for the work.
  * Precedence lives in PrabandhamRepository.recitationTarget.

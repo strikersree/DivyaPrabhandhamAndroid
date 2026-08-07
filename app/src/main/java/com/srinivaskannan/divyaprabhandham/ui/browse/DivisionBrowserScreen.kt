@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.Division
+import com.srinivaskannan.divyaprabhandham.media.AmazonMusicLauncher
 import com.srinivaskannan.divyaprabhandham.media.RecitationLauncher
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
@@ -128,17 +129,35 @@ fun DivisionBrowserScreen(
                         },
                         hasRecitation = repository.hasRecitation(work.id),
                         onListen = {
-                            // Hand off to YouTube Music / YouTube / browser.
-                            val target = repository.recitationTarget(work.id)
-                            val ok = RecitationLauncher.launch(
-                                context = context,
-                                work = work,
-                                playlistId = target.playlistId,
-                                videoIds = target.videoIds,
-                                script = appState.scriptChoice,
-                            )
-                            if (!ok) scope.launch {
-                                snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
+                            // Amazon Music trial: where a work is mapped
+                            // (currently Thiruppavai only), prefer it — it
+                            // plays in the background properly, unlike the
+                            // YouTube hand-off. Everything else keeps using
+                            // the existing YouTube chain unchanged.
+                            val amazonWork = repository.amazonTarget(work.id)
+                            if (amazonWork != null) {
+                                when (AmazonMusicLauncher.launch(context, amazonWork.album)) {
+                                    AmazonMusicLauncher.Result.OpenedApp -> Unit
+                                    AmazonMusicLauncher.Result.OpenedPlayStore -> scope.launch {
+                                        snackbars.showSnackbar(appState.ui(Ui.LISTEN_AMAZON_INSTALL))
+                                    }
+                                    AmazonMusicLauncher.Result.Failed -> scope.launch {
+                                        snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
+                                    }
+                                }
+                            } else {
+                                // Hand off to YouTube Music / YouTube / browser.
+                                val target = repository.recitationTarget(work.id)
+                                val ok = RecitationLauncher.launch(
+                                    context = context,
+                                    work = work,
+                                    playlistId = target.playlistId,
+                                    videoIds = target.videoIds,
+                                    script = appState.scriptChoice,
+                                )
+                                if (!ok) scope.launch {
+                                    snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
+                                }
                             }
                         },
                     )

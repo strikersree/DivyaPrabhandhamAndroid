@@ -27,6 +27,7 @@ class PrabandhamRepository private constructor(
     val decadEssences: Map<String, Essence>,
     val recitations: Map<String, Recitation>,
     private val youtube: YouTubeCatalogue,
+    private val amazon: AmazonCatalogue = AmazonCatalogue(),
     val divyaDesams: List<DivyaDesam>,
     val aazhwars: List<Aazhwar>,
 ) {
@@ -136,6 +137,13 @@ class PrabandhamRepository private constructor(
 
     fun hasRecitation(workId: String): Boolean =
         with(recitationTarget(workId)) { playlistId != null || videoIds.isNotEmpty() }
+
+    /**
+     * Amazon Music mapping for a work, if this work has been added to the
+     * trial catalogue (amazon_music.json). Null means fall back to the
+     * YouTube hand-off as before.
+     */
+    fun amazonTarget(workId: String): AmazonWork? = amazon.works[workId]
 
     // MARK: - Lookups
 
@@ -359,6 +367,10 @@ class PrabandhamRepository private constructor(
                 runCatching { json.decodeFromString<YouTubeCatalogue>(text) }.getOrNull()
             } ?: YouTubeCatalogue()
 
+            val amazon: AmazonCatalogue = readOrNull("amazon_music")?.let { text ->
+                runCatching { json.decodeFromString<AmazonCatalogue>(text) }.getOrNull()
+            } ?: AmazonCatalogue()
+
             val desams: List<DivyaDesam> = readOrNull("divyadesams")?.let { text ->
                 runCatching { json.decodeFromString<List<DivyaDesam>>(text) }.getOrNull()
             }.orEmpty()
@@ -373,6 +385,7 @@ class PrabandhamRepository private constructor(
                 decadEssences = decadEssences,
                 recitations = recitations,
                 youtube = youtube,
+                amazon = amazon,
                 divyaDesams = desams,
                 aazhwars = aazhwars,
             )

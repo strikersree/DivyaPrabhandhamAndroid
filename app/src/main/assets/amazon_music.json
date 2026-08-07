@@ -1,0 +1,9 @@
+{
+  "_comment": "Amazon Music hand-off trial. album is the Amazon Music album ASIN; tracks are per-pasuram track ASINs in pasuram order (pasuram N -> tracks[N-1]). Only w3 (Thiruppavai) is mapped so far, with pasuram 1 confirmed; the remaining 29 are to be filled in once verified.",
+  "works": {
+    "w3": {
+      "album": "B00DHETYEO",
+      "tracks": ["B00DHEU1ZA"]
+    }
+  }
+}
