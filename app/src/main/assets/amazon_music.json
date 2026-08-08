@@ -1,5 +1,5 @@
 {
-  "_comment": "Amazon Music hand-off trial. Confirmed on device: playback continues in the background after switching back to the app. Shorter works are one continuous track within the shared compilation album (B00DHETYEO); the two largest works (w2, b2w1) are given as curated playlists instead. w1 (Thiruppallandu) has no link yet.",
+  "_comment": "Amazon Music hand-off trial. Confirmed on device: playback continues in the background after switching back to the app. Shorter works are one continuous track within a shared compilation album; large works get their own dedicated album/playlist. w1 (Thiruppallandu) has no link yet.",
   "works": {
     "w2": { "playlist": "df3f3f8e2b5a46aaac370e25c49b77dai8n0" },
     "w3": { "album": "B00DHETYEO", "track": "B00DHEU1ZA" },
@@ -10,6 +10,10 @@
     "w8": { "album": "B00DHETYEO", "track": "B00DHEU4A2" },
     "w9": { "album": "B00DHETYEO", "track": "B00DHEU592" },
     "w10": { "album": "B00DHETYEO", "track": "B00DHEU5PQ" },
-    "b2w1": { "playlist": "af0644bfd19a41a2a55c1e40e273f6a6i8n0" }
+    "b2w1": { "playlist": "af0644bfd19a41a2a55c1e40e273f6a6i8n0" },
+    "b2w2": { "album": "B00DIM066U", "track": "B00DIM0C7S" },
+    "b2w3": { "album": "B00DIM066U", "track": "B00DIM0CPA" },
+    "b4w1": { "album": "B00DHTZVV4" },
+    "b4w2": { "album": "B005GRV29A", "track": "B005GRV2PY" }
   }
 }

@@ -136,7 +136,8 @@ class PrabandhamRepository private constructor(
     }
 
     fun hasRecitation(workId: String): Boolean =
-        with(recitationTarget(workId)) { playlistId != null || videoIds.isNotEmpty() }
+        with(recitationTarget(workId)) { playlistId != null || videoIds.isNotEmpty() } ||
+            amazonTarget(workId) != null
 
     /**
      * Amazon Music mapping for a work, if this work has been added to the
