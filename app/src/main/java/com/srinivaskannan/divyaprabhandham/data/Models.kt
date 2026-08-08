@@ -177,19 +177,22 @@ data class YouTubeCatalogue(
 )
 
 /**
- * Amazon Music track/album identifiers for the hand-off experiment (Thiruppavai
- * first). Unlike YouTube, Amazon Music plays properly in the background once
- * handed off, so this is being trialled as a better "Listen" destination where
- * mapped — see media/AmazonMusicLauncher.kt.
+ * Amazon Music identifiers for the hand-off trial. Once handed off, playback
+ * continues in the background properly (confirmed on device) — the problem
+ * the YouTube hand-off couldn't solve. See media/AmazonMusicLauncher.kt.
  *
- * [album] alone plays the whole album from its first track; [tracks], when
- * present, are per-pasuram track ASINs in pasuram order, letting a specific
- * pasuram jump straight to its track.
+ * Two shapes, matching how the source catalogue is actually organised:
+ *  - Shorter works are one continuous track within a shared compilation album:
+ *    [album] + [track] (a specific track ASIN within that album).
+ *  - The two largest works (Periyazhwar Thirumozhi, Periya Thirumozhi) are far
+ *    too long for a single track and are given as a curated [playlist] instead.
+ * A work has exactly one of [playlist] or [album]+[track] set.
  */
 @Serializable
 data class AmazonWork(
-    val album: String,
-    val tracks: List<String> = emptyList(),
+    val album: String? = null,
+    val track: String? = null,
+    val playlist: String? = null,
 )
 
 @Serializable

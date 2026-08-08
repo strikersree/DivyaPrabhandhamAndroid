@@ -4,11 +4,12 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.srinivaskannan.divyaprabhandham.data.AmazonWork
 
 /**
  * Hands recitation playback to the Amazon Music app.
  *
- * TRIAL, SCOPED TO THIRUPPAVAI (w3): unlike the YouTube hand-off, once Amazon
+ * TRIAL, EXPANDING TO THE MUDHALAYIRAM: confirmed on device that once Amazon
  * Music takes over, playback continues in the background when the listener
  * switches back to this app — YouTube either pauses on backgrounding (in-app
  * embed) or requires Premium to keep playing (the YouTube app itself). That is
@@ -38,10 +39,11 @@ object AmazonMusicLauncher {
     }
 
     /**
-     * Opens [albumAsin] in Amazon Music, jumping straight to [trackAsin] when
-     * given. Targets the Amazon Music package directly (skipping the app
-     * chooser); if it isn't installed, falls back to its Play Store listing so
-     * the listener can install it and try again.
+     * Opens [work] in Amazon Music: its playlist when one is set, otherwise its
+     * album (jumping straight to the track when one is set). Targets the
+     * Amazon Music package directly (skipping the app chooser); if it isn't
+     * installed, falls back to its Play Store listing so the listener can
+     * install it and try again.
      *
      * Deliberately does not pre-check whether Amazon Music is installed via
      * PackageManager: on Android 11+, that query requires the package to be
@@ -50,14 +52,11 @@ object AmazonMusicLauncher {
      * history). An explicit setPackage() intent needs no such declaration to
      * be *sent*; it simply fails with ActivityNotFoundException if the target
      * truly isn't there, which is what we actually want to react to.
+     *
+     * @return Failed if [work] has neither a playlist nor an album set.
      */
-    fun launch(context: Context, albumAsin: String, trackAsin: String? = null): Result {
-        val url = buildString {
-            append("https://music.amazon.in/albums/").append(albumAsin)
-            append('?')
-            if (trackAsin != null) append("trackAsin=").append(trackAsin).append('&')
-            append("do=play")
-        }
+    fun launch(context: Context, work: AmazonWork): Result {
+        val url = targetUrl(work) ?: return Result.Failed
         val toAmazon = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
             setPackage(PKG)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -68,6 +67,18 @@ object AmazonMusicLauncher {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         return if (tryStart(context, toStore)) Result.OpenedPlayStore else Result.Failed
+    }
+
+    private fun targetUrl(work: AmazonWork): String? = when {
+        !work.playlist.isNullOrBlank() ->
+            "https://music.amazon.in/user-playlists/${work.playlist}?do=play"
+        !work.album.isNullOrBlank() -> buildString {
+            append("https://music.amazon.in/albums/").append(work.album)
+            append('?')
+            if (!work.track.isNullOrBlank()) append("trackAsin=").append(work.track).append('&')
+            append("do=play")
+        }
+        else -> null
     }
 
     private fun tryStart(context: Context, intent: Intent): Boolean = try {

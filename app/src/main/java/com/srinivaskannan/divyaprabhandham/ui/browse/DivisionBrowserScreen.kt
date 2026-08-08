@@ -136,7 +136,7 @@ fun DivisionBrowserScreen(
                             // the existing YouTube chain unchanged.
                             val amazonWork = repository.amazonTarget(work.id)
                             if (amazonWork != null) {
-                                when (AmazonMusicLauncher.launch(context, amazonWork.album)) {
+                                when (AmazonMusicLauncher.launch(context, amazonWork)) {
                                     AmazonMusicLauncher.Result.OpenedApp -> Unit
                                     AmazonMusicLauncher.Result.OpenedPlayStore -> scope.launch {
                                         snackbars.showSnackbar(appState.ui(Ui.LISTEN_AMAZON_INSTALL))

@@ -1,9 +1,15 @@
 {
-  "_comment": "Amazon Music hand-off trial. album is the Amazon Music album ASIN; tracks are per-pasuram track ASINs in pasuram order (pasuram N -> tracks[N-1]). Only w3 (Thiruppavai) is mapped so far, with pasuram 1 confirmed; the remaining 29 are to be filled in once verified.",
+  "_comment": "Amazon Music hand-off trial. Confirmed on device: playback continues in the background after switching back to the app. Shorter works are one continuous track within the shared compilation album (B00DHETYEO); the two largest works (w2, b2w1) are given as curated playlists instead. w1 (Thiruppallandu) has no link yet.",
   "works": {
-    "w3": {
-      "album": "B00DHETYEO",
-      "tracks": ["B00DHEU1ZA"]
-    }
+    "w2": { "playlist": "df3f3f8e2b5a46aaac370e25c49b77dai8n0" },
+    "w3": { "album": "B00DHETYEO", "track": "B00DHEU1ZA" },
+    "w4": { "album": "B00DHETYEO", "track": "B00DHEU2LS" },
+    "w5": { "album": "B00DHETYEO", "track": "B00DHEU308" },
+    "w6": { "album": "B00DHETYEO", "track": "B00DHEU3DU" },
+    "w7": { "album": "B00DHETYEO", "track": "B00DHEU3V2" },
+    "w8": { "album": "B00DHETYEO", "track": "B00DHEU4A2" },
+    "w9": { "album": "B00DHETYEO", "track": "B00DHEU592" },
+    "w10": { "album": "B00DHETYEO", "track": "B00DHEU5PQ" },
+    "b2w1": { "playlist": "af0644bfd19a41a2a55c1e40e273f6a6i8n0" }
   }
 }
