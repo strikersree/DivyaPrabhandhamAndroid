@@ -1,6 +1,7 @@
 {
-  "_comment": "Amazon Music hand-off trial. Confirmed on device: playback continues in the background after switching back to the app. Shorter works are one continuous track within a shared compilation album; large works get their own dedicated album/playlist. w1 (Thiruppallandu) has no link yet.",
+  "_comment": "Amazon Music hand-off trial. Confirmed on device: playback continues in the background after switching back to the app. Shorter works are one continuous track within a shared compilation album; large works get their own dedicated album/playlist. b5w19 (ஆகாரநியமம்) has no recitation link anywhere in the corpus, Amazon included -- a known gap, not an oversight here.",
   "works": {
+    "w1": { "album": "B005HRCYNW", "track": "B005HRCYS2" },
     "w2": { "playlist": "df3f3f8e2b5a46aaac370e25c49b77dai8n0" },
     "w3": { "album": "B00DHETYEO", "track": "B00DHEU1ZA" },
     "w4": { "album": "B00DHETYEO", "track": "B00DHEU2LS" },
@@ -24,6 +25,25 @@
     "b3w7": { "album": "B00DIYWZ8U", "track": "B00DIYYH18" },
     "b3w8": { "album": "B00DIYWZ8U", "track": "B00DIYYIK8" },
     "b3w9": { "album": "B00DIYWZ8U", "track": "B00DIYYJPW" },
-    "b3w10": { "album": "B00DIYWZ8U", "track": "B00DIYYKZG" }
+    "b3w10": { "album": "B00DIYWZ8U", "track": "B00DIYYKZG" },
+    "b5w1": { "album": "B0766455DJ", "track": "B07667HFH5" },
+    "b5w2": { "album": "B0766455DJ", "track": "B07665ZGRG" },
+    "b5w3": { "album": "B0766455DJ", "track": "B07666DXCH" },
+    "b5w4": { "album": "B0766455DJ", "track": "B076662RSL" },
+    "b5w5": { "album": "B0766455DJ", "track": "B07666KS7V" },
+    "b5w6": { "album": "B0766455DJ", "track": "B07666432X" },
+    "b5w7": { "album": "B0766455DJ", "track": "B076667VYN" },
+    "b5w8": { "album": "B0766455DJ", "track": "B076663D4G" },
+    "b5w9": { "album": "B0766455DJ", "track": "B07665GKV3" },
+    "b5w10": { "album": "B0766455DJ", "track": "B07664KP3G" },
+    "b5w11": { "album": "B0766455DJ", "track": "B0766633CT" },
+    "b5w12": { "album": "B0766455DJ", "track": "B076667F8M" },
+    "b5w13": { "album": "B0766455DJ", "track": "B076668YYG" },
+    "b5w14": { "album": "B0766455DJ", "track": "B07666165G" },
+    "b5w15": { "album": "B0766455DJ", "track": "B076669W39" },
+    "b5w16": { "album": "B0766455DJ", "track": "B07665D6VW" },
+    "b5w17": { "album": "B0766455DJ", "track": "B076664GVV" },
+    "b5w18": { "album": "B0766455DJ", "track": "B07666FDR1" },
+    "b5w20": { "album": "B0766455DJ", "track": "B0766588GQ" }
   }
 }
