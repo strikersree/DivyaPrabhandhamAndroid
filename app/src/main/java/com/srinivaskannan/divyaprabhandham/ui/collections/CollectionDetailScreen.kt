@@ -196,19 +196,17 @@ private fun AddWorkSheet(onDismiss: () -> Unit, onPick: (Work) -> Unit) {
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         LazyColumn(Modifier.fillMaxSize()) {
-            repository.divisions.forEach { division ->
-                items(division.works, key = { it.id }) { work ->
-                    Surface(
-                        onClick = { onPick(work) },
-                        color = MaterialTheme.colorScheme.surface,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            work.title(appState.scriptChoice),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
-                        )
-                    }
+            items(repository.allWorks, key = { it.id }) { work ->
+                Surface(
+                    onClick = { onPick(work) },
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        work.title(appState.scriptChoice),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                    )
                 }
             }
         }
