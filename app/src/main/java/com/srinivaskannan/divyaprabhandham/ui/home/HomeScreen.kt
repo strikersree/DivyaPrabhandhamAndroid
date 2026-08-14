@@ -46,6 +46,8 @@ import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.ui.components.AnimatedMeshBackground
+import com.srinivaskannan.divyaprabhandham.ui.components.ListRow
+import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.ui.components.rememberReduceMotion
 import com.srinivaskannan.divyaprabhandham.ui.theme.DivisionPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
@@ -64,6 +66,8 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 fun HomeScreen(
     onOpenDivision: (String) -> Unit,
     onOpenSection: (sectionId: String, stanzaKey: String?) -> Unit,
+    onOpenFavourites: () -> Unit,
+    onOpenCollection: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appState = LocalAppState.current
@@ -109,10 +113,20 @@ fun HomeScreen(
             )
         }
 
+        item(key = "favourites") {
+            ListRow(
+                title = appState.ui(Ui.FAVOURITES),
+                leading = Icons.Filled.Star,
+                leadingTint = MaterialTheme.colorScheme.primary,
+                onClick = onOpenFavourites,
+            )
+        }
+
         if (appState.pinnedWorks.isNotEmpty()) {
             item(key = "pinned") {
                 PinnedSection(
                     onOpenSection = { onOpenSection(it, null) },
+                    onOpenCollection = onOpenCollection,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
@@ -271,10 +285,15 @@ private fun buildSubtitle(
     return "${appState.ui(Ui.PASURAM)} $lo–$hi · ${works.size} ${appState.ui(Ui.WORKS)}"
 }
 
-/** Pinned works as square tiles in their division's colours. */
+/** Pinned works and collections as square tiles. A pin entry is either a bare
+ *  work id, or "collection:<id>" — see [AppState.pinnedCollectionEntry]. This
+ *  union-aware rendering exists because the earlier version assumed every
+ *  entry was a work: a pinned collection would have silently rendered as an
+ *  empty gap in the row. Mirrors a real bug the iOS build found and fixed. */
 @Composable
 private fun PinnedSection(
     onOpenSection: (String) -> Unit,
+    onOpenCollection: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appState = LocalAppState.current
@@ -291,19 +310,35 @@ private fun PinnedSection(
         // keeps Home scannable in one screen rather than pushing the recents
         // below the fold.
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(appState.pinnedWorks, key = { it }) { workId ->
-                val work = repository.work(workId)
-                if (work != null) {
-                    PinnedTile(
-                        title = work.title(appState.scriptChoice),
-                        author = work.author(appState.scriptChoice),
-                        palette = DivisionPalette.sweep(
-                            repository.divisionForWork(workId)?.id ?: "d1",
-                        ),
-                        onClick = {
-                            work.sections.firstOrNull()?.let { onOpenSection(it.id) }
-                        },
-                    )
+            items(appState.pinnedWorks, key = { it }) { pinEntry ->
+                val collectionId = AppState.pinnedCollectionId(pinEntry)
+                if (collectionId != null) {
+                    val collection = appState.collection(collectionId)
+                    if (collection != null) {
+                        PinnedTile(
+                            title = collection.name,
+                            author = "${collection.pasuramKeys.size} ${appState.ui(Ui.COLLECTION_PASURAM_COUNT)}",
+                            palette = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primaryContainer,
+                            ),
+                            onClick = { onOpenCollection(collectionId) },
+                        )
+                    }
+                } else {
+                    val work = repository.work(pinEntry)
+                    if (work != null) {
+                        PinnedTile(
+                            title = work.title(appState.scriptChoice),
+                            author = work.author(appState.scriptChoice),
+                            palette = DivisionPalette.sweep(
+                                repository.divisionForWork(pinEntry)?.id ?: "d1",
+                            ),
+                            onClick = {
+                                work.sections.firstOrNull()?.let { onOpenSection(it.id) }
+                            },
+                        )
+                    }
                 }
             }
         }

@@ -35,6 +35,22 @@ data class ReminderTime(val hour: Int, val minute: Int) {
 data class LastRead(val sectionId: String, val stanzaKey: String? = null)
 
 /**
+ * A user-created collection of pasurams — a playlist, not a folder: it holds
+ * individual verse keys (the same "sectionId#index" format bookmarks already
+ * use), gathered from any work of any division, in the order they were added.
+ * Adding a whole work is a convenience that expands to every pasuram key in
+ * it at once — the collection itself never stores a reference to the work,
+ * only the tracks. Mirrors the iOS implementation's model exactly.
+ */
+@Serializable
+data class UserCollection(
+    val id: String,
+    val name: String,
+    val pasuramKeys: List<String> = emptyList(),
+    val createdAt: Long,
+)
+
+/**
  * Everything that should survive relaunch: reading position, bookmarks,
  * recently viewed sections, pins, theme and font settings.
  *
@@ -82,8 +98,14 @@ class AppState private constructor(
     var recentSearches: List<String> by mutableStateOf(snapshot.recentSearches)
         internal set
 
-    /** Works pinned to Home (up to [MAX_PINNED_WORKS]). */
+    /** Works pinned to Home (up to [MAX_PINNED_WORKS]). Entries are either a
+     *  bare work id, or "collection:<id>" for a pinned collection — see
+     *  [pinnedCollectionId]. */
     var pinnedWorks: List<String> by mutableStateOf(snapshot.pinnedWorks)
+
+    /** The user's own collections of pasurams, most-recently-created last. */
+    var collections: List<UserCollection> by mutableStateOf(snapshot.collections)
+        internal set
 
     /** Divya Desams the user has visited, mapped to the year of the visit. */
     var visitedDesams: Map<String, Int> by mutableStateOf(snapshot.visitedDesams)
@@ -259,6 +281,73 @@ class AppState private constructor(
         commit { it[Keys.PINNED] = encodeList(list) }
     }
 
+    /** Pin or unpin a collection to Home, sharing the same list and cap as
+     *  pinned works — see [pinnedWorks]'s "collection:<id>" convention. */
+    fun togglePinCollection(collectionId: String) {
+        togglePin(pinnedCollectionEntry(collectionId))
+    }
+
+    fun isCollectionPinned(collectionId: String): Boolean =
+        pinnedCollectionEntry(collectionId) in pinnedWorks
+
+    // MARK: - Collections
+
+    /** Creates a new, empty collection and returns it so the caller can
+     *  navigate straight into it. */
+    fun createCollection(name: String): UserCollection {
+        val collection = UserCollection(
+            id = java.util.UUID.randomUUID().toString(),
+            name = name,
+            createdAt = System.currentTimeMillis(),
+        )
+        collections = collections + collection
+        commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+        return collection
+    }
+
+    fun renameCollection(collectionId: String, newName: String) {
+        collections = collections.map {
+            if (it.id == collectionId) it.copy(name = newName) else it
+        }
+        commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+    }
+
+    fun deleteCollection(collectionId: String) {
+        collections = collections.filterNot { it.id == collectionId }
+        // A deleted collection can no longer be pinned to Home.
+        if (isCollectionPinned(collectionId)) togglePin(pinnedCollectionEntry(collectionId))
+        commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+    }
+
+    fun collection(collectionId: String): UserCollection? =
+        collections.firstOrNull { it.id == collectionId }
+
+    fun collectionsContaining(pasuramKey: String): List<UserCollection> =
+        collections.filter { pasuramKey in it.pasuramKeys }
+
+    /** Adds one pasuram to a collection; a no-op if it's already in it. */
+    fun addToCollection(collectionId: String, pasuramKey: String) {
+        addAllToCollection(collectionId, listOf(pasuramKey))
+    }
+
+    /** Adds several pasurams (e.g. every verse in a work) to a collection at
+     *  once, skipping any already present, preserving the given order. */
+    fun addAllToCollection(collectionId: String, pasuramKeys: List<String>) {
+        collections = collections.map { c ->
+            if (c.id != collectionId) return@map c
+            val toAdd = pasuramKeys.filterNot { it in c.pasuramKeys }
+            if (toAdd.isEmpty()) c else c.copy(pasuramKeys = c.pasuramKeys + toAdd)
+        }
+        commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+    }
+
+    fun removeFromCollection(collectionId: String, pasuramKey: String) {
+        collections = collections.map { c ->
+            if (c.id != collectionId) c else c.copy(pasuramKeys = c.pasuramKeys - pasuramKey)
+        }
+        commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+    }
+
     /**
      * Records that a section was opened, keeping the most recent few,
      * most-recent-first, with no duplicates.
@@ -431,6 +520,7 @@ class AppState private constructor(
         prefs[Keys.BOOKMARKS] = encodeList(bookmarks)
         prefs[Keys.RECENT] = encodeList(recentlyViewed)
         prefs[Keys.PINNED] = encodeList(pinnedWorks)
+        prefs[Keys.COLLECTIONS] = json.encodeToString(collections)
         prefs[Keys.VISITED] = encodeVisited(visitedDesams)
         prefs[Keys.THEME] = theme.key
         prefs[Keys.FONT_SIZE] = fontSize.toDouble()
@@ -459,6 +549,7 @@ class AppState private constructor(
         val recentlyViewed: List<String>,
         val recentSearches: List<String>,
         val pinnedWorks: List<String>,
+        val collections: List<UserCollection>,
         val visitedDesams: Map<String, Int>,
         val theme: ReaderThemeChoice,
         val fontSize: Float,
@@ -487,6 +578,7 @@ class AppState private constructor(
         val RECENT = stringPreferencesKey("dp.recentlyViewed")
         val SEARCHES = stringPreferencesKey("dp.recentSearches")
         val PINNED = stringPreferencesKey("dp.pinnedWorks")
+        val COLLECTIONS = stringPreferencesKey("dp.collections")
         val THEME = stringPreferencesKey("dp.theme")
         val FONT_SIZE = doublePreferencesKey("dp.fontSize")
         val ACCENT = stringPreferencesKey("dp.accent")
@@ -509,6 +601,19 @@ class AppState private constructor(
 
     companion object {
         const val MAX_PINNED_WORKS = 6
+
+        // A pinned collection shares the same list (and cap) as pinned works,
+        // distinguished by this string prefix — mirrors the iOS
+        // implementation exactly, which found and fixed the same "a pinned
+        // entry isn't always a work" gap in its own Home grid.
+        private const val PINNED_COLLECTION_PREFIX = "collection:"
+
+        fun pinnedCollectionEntry(collectionId: String): String = PINNED_COLLECTION_PREFIX + collectionId
+
+        /** The collection id if [pinEntry] is a pinned collection, else null. */
+        fun pinnedCollectionId(pinEntry: String): String? =
+            pinEntry.takeIf { it.startsWith(PINNED_COLLECTION_PREFIX) }
+                ?.removePrefix(PINNED_COLLECTION_PREFIX)
         const val MAX_REMINDERS = 3
         const val MAX_RECENT = 8
         const val MAX_SEARCHES = 5
@@ -554,6 +659,9 @@ class AppState private constructor(
                 recentlyViewed = decodeList(prefs[Keys.RECENT]),
                 recentSearches = decodeList(prefs[Keys.SEARCHES]),
                 pinnedWorks = decodeList(prefs[Keys.PINNED]),
+                collections = prefs[Keys.COLLECTIONS]?.let {
+                    runCatching { json.decodeFromString<List<UserCollection>>(it) }.getOrNull()
+                } ?: emptyList(),
                 visitedDesams = decodeVisited(prefs[Keys.VISITED]),
                 theme = ReaderThemeChoice.from(prefs[Keys.THEME]),
                 fontSize = if (storedFontSize >= MIN_FONT_SIZE) storedFontSize else DEFAULT_FONT_SIZE,

@@ -29,7 +29,9 @@ import com.srinivaskannan.divyaprabhandham.ui.desams.DesamDetailScreen
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamsScreen
 import com.srinivaskannan.divyaprabhandham.ui.home.HomeScreen
 import com.srinivaskannan.divyaprabhandham.ui.reader.ReaderScreen
-import com.srinivaskannan.divyaprabhandham.ui.saved.SavedScreen
+import com.srinivaskannan.divyaprabhandham.ui.collections.CollectionDetailScreen
+import com.srinivaskannan.divyaprabhandham.ui.collections.CollectionsScreen
+import com.srinivaskannan.divyaprabhandham.ui.favourites.FavouritesScreen
 import com.srinivaskannan.divyaprabhandham.ui.search.SearchScreen
 import com.srinivaskannan.divyaprabhandham.ui.settings.AboutScreen
 import com.srinivaskannan.divyaprabhandham.ui.settings.SettingsScreen
@@ -157,6 +159,8 @@ fun AppScaffold(
                         HomeScreen(
                             onOpenDivision = { navController.navigate(Routes.division(it)) },
                             onOpenSection = openSection,
+                            onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
+                            onOpenCollection = { navController.navigate(Routes.collectionDetail(it)) },
                         )
                     }
 
@@ -166,8 +170,17 @@ fun AppScaffold(
                         )
                     }
 
-                    composable(Routes.SAVED) {
-                        SavedScreen(onOpenSection = openSection)
+                    composable(Routes.COLLECTIONS) {
+                        CollectionsScreen(
+                            onOpenCollection = { navController.navigate(Routes.collectionDetail(it)) },
+                        )
+                    }
+
+                    composable(Routes.FAVOURITES) {
+                        FavouritesScreen(
+                            onOpenSection = openSection,
+                            onBack = { navController.popBackStack() },
+                        )
                     }
 
                     composable(Routes.SEARCH) {
@@ -235,6 +248,22 @@ fun AppScaffold(
                         } else {
                             DesamDetailScreen(
                                 desam = desam,
+                                onBack = { navController.popBackStack() },
+                                onOpenSection = openSection,
+                            )
+                        }
+                    }
+
+                    composable(
+                        route = Routes.COLLECTION_DETAIL,
+                        arguments = listOf(navArgument("collectionId") { type = NavType.StringType }),
+                    ) { entry ->
+                        val id = entry.arguments?.getString("collectionId")
+                        if (id == null) {
+                            EmptyState(title = appState.ui(Ui.NO_RESULTS))
+                        } else {
+                            CollectionDetailScreen(
+                                collectionId = id,
                                 onBack = { navController.popBackStack() },
                                 onOpenSection = openSection,
                             )

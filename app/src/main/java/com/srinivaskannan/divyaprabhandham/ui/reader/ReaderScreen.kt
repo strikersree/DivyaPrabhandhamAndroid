@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -69,6 +70,7 @@ import com.srinivaskannan.divyaprabhandham.data.BookSection
 import com.srinivaskannan.divyaprabhandham.data.Essence
 import com.srinivaskannan.divyaprabhandham.data.Stanza
 import com.srinivaskannan.divyaprabhandham.data.Ui
+import com.srinivaskannan.divyaprabhandham.ui.collections.AddToCollectionSheet
 import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.LastRead
@@ -90,9 +92,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * A few decisions carried over from iOS because they were hard-won there:
  *
  *  - Verse text is selectable, and the essence action lives on the pasuram
- *    number badge rather than on the card. Putting it on the card meant a long
- *    press anywhere in a verse opened a menu instead of selecting text, which
- *    is the wrong trade in a book.
+ *    number badge rather than on the card, so a long press inside the verse
+ *    still starts text selection there. Add to Collection is the one
+ *    deliberate exception: by explicit product decision it lives on a
+ *    long-press of the whole card instead, which does take over that
+ *    long-press from text selection — the trade the badge placement was
+ *    originally chosen to avoid, accepted here on purpose for this action.
  *  - Progress tracks the furthest verse currently on screen, so scrolling back
  *    up winds the bar down rather than leaving it stuck at the end.
  *  - Adjacent-section cards top and bottom let a reciter move through the text
@@ -376,6 +381,7 @@ private fun ReaderHeader(
 }
 
 /** One pasuram, with bookmark, share and the essence affordance. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun StanzaCard(
     stanza: Stanza,
@@ -397,9 +403,22 @@ private fun StanzaCard(
     val lineHeight = appState.fontSize * ReadingFonts.lineHeightMultiplier(appState.scriptChoice)
 
     var essenceMenuOpen by remember { mutableStateOf(false) }
+    // Long-press anywhere on the card opens Add to Collection, per an
+    // explicit decision to use the card rather than the pasuram-number
+    // badge. Note this does take over the card's long-press from the verse
+    // text's own long-press-to-select — the exact trade the badge placement
+    // was originally chosen to avoid — so long-pressing a verse now opens
+    // this sheet instead of starting a text selection.
+    var addToCollectionOpen by remember { mutableStateOf(false) }
+
+    if (addToCollectionOpen) {
+        AddToCollectionSheet(pasuramKey = key, onDismiss = { addToCollectionOpen = false })
+    }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = {}, onLongClick = { addToCollectionOpen = true }),
         shape = MaterialTheme.shapes.large,
         color = palette.card,
         border = palette.cardBorder?.let { border ->

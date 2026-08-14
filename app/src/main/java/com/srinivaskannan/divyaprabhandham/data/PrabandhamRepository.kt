@@ -152,6 +152,15 @@ class PrabandhamRepository private constructor(
 
     fun work(id: String): Work? = worksById[id]
 
+    /** Every pasuram key in [workId], section by section, in reading order —
+     *  what "add this whole work to a collection" expands to. */
+    fun allPasuramKeys(workId: String): List<String> {
+        val work = worksById[workId] ?: return emptyList()
+        return work.sections.flatMap { section ->
+            section.stanzas(ScriptChoice.TAMIL).map { section.key(it) }
+        }
+    }
+
     fun workContaining(sectionId: String): Work? = workBySectionId[sectionId]
 
     fun divisionForWork(workId: String): Division? = divisionByWorkId[workId]

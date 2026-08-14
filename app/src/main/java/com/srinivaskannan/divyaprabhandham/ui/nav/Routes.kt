@@ -3,15 +3,15 @@ package com.srinivaskannan.divyaprabhandham.ui.nav
 import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -28,19 +28,23 @@ import com.srinivaskannan.divyaprabhandham.data.Ui
 object Routes {
     const val HOME = "home"
     const val DESAMS = "desams"
-    const val SAVED = "saved"
+    const val COLLECTIONS = "collections"
+    const val FAVOURITES = "favourites"
     const val SEARCH = "search"
     const val SETTINGS = "settings"
 
     const val DIVISION = "division/{divisionId}"
     const val READER = "reader/{sectionId}?stanzaKey={stanzaKey}"
     const val DESAM_DETAIL = "desam/{desamId}"
+    const val COLLECTION_DETAIL = "collection/{collectionId}"
     const val ABOUT = "about"
     const val TIP_JAR = "tipjar"
 
     fun division(divisionId: String) = "division/$divisionId"
 
     fun desam(desamId: String) = "desam/$desamId"
+
+    fun collectionDetail(collectionId: String) = "collection/$collectionId"
 
     /**
      * The stanza key is encoded because it contains a '#', which a nav route
@@ -63,7 +67,7 @@ enum class TopLevel(
 ) {
     HOME(Routes.HOME, Ui.HOME, Icons.Filled.Home, Icons.Outlined.Home),
     DESAMS(Routes.DESAMS, Ui.DIVYA_DESAMS_TAB, Icons.Filled.AccountBalance, Icons.Outlined.AccountBalance),
-    SAVED(Routes.SAVED, Ui.SAVED, Icons.Filled.Star, Icons.Outlined.StarOutline),
+    COLLECTIONS(Routes.COLLECTIONS, Ui.COLLECTIONS, Icons.Filled.Collections, Icons.Outlined.Collections),
     SEARCH(Routes.SEARCH, Ui.SEARCH, Icons.Filled.Search, Icons.Outlined.Search),
     SETTINGS(Routes.SETTINGS, Ui.SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings),
 }

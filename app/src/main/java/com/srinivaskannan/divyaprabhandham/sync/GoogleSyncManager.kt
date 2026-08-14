@@ -229,6 +229,7 @@ class GoogleSyncManager(
         supporterSince = appState.supporterSince,
         tipPromptSilenced = appState.tipPromptSilenced,
         visitedDesams = appState.visitedDesams.entries.map { "${it.key}:${it.value}" },
+        collections = appState.collections,
     )
 
     /**
@@ -240,6 +241,7 @@ class GoogleSyncManager(
             bookmarks = payload.bookmarks
             recentlyViewed = payload.recentlyViewed
             pinnedWorks = payload.pinnedWorks
+            collections = payload.collections
             visitedDesams = payload.visitedDesams.mapNotNull { line ->
                 val i = line.lastIndexOf(':')
                 if (i <= 0) return@mapNotNull null

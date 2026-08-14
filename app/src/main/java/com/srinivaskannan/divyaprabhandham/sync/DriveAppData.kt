@@ -3,6 +3,7 @@ package com.srinivaskannan.divyaprabhandham.sync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.srinivaskannan.divyaprabhandham.ask.AskHistory
+import com.srinivaskannan.divyaprabhandham.prefs.UserCollection
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.OutputStreamWriter
@@ -45,6 +46,10 @@ data class SyncPayload(
     // survives the JSON round-trip without a custom serializer. Additive and
     // defaulted, so older payloads decode fine.
     val visitedDesams: List<String> = emptyList(),
+    // Collections serialize directly as nested @Serializable objects — no
+    // manual string-encoding needed, unlike visitedDesams above (which
+    // predates this and encodes as "id:year" strings for a simpler map).
+    val collections: List<UserCollection> = emptyList(),
 ) {
     companion object {
         const val CURRENT_VERSION = 1

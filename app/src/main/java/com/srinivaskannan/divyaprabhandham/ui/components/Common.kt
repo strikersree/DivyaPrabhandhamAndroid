@@ -81,7 +81,7 @@ fun BackButton(onBack: () -> Unit) {
     }
 }
 
-/** A tappable row used by Home, Saved and Settings, so they all sit the same. */
+/** A tappable row used by Home, Favourites and Settings, so they all sit the same. */
 @Composable
 fun ListRow(
     title: String,
