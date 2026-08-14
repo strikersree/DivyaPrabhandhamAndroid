@@ -140,6 +140,28 @@ def check_duplicate_imports(path, code):
             seen.add(st)
 
 
+# Compose symbols commonly imported from the wrong package — real bug seen
+# once (rememberSaveable pulled from androidx.compose.runtime instead of
+# androidx.compose.runtime.saveable), causing "unresolved reference" plus a
+# cascade of confusing follow-on errors later in the same file.
+KNOWN_WRONG_IMPORTS = {
+    "androidx.compose.runtime.rememberSaveable": "androidx.compose.runtime.saveable.rememberSaveable",
+    "androidx.compose.runtime.Saver": "androidx.compose.runtime.saveable.Saver",
+    "androidx.compose.runtime.rememberSaveableStateHolder": "androidx.compose.runtime.saveable.rememberSaveableStateHolder",
+}
+
+
+def check_known_wrong_imports(path, code):
+    for i, line in enumerate(code.split("\n"), start=1):
+        st = line.strip()
+        if not st.startswith("import "):
+            continue
+        imported = st[len("import "):].strip()
+        correct = KNOWN_WRONG_IMPORTS.get(imported)
+        if correct:
+            fail(rel(path), f"line {i}: '{imported}' should be '{correct}'")
+
+
 def rel(path):
     return os.path.relpath(path, ROOT)
 
@@ -648,6 +670,7 @@ def main():
         check_delimiters(path, strip_code(text))
         check_doubled_accessors(path, strip_code(text))
         check_duplicate_imports(path, text)
+        check_known_wrong_imports(path, text)
 
     declared = collect_declarations(files)
 
