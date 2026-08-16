@@ -1,11 +1,14 @@
 # Making Google sync (and Ask history) actually work: what to configure
 
 The app's sync uses Google's Identity **AuthorizationClient** to request the
-Drive **appdata** scope. There is no client ID in the source — Google matches
-the request to your OAuth client by the app's **package name + signing SHA-1**.
-Until that OAuth client exists in a Google Cloud project, sign-in returns a
-grant the app can't use, which is why sync "signs in but never syncs" (now shown
-as "Sync failed — tap to retry").
+Drive **appdata** scope. Two OAuth clients are needed together: an **Android**
+client, matched by the app's package name + signing SHA-1 (no ID in source for
+this one), and a **Web application** client, whose ID *does* go in source
+(`GoogleSyncManager.WEB_CLIENT_ID`) via `requestOfflineAccess()` — this is
+what makes the authorization survive app restarts, rather than needing
+re-consent every cold start. Without the Web client, sign-in can still
+complete once but "signs in but never syncs" again after the app is killed and
+reopened (now shown as "Sync failed — tap to retry").
 
 The Ask history feature uses the **same** Drive appdata scope, so configuring
 this once fixes both.
@@ -34,14 +37,23 @@ this once fixes both.
      release keystore **and** the Play App Signing SHA-1 (Play Console -> your
      app -> Setup -> App signing).
 
-That's it. No client ID or JSON goes into the app — the AuthorizationClient
-matches on package + SHA-1 at runtime. Once the Android OAuth client exists with
-the right package and SHA-1, sign-in yields a usable Drive token and both sync
-and Ask history start working.
+5. **Create a Web application OAuth client ID**, same Credentials page ->
+   Create credentials -> OAuth client ID -> Web application. No redirect URI
+   or origin needed for this use — just create it and copy the client ID
+   (`<numbers>-<random>.apps.googleusercontent.com`) into
+   `GoogleSyncManager.WEB_CLIENT_ID`. This ID is public by design (Google
+   distributes it embedded in client code); its *secret* counterpart must
+   never go in the app, and this setup never needs that secret.
+
+The Android client matches package + SHA-1 at runtime, and the Web client ID
+in source is what `requestOfflineAccess()` uses to keep the grant usable
+across app restarts. With both in place, sign-in yields a usable Drive token
+and both sync and Ask history start working.
 
 ## Do I need Firebase?
 
-**Not for sync or Ask history.** Those only need the Cloud OAuth client above.
+**Not for sync or Ask history.** Those only need the two Cloud OAuth clients
+above.
 
 **Firebase is only for App Check** (Phase 3 of the Ask proxy) — the piece that
 stops someone calling your Gemini endpoint from outside the app. That is

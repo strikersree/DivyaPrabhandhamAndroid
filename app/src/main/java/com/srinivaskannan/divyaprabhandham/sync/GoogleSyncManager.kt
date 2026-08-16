@@ -37,11 +37,12 @@ import kotlin.coroutines.resume
  * this app.
  *
  * SETUP REQUIRED (see README): a Google Cloud project with the Drive API
- * enabled and an Android OAuth client registered against this app's package
- * name and signing certificate. No client ID goes in the source — the grant is
- * matched on package + signature. Until that exists, [authorize] fails
- * silently and the app carries on entirely offline, which is the intended
- * degraded state rather than an error.
+ * enabled, an Android OAuth client registered against this app's package name
+ * and signing certificate (matched at runtime, no ID needed in source for
+ * that one), and a Web-type OAuth client whose ID is [WEB_CLIENT_ID] below
+ * (public by design, safe in source — see that constant's comment). Until
+ * both exist, [authorize] fails silently and the app carries on entirely
+ * offline, which is the intended degraded state rather than an error.
  */
 class GoogleSyncManager(
     private val context: Context,
@@ -78,6 +79,12 @@ class GoogleSyncManager(
 
     private val request = AuthorizationRequest.builder()
         .setRequestedScopes(listOf(Scope(DRIVE_APPDATA_SCOPE)))
+        // Ties the grant to the registered Web-type OAuth client so it
+        // survives process death and app restarts, rather than needing
+        // re-authorization every cold start — the previous package+SHA-1-only
+        // match (the Android-type client) was enough to get a one-off access
+        // token, but not enough to keep it usable across launches.
+        .requestOfflineAccess(WEB_CLIENT_ID)
         .build()
 
     /**
@@ -266,6 +273,17 @@ class GoogleSyncManager(
 
     companion object {
         const val DRIVE_APPDATA_SCOPE = "https://www.googleapis.com/auth/drive.appdata"
+
+        // The Web-type OAuth client from Google Cloud Console (Credentials ->
+        // Web application). Public by design -- unlike its client *secret*,
+        // which must never go in app code, this ID is meant to be embedded in
+        // client code; Google's own docs distribute it this way. Paired with
+        // the Android-type OAuth client (matched by package name + signing
+        // SHA-1, registered separately in Cloud Console, no ID needed in
+        // source for that one) to grant a persistent, restart-surviving
+        // authorization via requestOfflineAccess() above.
+        const val WEB_CLIENT_ID =
+            "342279378912-jur7m4k9uu8ruvfonl3m6e848vq85noj.apps.googleusercontent.com"
         /**
          * Long enough that a reading session produces one push rather than
          * hundreds, short enough that closing the app right after bookmarking

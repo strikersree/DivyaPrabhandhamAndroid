@@ -41,11 +41,16 @@ It needs:
 
 1. A Google Cloud project with the **Drive API** enabled.
 2. An **Android OAuth client** registered against
-   `com.srinivaskannan.divyaprabhandham` and your signing certificate's SHA-1.
+   `com.srinivaskannan.divyaprabhandham` and your signing certificate's SHA-1
+   (matched at runtime — no ID needed in source for this one).
+3. A **Web application OAuth client**, whose client ID goes in
+   `GoogleSyncManager.WEB_CLIENT_ID` — it's public by design (unlike a client
+   *secret*, which must never appear in app code), and is what lets the
+   authorization survive app restarts via `requestOfflineAccess()` rather than
+   needing re-consent on every cold start.
 
-No client ID goes in the source — the grant is matched on package plus
-signature. Until this exists, the sync toggle simply never succeeds and the app
-stays entirely offline, which is the intended degraded state.
+Until both exist, the sync toggle simply never succeeds and the app stays
+entirely offline, which is the intended degraded state.
 
 ### 3. Tip jar (optional)
 
