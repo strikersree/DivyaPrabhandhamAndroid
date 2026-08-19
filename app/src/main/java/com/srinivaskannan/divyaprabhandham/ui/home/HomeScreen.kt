@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,10 +44,8 @@ import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
-import com.srinivaskannan.divyaprabhandham.ui.components.AnimatedMeshBackground
 import com.srinivaskannan.divyaprabhandham.ui.components.ListRow
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
-import com.srinivaskannan.divyaprabhandham.ui.components.rememberReduceMotion
 import com.srinivaskannan.divyaprabhandham.ui.theme.DivisionPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
@@ -96,9 +93,11 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     items(repository.divisions, key = { it.id }) { division ->
-                        DivisionHeroCard(
+                        val works = repository.works(division)
+                        SacredTomeCard(
                             division = division,
-                            works = repository.works(division),
+                            title = division.title(appState.scriptChoice),
+                            subtitle = buildSubtitle(division, works, appState),
                             onClick = { onOpenDivision(division.id) },
                         )
                     }
@@ -192,84 +191,6 @@ fun HomeScreen(
     }
 }
 
-/**
- * A division as a large poster card: an animated mesh in its own palette, with
- * the title and pasuram range set into the darker foot of the card.
- */
-@Composable
-private fun DivisionHeroCard(
-    division: Division,
-    works: List<Work>?,
-    onClick: () -> Unit,
-) {
-    val appState = LocalAppState.current
-    val reduceMotion = rememberReduceMotion()
-    val highContrast = appState.isHighContrast
-
-    val subtitle = remember(works, division, appState.scriptChoice) {
-        buildSubtitle(division, works, appState)
-    }
-    val label = "${division.title(appState.scriptChoice)}, $subtitle"
-
-    Box(
-        modifier = Modifier
-            .width(320.dp)
-            .height(250.dp)
-            .clip(MaterialTheme.shapes.large)
-            .clickable(onClick = onClick)
-            .clearAndSetSemantics { contentDescription = label },
-    ) {
-        if (highContrast) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            )
-        } else {
-            AnimatedMeshBackground(
-                colors = DivisionPalette.colors(division.id),
-                animated = !reduceMotion,
-                modifier = Modifier.fillMaxSize(),
-            )
-            // A scrim so the title stays legible wherever the mesh happens to
-            // be light when it drifts.
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            0.45f to Color.Transparent,
-                            1f to Color.Black.copy(alpha = 0.55f),
-                        ),
-                    ),
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = division.title(appState.scriptChoice),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = if (highContrast) MaterialTheme.colorScheme.onSurface else Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (highContrast) MaterialTheme.colorScheme.onSurfaceVariant
-                else Color.White.copy(alpha = 0.92f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
 
 private fun buildSubtitle(
     division: Division,
