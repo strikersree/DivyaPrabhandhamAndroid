@@ -90,6 +90,12 @@ data class BookSection(
     @SerialName("title_s") val titleS: String? = null,
     @SerialName("content_r") val contentR: String? = null,
     @SerialName("content_s") val contentS: String? = null,
+    /** The invocatory verse that opens a Desika Prabandham work, shown as a
+     *  prelude above the first pasuram rather than folded into it. Null for
+     *  every other division. */
+    val thaniyan: String? = null,
+    @SerialName("thaniyan_r") val thaniyanR: String? = null,
+    @SerialName("thaniyan_s") val thaniyanS: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
@@ -101,6 +107,12 @@ data class BookSection(
         ScriptChoice.TAMIL -> content
         ScriptChoice.READABLE -> contentR ?: content
         ScriptChoice.SCHOLARLY -> contentS ?: content
+    }
+
+    fun thaniyan(script: ScriptChoice): String? = when (script) {
+        ScriptChoice.TAMIL -> thaniyan
+        ScriptChoice.READABLE -> thaniyanR ?: thaniyan
+        ScriptChoice.SCHOLARLY -> thaniyanS ?: thaniyan
     }
 
     /**
