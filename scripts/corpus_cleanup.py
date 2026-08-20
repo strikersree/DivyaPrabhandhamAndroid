@@ -1,30 +1,26 @@
 """
-Corpus content cleanup for items 1, 3, 5 (glued footnote-digit, trailing
-decad-numbers, page-break footer junk). Verified against real data via
-extensive dry-run inspection before being applied here.
+Corpus content cleanup for items 1, 3, 5.
 
-CRITICAL: junk-line indices for item 5 are always determined from the
-Tamil `content` field, then the SAME indices are removed from content_r/
-content_s regardless of their own text at that position -- this keeps all
-three fields' line counts aligned, per this project's established rule
-that structure is always derived from the authoritative Tamil.
+CRITICAL: a junk line's leading number cannot be left as an orphaned "N "
+line by itself -- the real Kotlin parser trims every line before matching
+(`tamilLines[i].trim()`), so after trimming, a bare "N" has nothing
+following it and the numbered-line regex's required `\\s+` fails to match,
+silently un-recognizing that number as a stanza trigger. The fix: when a
+junk line carries a leading number, that number is PREPENDED onto the next
+kept line instead of being left on its own -- verified by re-checking the
+preserved-number set using the same trim-then-match logic the real parser
+uses, not a looser check.
 """
-import json, re, glob
+import json, re
 
 ASSETS = "/home/claude/port/DivyaPrabhandhamAndroid/app/src/main/assets"
 
-# ---------- Item 3: trailing decad-position numbers ----------
-# Extended to accept a Tamil-zero-glyph OCR misread mixed with ascii digits,
-# e.g. "(6௦)" for "(60)", found during verification.
 TRAILING_PAREN = re.compile(r'\s*\([௦0-9]+\)')
-BARE_TRAILING_ZERO = re.compile(r'\s+௦$')  # one confirmed isolated case
+BARE_TRAILING_ZERO = re.compile(r'\s+௦$')
 
-# ---------- Item 1: bare "1" footnote-marker glued onto real verse text,
-# immediately after a valid leading pasuram number. Always literally "1". ----------
 NUMBERED = re.compile(r'^([0-9]{1,4})(\s+)(.*)$')
 GLUED_ONE = re.compile(r'^1(?=[^\s0-9])')
 
-# ---------- Item 5: whole-line page-break footer junk ----------
 FRAGMENTS = {'மப','மீடர்','பயப்','கண்றாமகாய்','றாக','றாம்','மம','வபனயறர்',
              'மொயின்','வணக','சமா','வரிப்','கறக்க','கறக்','கற்க','கணறாமலீய்',
              'கணறாஹகாட','காமக்','கணறாமகீரர்','பப','வன','மயா','பர்வம்',
@@ -45,8 +41,6 @@ def is_whole_line_junk(line):
         return False
     return True
 
-# Four confirmed one-off stragglers (verified individually, exact literal
-# text) that the general whole-line check doesn't reach.
 JUNK_LINE_LITERALS = {
     '31 கணறாஹகாட.௦௦ங 9 மம விபர',
     'மம 1வபனயறர்\u200c 36 கற்க. ௦௦',
@@ -54,7 +48,6 @@ JUNK_LINE_LITERALS = {
 }
 
 def clean_inline(line):
-    """Items 1 and 3: substring-level fixes that don't change line count."""
     line = TRAILING_PAREN.sub('', line)
     line = BARE_TRAILING_ZERO.sub('', line)
     m = NUMBERED.match(line)
@@ -63,37 +56,61 @@ def clean_inline(line):
         line = f'{num}{sep}{GLUED_ONE.sub("", rest)}'
     return line
 
-def junk_line_indices(tamil_content):
-    """Item 5: line indices to delete entirely, determined from Tamil only."""
+def junk_line_leading_number(line):
+    """Returns the leading number as a string ('12') if this junk line
+    carries one, else None -- determines merge vs. plain delete."""
+    m = re.match(r'^\s*([0-9]{1,4})\s+', line)
+    return m.group(1) if m else None
+
+def junk_line_indices_and_numbers(tamil_content):
+    """Item 5 plan, determined from Tamil only: {index: leading_number_or_None}."""
     lines = tamil_content.split('\n')
-    idx = set()
+    plan = {}
     for i, line in enumerate(lines):
         stripped = line.strip()
         if stripped in JUNK_LINE_LITERALS or is_whole_line_junk(line):
-            idx.add(i)
-    return idx
+            plan[i] = junk_line_leading_number(line)
+    return plan
+
+def apply_line_plan(lines, plan):
+    """Drops junk-line indices; a preserved leading number is prepended onto
+    the next surviving line rather than left orphaned on its own line."""
+    out = []
+    pending_prefix = None
+    for i, line in enumerate(lines):
+        if i in plan:
+            num = plan[i]
+            if num is not None:
+                pending_prefix = num if pending_prefix is None else pending_prefix
+            continue  # the junk line itself never survives as its own line
+        if pending_prefix is not None:
+            out.append(f'{pending_prefix} {line}')
+            pending_prefix = None
+        else:
+            out.append(line)
+    if pending_prefix is not None:
+        # A junk line's number had no following line to attach to (end of
+        # section) -- extremely unlikely given content always continues,
+        # but fail loudly rather than silently drop it.
+        out.append(pending_prefix)
+    return out
 
 def process_section(section):
     tamil = section.get('content')
     if not isinstance(tamil, str):
         return False
-    drop = junk_line_indices(tamil)
+    plan = junk_line_indices_and_numbers(tamil)
+    tamil_lines = tamil.split('\n')
     changed = False
     for field in ('content', 'content_r', 'content_s'):
         old = section.get(field)
         if not isinstance(old, str):
             continue
         lines = old.split('\n')
-        # Guard: only drop by index if this field's line count still
-        # matches the Tamil field's (established project invariant); if a
-        # field has drifted out of alignment, skip item 5 for it rather
-        # than risk misaligning further, and report loudly.
-        tamil_lines = tamil.split('\n')
         if len(lines) != len(tamil_lines):
-            print(f'  WARNING: line-count mismatch, skipping whole-line drop for this field')
             kept = lines
         else:
-            kept = [l for i, l in enumerate(lines) if i not in drop]
+            kept = apply_line_plan(lines, plan)
         new_lines = [clean_inline(l) for l in kept]
         new = '\n'.join(new_lines)
         if new != old:

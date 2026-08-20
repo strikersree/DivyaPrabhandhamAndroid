@@ -19,6 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -135,10 +139,15 @@ fun ReaderScreen(
     var fontBarExpanded by remember { mutableStateOf(false) }
     var themeMenuOpen by remember { mutableStateOf(false) }
 
+    val thaniyan = remember(section.id, appState.scriptChoice) {
+        section.thaniyan(appState.scriptChoice)
+    }
+
     // Header rows sit above the verses, so the index of a verse in the list is
     // offset by however many of them are present.
-    val leadingRows = remember(decadEssence, previous) {
-        1 + (if (decadEssence != null) 1 else 0) + (if (previous != null) 1 else 0)
+    val leadingRows = remember(decadEssence, previous, thaniyan) {
+        1 + (if (decadEssence != null) 1 else 0) + (if (previous != null) 1 else 0) +
+            (if (thaniyan != null) 1 else 0)
     }
 
     /** Furthest verse currently on screen, 0..1. */
@@ -269,6 +278,12 @@ fun ReaderScreen(
                             accent = accent,
                             onClick = { onOpenSection(previous.id, null) },
                         )
+                    }
+                }
+
+                if (thaniyan != null) {
+                    item(key = "thaniyan") {
+                        ThaniyanCard(text = thaniyan, palette = palette)
                     }
                 }
 
@@ -499,7 +514,7 @@ private fun StanzaCard(
 
             SelectionContainer {
                 Text(
-                    text = stanza.text,
+                    text = stanzaAnnotatedText(stanza),
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = size,
@@ -592,6 +607,23 @@ private fun DecadeDescription(
 }
 
 /** Attribution lines like "நாதமுனிகள் அருளிச் செய்தது". */
+/**
+ * A rare few pasurams (5 across the whole corpus) carry a short editorial
+ * prelude before the verse itself begins — e.g. Adhigarasangraham's
+ * Pasuram 41. The split point is [Stanza.preludeEnd] (parsed and stripped
+ * of its marker character upstream in StanzaParser, so [Stanza.text] itself
+ * is always clean); this renders that leading span in italics and the rest
+ * normally. Stanzas without a prelude render unchanged.
+ */
+private fun stanzaAnnotatedText(stanza: Stanza): AnnotatedString {
+    val end = stanza.preludeEnd
+    if (end == null || end <= 0 || end > stanza.text.length) return AnnotatedString(stanza.text)
+    return buildAnnotatedString {
+        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(stanza.text.substring(0, end)) }
+        append(stanza.text.substring(end))
+    }
+}
+
 @Composable
 private fun AttributionHeader(text: String, accent: Color) {
     Row(
@@ -610,6 +642,35 @@ private fun AttributionHeader(text: String, accent: Color) {
             textAlign = TextAlign.Center,
         )
         Rule(accent, Modifier.weight(1f))
+    }
+}
+
+/**
+ * The invocatory verse that opens every Desika Prabandham work — a prelude
+ * to the work as a whole, not to any single pasuram, so it renders as its
+ * own card above Pasuram 1 rather than folded into it. Italic red, a
+ * theme-independent styling choice (matching the printed convention of
+ * setting a taniyan apart in red ink) rather than pulled from the reader
+ * palette, which otherwise varies across light/sepia/night.
+ */
+@Composable
+private fun ThaniyanCard(text: String, palette: ReaderPalette) {
+    val thaniyanRed = Color(0xFFA1272E)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = palette.card,
+        border = palette.cardBorder?.let { androidx.compose.foundation.BorderStroke(1.dp, it) },
+        tonalElevation = if (palette.cardBorder == null) 1.dp else 0.dp,
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            fontStyle = FontStyle.Italic,
+            color = thaniyanRed,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

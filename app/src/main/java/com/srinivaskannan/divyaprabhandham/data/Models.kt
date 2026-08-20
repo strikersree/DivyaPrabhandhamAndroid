@@ -158,6 +158,12 @@ data class Stanza(
     val isHeading: Boolean = false,
     /** True for the leading decad-heading block, rendered as a description. */
     val isDescription: Boolean = false,
+    /** For the handful of pasurams with an editorial prelude before the verse
+     *  itself (see StanzaParser's PRELUDE_MARKER), the character offset in
+     *  [text] where the prelude ends and the verse begins. Null otherwise.
+     *  The marker itself is stripped during parsing, so [text] is always
+     *  clean — this is the only place the split survives. */
+    val preludeEnd: Int? = null,
 )
 
 /**

@@ -31,6 +31,13 @@ object StanzaParser {
     /** Zero-width non-joiner, which the OCR pipeline leaves in some headings. */
     private const val ZWNJ = '\u200C'
 
+    /** Invisible Private Use Area marker inserted at the content level for the
+     *  handful of pasurams (5 across the whole corpus) that carry a short
+     *  editorial prelude before the verse proper begins. Stripped here during
+     *  parsing; its position becomes [Stanza.preludeEnd] so [Stanza.text] is
+     *  always clean wherever it's read. */
+    private const val PRELUDE_MARKER = '\uE000'
+
     private val cache =
         Collections.synchronizedMap(HashMap<String, List<Stanza>>())
 
@@ -56,10 +63,18 @@ object StanzaParser {
         var currentNumber: Int? = null
 
         fun flush() {
-            val text = current.joinToString("\n").trim()
+            val raw = current.joinToString("\n").trim()
             current = mutableListOf()
-            if (text.isEmpty()) return
-            blocks += Stanza(index = blocks.size, number = currentNumber, text = text)
+            if (raw.isEmpty()) return
+            val markerIndex = raw.indexOf(PRELUDE_MARKER)
+            val text = if (markerIndex >= 0) raw.removeRange(markerIndex, markerIndex + 1) else raw
+            val preludeEnd = if (markerIndex >= 0) markerIndex else null
+            blocks += Stanza(
+                index = blocks.size,
+                number = currentNumber,
+                text = text,
+                preludeEnd = preludeEnd,
+            )
         }
 
         for (i in tamilLines.indices) {
