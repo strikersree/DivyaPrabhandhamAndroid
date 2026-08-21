@@ -1,13 +1,12 @@
 package com.srinivaskannan.divyaprabhandham.ui.home
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,13 +33,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,10 +57,10 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.TomePalette
  * a centred emblem, and the title beneath it — all sharing one gold-foil
  * shimmer (see [FoilShimmer]).
  *
- * A brief tap-triggered tilt (the reference's isOpen/rotationY mechanic)
- * plays before [onClick] fires, like a cover creaking open, rather than a
- * literal persistent open/closed state — these are navigation cards, not
- * pages that stay open.
+ * The tap-triggered "cover creaking open" tilt from the original reference
+ * was removed: it added a perceptible delay before a division actually
+ * opened, which read as sluggishness rather than delight. onClick now fires
+ * immediately on tap.
  */
 @Composable
 fun SacredTomeCard(
@@ -74,28 +71,24 @@ fun SacredTomeCard(
     modifier: Modifier = Modifier,
 ) {
     val tome = TomePalette.forId(division.id)
-    var opening by remember { mutableStateOf(false) }
-    val rotation by animateFloatAsState(
-        targetValue = if (opening) -18f else 0f,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessLow),
-        label = "tomeOpen",
-        finishedListener = { if (opening) { opening = false; onClick() } },
-    )
     var cardSize by remember { mutableStateOf(Size.Zero) }
-    val density = LocalDensity.current
     val shimmerModifier = FoilShimmer.rememberFoilShimmerModifier(cardSize)
+
+    // Sized relative to the screen, not a fixed dp value, so one card
+    // dominates the row with just a sliver of the next peeking in — matching
+    // the reference's proportions rather than the old fixed 320x250, which
+    // read small next to iOS's near-full-width card. Height stays close to
+    // 1:1 with width (the reference reads roughly square), not the old
+    // wider 320:250 ratio.
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardWidth = screenWidth - 40.dp
 
     Box(
         modifier = modifier
-            .width(320.dp)
-            .height(250.dp)
-            .graphicsLayer {
-                rotationY = rotation
-                cameraDistance = 12f * density.density
-                transformOrigin = TransformOrigin(0f, 0.5f)
-            }
+            .width(cardWidth)
+            .aspectRatio(0.98f)
             .clip(RoundedCornerShape(20.dp))
-            .clickable { if (!opening) opening = true }
+            .clickable(onClick = onClick)
             .clearAndSetSemantics { contentDescription = "$title, $subtitle" }
             .onSizeChanged { cardSize = Size(it.width.toFloat(), it.height.toFloat()) }
             .then(shimmerModifier),
@@ -137,7 +130,7 @@ fun SacredTomeCard(
                     painter = painterResource(emblemRes),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(TomePalette.gold),
-                    modifier = Modifier.size(76.dp),
+                    modifier = Modifier.size(140.dp),
                 )
             } else {
                 // Placeholder until this division's emblem artwork exists —
@@ -146,7 +139,7 @@ fun SacredTomeCard(
                     Icons.Filled.AutoStories,
                     contentDescription = null,
                     tint = TomePalette.gold,
-                    modifier = Modifier.size(56.dp),
+                    modifier = Modifier.size(100.dp),
                 )
             }
             Spacer(Modifier.height(10.dp))
@@ -161,7 +154,7 @@ fun SacredTomeCard(
                     text = title,
                     style = TextStyle(
                         color = TomePalette.gold,
-                        fontSize = 22.sp,
+                        fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     ),
@@ -173,7 +166,7 @@ fun SacredTomeCard(
                     text = title,
                     style = TextStyle(
                         brush = FoilShimmer.shimmerBrush(),
-                        fontSize = 22.sp,
+                        fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     ),
@@ -181,10 +174,10 @@ fun SacredTomeCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = TomePalette.foil.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center,
                 maxLines = 1,
