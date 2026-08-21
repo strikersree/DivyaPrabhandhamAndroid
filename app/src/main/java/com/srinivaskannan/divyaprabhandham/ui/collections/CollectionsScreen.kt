@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.PushPin
@@ -35,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -163,11 +165,21 @@ private fun CollectionCard(
                 tint = MaterialTheme.colorScheme.primary,
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    collection.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        collection.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (collection.isBuiltIn) {
+                        Icon(
+                            Icons.Filled.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                }
                 Text(
                     "${collection.pasuramKeys.size} ${appState.ui(Ui.COLLECTION_PASURAM_COUNT)}",
                     style = MaterialTheme.typography.bodySmall,
@@ -184,10 +196,16 @@ private fun CollectionCard(
             }
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            DropdownMenuItem(
-                text = { Text(appState.ui(Ui.RENAME_COLLECTION)) },
-                onClick = { menuOpen = false; renaming = true },
-            )
+            // The app's own permanent Saththumurai collections can be pinned
+            // like any other, but never renamed or deleted — the state layer
+            // already refuses both, this just keeps the menu from offering
+            // options that would silently no-op.
+            if (!collection.isBuiltIn) {
+                DropdownMenuItem(
+                    text = { Text(appState.ui(Ui.RENAME_COLLECTION)) },
+                    onClick = { menuOpen = false; renaming = true },
+                )
+            }
             DropdownMenuItem(
                 text = {
                     Text(appState.ui(if (pinned) Ui.UNPIN_COLLECTION else Ui.PIN_COLLECTION))
@@ -200,10 +218,12 @@ private fun CollectionCard(
                 },
                 onClick = { menuOpen = false; onTogglePin() },
             )
-            DropdownMenuItem(
-                text = { Text(appState.ui(Ui.DELETE_COLLECTION)) },
-                onClick = { menuOpen = false; deleting = true },
-            )
+            if (!collection.isBuiltIn) {
+                DropdownMenuItem(
+                    text = { Text(appState.ui(Ui.DELETE_COLLECTION)) },
+                    onClick = { menuOpen = false; deleting = true },
+                )
+            }
         }
     }
 }

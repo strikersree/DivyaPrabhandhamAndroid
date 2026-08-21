@@ -48,6 +48,11 @@ data class UserCollection(
     val name: String,
     val pasuramKeys: List<String> = emptyList(),
     val createdAt: Long,
+    /** True for the app's own permanent recitation collections (Saththumurai)
+     *  — undeletable, unrenamable, and re-synced at each launch so code-side
+     *  additions reach devices that already have it. False for anything the
+     *  person created themselves. */
+    val isBuiltIn: Boolean = false,
 )
 
 /**
@@ -306,6 +311,8 @@ class AppState private constructor(
     }
 
     fun renameCollection(collectionId: String, newName: String) {
+        val target = collection(collectionId) ?: return
+        if (target.isBuiltIn) return
         collections = collections.map {
             if (it.id == collectionId) it.copy(name = newName) else it
         }
@@ -313,6 +320,8 @@ class AppState private constructor(
     }
 
     fun deleteCollection(collectionId: String) {
+        val target = collection(collectionId) ?: return
+        if (target.isBuiltIn) return
         collections = collections.filterNot { it.id == collectionId }
         // A deleted collection can no longer be pinned to Home.
         if (isCollectionPinned(collectionId)) togglePin(pinnedCollectionEntry(collectionId))
@@ -344,6 +353,37 @@ class AppState private constructor(
     fun removeFromCollection(collectionId: String, pasuramKey: String) {
         collections = collections.map { c ->
             if (c.id != collectionId) c else c.copy(pasuramKeys = c.pasuramKeys - pasuramKey)
+        }
+        commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+    }
+
+    /**
+     * Seeds a built-in, permanent collection on first run, or merges in any
+     * new pasuram keys the current app version knows about on every run
+     * after that — "seed-or-sync", not "seed-once", so a code-side addition
+     * (e.g. this build adding more entries to Desika Prabhandha
+     * Saaththumurai) reaches a device that already has the collection from
+     * an earlier version. Never removes a key: if a person somehow has one
+     * beyond what's currently seeded, it stays. Call once at startup for
+     * each built-in collection.
+     */
+    fun seedOrSyncBuiltInCollection(id: String, name: String, seedKeys: List<String>) {
+        val existing = collection(id)
+        if (existing == null) {
+            collections = collections + UserCollection(
+                id = id,
+                name = name,
+                pasuramKeys = seedKeys,
+                createdAt = System.currentTimeMillis(),
+                isBuiltIn = true,
+            )
+            commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+            return
+        }
+        val missing = seedKeys.filterNot { it in existing.pasuramKeys }
+        if (missing.isEmpty()) return
+        collections = collections.map {
+            if (it.id == id) it.copy(pasuramKeys = it.pasuramKeys + missing) else it
         }
         commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
     }

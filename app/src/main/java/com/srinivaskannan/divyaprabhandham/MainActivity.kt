@@ -121,6 +121,14 @@ class MainActivity : ComponentActivity() {
 
                     LaunchedEffect(Unit) { startup.tipJar.connect(this@MainActivity) }
 
+                    LaunchedEffect(Unit) {
+                        appState.seedOrSyncBuiltInCollection(
+                            id = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.DESIKA_PRABHANDHA_SAATHTHUMURAI_ID,
+                            name = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.DESIKA_SAATHTHUMURAI_NAME),
+                            seedKeys = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.desikaPrabhandhaSaaththumuraiKeys,
+                        )
+                    }
+
                     // A pending Drive grant needs an activity to launch from,
                     // so it is surfaced here rather than in the sync manager.
                     LaunchedEffect(sync.pendingConsent) {
