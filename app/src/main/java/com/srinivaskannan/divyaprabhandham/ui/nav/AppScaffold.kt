@@ -30,6 +30,7 @@ import com.srinivaskannan.divyaprabhandham.ui.desams.DesamsScreen
 import com.srinivaskannan.divyaprabhandham.ui.home.HomeScreen
 import com.srinivaskannan.divyaprabhandham.ui.reader.ReaderScreen
 import com.srinivaskannan.divyaprabhandham.ui.collections.CollectionDetailScreen
+import com.srinivaskannan.divyaprabhandham.ui.collections.CollectionReaderScreen
 import com.srinivaskannan.divyaprabhandham.ui.collections.CollectionsScreen
 import com.srinivaskannan.divyaprabhandham.ui.favourites.FavouritesScreen
 import com.srinivaskannan.divyaprabhandham.ui.search.SearchScreen
@@ -160,7 +161,7 @@ fun AppScaffold(
                             onOpenDivision = { navController.navigate(Routes.division(it)) },
                             onOpenSection = openSection,
                             onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
-                            onOpenCollection = { navController.navigate(Routes.collectionDetail(it)) },
+                            onOpenCollection = { navController.navigate(Routes.collectionRead(it)) },
                         )
                     }
 
@@ -172,7 +173,7 @@ fun AppScaffold(
 
                     composable(Routes.COLLECTIONS) {
                         CollectionsScreen(
-                            onOpenCollection = { navController.navigate(Routes.collectionDetail(it)) },
+                            onOpenCollection = { navController.navigate(Routes.collectionRead(it)) },
                         )
                     }
 
@@ -266,6 +267,22 @@ fun AppScaffold(
                                 collectionId = id,
                                 onBack = { navController.popBackStack() },
                                 onOpenSection = openSection,
+                            )
+                        }
+                    }
+
+                    composable(
+                        route = Routes.COLLECTION_READ,
+                        arguments = listOf(navArgument("collectionId") { type = NavType.StringType }),
+                    ) { entry ->
+                        val id = entry.arguments?.getString("collectionId")
+                        if (id == null) {
+                            EmptyState(title = appState.ui(Ui.NO_RESULTS))
+                        } else {
+                            CollectionReaderScreen(
+                                collectionId = id,
+                                onBack = { navController.popBackStack() },
+                                onManage = { navController.navigate(Routes.collectionDetail(id)) },
                             )
                         }
                     }

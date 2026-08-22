@@ -147,6 +147,8 @@ enum class Ui {
     PILGRIMAGE_TEMPLES,
     PILGRIMAGE_TIER,
     DESIKA_SAATHTHUMURAI_NAME,
+    MANAGE_COLLECTION,
+    PRABHANDHA_SAATHTHUMURAI_NAME,
     ONB_WELCOME_TITLE,
     ONB_WELCOME_BODY,
     ONB_GET_STARTED,
@@ -444,6 +446,8 @@ object UiText {
         Ui.PILGRIMAGE_TEMPLES to ("கோயில்கள்" to "temples"),
         Ui.PILGRIMAGE_TIER to ("நிலை" to "Tier"),
         Ui.DESIKA_SAATHTHUMURAI_NAME to ("தேசிக பிரபந்த சாத்துமுறை" to "Desika Prabhandha Saaththumurai"),
+        Ui.MANAGE_COLLECTION to ("தொகுப்பை மாற்று" to "Manage collection"),
+        Ui.PRABHANDHA_SAATHTHUMURAI_NAME to ("பிரபந்த சாத்துமுறை" to "Prabhandha Saaththumurai"),
         Ui.ONB_WELCOME_TITLE to ("திவ்ய பிரபந்தத்திற்கு வரவேற்கிறோம்" to "Welcome to Divya Prabandham"),
         Ui.ONB_WELCOME_BODY to (
             "ஆழ்வார்களின் தெய்வீகப் பாசுரங்களை, உங்கள் தனிப்பட்ட பக்தி பயணத்திற்கு ஏற்ப அறியுங்கள்." to

@@ -37,6 +37,7 @@ object Routes {
     const val READER = "reader/{sectionId}?stanzaKey={stanzaKey}"
     const val DESAM_DETAIL = "desam/{desamId}"
     const val COLLECTION_DETAIL = "collection/{collectionId}"
+    const val COLLECTION_READ = "collection/{collectionId}/read"
     const val ABOUT = "about"
     const val TIP_JAR = "tipjar"
 
@@ -45,6 +46,8 @@ object Routes {
     fun desam(desamId: String) = "desam/$desamId"
 
     fun collectionDetail(collectionId: String) = "collection/$collectionId"
+
+    fun collectionRead(collectionId: String) = "collection/$collectionId/read"
 
     /**
      * The stanza key is encoded because it contains a '#', which a nav route
