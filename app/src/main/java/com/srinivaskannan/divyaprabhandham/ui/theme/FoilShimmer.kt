@@ -42,12 +42,22 @@ import kotlin.math.PI
  *
  * WHAT CHANGED FROM THE FIRST PASS: that version drove the glint sweep off
  * a continuously looping animated value rather than device tilt, flagged
- * explicitly as a stopgap. It read as "shimmer that plays by itself and
- * ignores the phone" — fixed here with a real SensorManager listener
- * (TYPE_ROTATION_VECTOR) feeding two tilt uniforms into the shader, so the
- * highlight band's direction actually follows how the phone is held. A
- * device without a rotation sensor gets a fixed, centred glint rather than
- * a crash or an empty effect.
+ * explicitly as a stopgap. Fixed here with a real SensorManager listener
+ * (TYPE_ROTATION_VECTOR) feeding a tilt uniform into the shader, so the
+ * sweep's position genuinely follows how the phone is held rather than
+ * looping on its own. Deliberately kept the sweep itself as pure scalar
+ * arithmetic — the exact diagonal-sweep shape already proven to compile
+ * and render correctly, just with tilt substituted for the old animated
+ * offset — rather than a full 2D directional sweep, since AGSL compiles at
+ * runtime and isn't caught by the Kotlin build; minimizing how far the
+ * shader departs from known-working code was the safer trade after an
+ * earlier, more elaborate version of this shader (vector length/normalize/
+ * ternary for a true directional sweep) shipped with the shimmer entirely
+ * absent on-device, most likely a runtime AGSL compile failure silently
+ * falling back to unmodified rendering — something this project has no way
+ * to confirm without device logs, so the fix favors reducing risk over
+ * chasing the exact cause. A device without a rotation sensor gets a fixed
+ * sweep position rather than a crash or an empty effect.
  *
  * Patina (leather aging/verdigris) is intentionally NOT ported: it's
  * currently disabled in the iOS build itself (a live performance
@@ -81,14 +91,16 @@ object FoilShimmer {
             half goldMask = lumaMask * warmthMask;
             if (goldMask < 0.01) { return c; }
 
-            // ---------- Glint: a band sweeping along the device-tilt direction ----------
+            // ---------- Glint: same diagonal sweep as the original,
+            // proven-working version, with the offset now driven by tilt
+            // instead of an animated uniform. Deliberately pure scalar
+            // arithmetic (no vector length/normalize/ternary) to stay as
+            // close as possible to the exact shape of code already
+            // confirmed to compile and render on-device.
             float2 uv = fragCoord / size;
-            float2 centred = uv - 0.5;
-            float2 lightDir = tilt;
-            float dirLen = length(lightDir);
-            float2 dir = dirLen > 0.02 ? lightDir / dirLen : float2(0.70710678, 0.70710678);
-            float proj = dot(centred, dir) + 0.5;
-            float sweep = fract(proj);
+            float diag = (uv.x + uv.y) * 0.5;
+            float progress = 0.5 + 0.25 * (tilt.x + tilt.y);
+            float sweep = fract(diag - progress);
             float band = smoothstep(0.0, 0.10, sweep) * (1.0 - smoothstep(0.10, 0.22, sweep));
             half glint = half(band) * goldMask;
 

@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,7 +36,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -74,19 +72,21 @@ fun SacredTomeCard(
     var cardSize by remember { mutableStateOf(Size.Zero) }
     val shimmerModifier = FoilShimmer.rememberFoilShimmerModifier(cardSize)
 
-    // Sized relative to the screen, not a fixed dp value, so one card
-    // dominates the row with just a sliver of the next peeking in — matching
-    // the reference's proportions rather than the old fixed 320x250, which
-    // read small next to iOS's near-full-width card. Height stays close to
-    // 1:1 with width (the reference reads roughly square), not the old
-    // wider 320:250 ratio.
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val cardWidth = screenWidth - 40.dp
+    // Fixed size, not screen-relative — the previous screenWidthDp-based
+    // sizing looked reasonable in portrait but used the device's LONG edge
+    // as the card width in landscape (screenWidthDp reports whichever
+    // dimension is currently "width"), producing a card that filled far
+    // more of the screen than intended in both orientations. A fixed size
+    // stays consistent regardless of orientation and, per direct feedback
+    // that the screen-relative version was oversized even in portrait, is
+    // set noticeably smaller than that version was.
+    val cardWidth = 260.dp
+    val cardHeight = 300.dp
 
     Box(
         modifier = modifier
             .width(cardWidth)
-            .aspectRatio(0.98f)
+            .height(cardHeight)
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
             .clearAndSetSemantics { contentDescription = "$title, $subtitle" }
@@ -130,7 +130,7 @@ fun SacredTomeCard(
                     painter = painterResource(emblemRes),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(TomePalette.gold),
-                    modifier = Modifier.size(140.dp),
+                    modifier = Modifier.size(104.dp),
                 )
             } else {
                 // Placeholder until this division's emblem artwork exists —
@@ -139,7 +139,7 @@ fun SacredTomeCard(
                     Icons.Filled.AutoStories,
                     contentDescription = null,
                     tint = TomePalette.gold,
-                    modifier = Modifier.size(100.dp),
+                    modifier = Modifier.size(76.dp),
                 )
             }
             Spacer(Modifier.height(10.dp))
@@ -154,7 +154,7 @@ fun SacredTomeCard(
                     text = title,
                     style = TextStyle(
                         color = TomePalette.gold,
-                        fontSize = 30.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     ),
@@ -166,7 +166,7 @@ fun SacredTomeCard(
                     text = title,
                     style = TextStyle(
                         brush = FoilShimmer.shimmerBrush(),
-                        fontSize = 30.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     ),
