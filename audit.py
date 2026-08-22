@@ -162,6 +162,42 @@ def check_known_wrong_imports(path, code):
             fail(rel(path), f"line {i}: '{imported}' should be '{correct}'")
 
 
+# A handful of extremely common Compose layout modifiers that keep getting
+# used without their import (size, fillMaxWidth, padding...) -- this exact
+# bug class has recurred multiple times across this project (rememberSaveable
+# wrong-package, getValue/setValue for State delegation, fillMaxSize, and now
+# size). A Glance widget uses same-named modifiers from androidx.glance.layout
+# instead of androidx.compose.foundation.layout, so a file is only flagged if
+# it has NEITHER import for a symbol it uses.
+COMMON_LAYOUT_MODIFIERS = {
+    "size": r"Modifier\s*\.\s*size\(",
+    "fillMaxSize": r"\bfillMaxSize\(",
+    "fillMaxWidth": r"\bfillMaxWidth\(",
+    "fillMaxHeight": r"\bfillMaxHeight\(",
+    "padding": r"Modifier\s*\.\s*padding\(",
+    "height": r"Modifier\s*\.\s*height\(",
+    "width": r"Modifier\s*\.\s*width\(",
+    "wrapContentSize": r"\bwrapContentSize\(",
+    "aspectRatio": r"\baspectRatio\(",
+}
+
+
+def check_common_modifier_imports(path, code):
+    for name, pattern in COMMON_LAYOUT_MODIFIERS.items():
+        if not re.search(pattern, code):
+            continue
+        compose_import = re.search(
+            rf'^import androidx\.compose\.foundation\.layout\.{name}$', code, re.M
+        )
+        glance_import = re.search(
+            rf'^import androidx\.glance\.layout\.{name}$', code, re.M
+        )
+        if not compose_import and not glance_import:
+            fail(rel(path), f"uses '{name}(' but neither "
+                             f"androidx.compose.foundation.layout.{name} nor "
+                             f"androidx.glance.layout.{name} is imported")
+
+
 def rel(path):
     return os.path.relpath(path, ROOT)
 
@@ -671,6 +707,7 @@ def main():
         check_doubled_accessors(path, strip_code(text))
         check_duplicate_imports(path, text)
         check_known_wrong_imports(path, text)
+        check_common_modifier_imports(path, text)
 
     declared = collect_declarations(files)
 
