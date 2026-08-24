@@ -1,5 +1,6 @@
 package com.srinivaskannan.divyaprabhandham.ui.collections
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -24,12 +26,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +49,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 import com.srinivaskannan.divyaprabhandham.ui.theme.ReaderPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.ReadingFonts
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
+import com.srinivaskannan.divyaprabhandham.ui.theme.repeatHighlight
 
 /**
  * Reads a collection straight through as one continuous scroll, rather than
@@ -91,6 +96,7 @@ fun CollectionReaderScreen(collectionId: String, onBack: () -> Unit, onManage: (
     val fontSize = appState.fontSize.sp
     val lineHeight = appState.fontSize * ReadingFonts.lineHeightMultiplier(script)
     val palette = readerPalette(appState.theme)
+    val accent = MaterialTheme.colorScheme.primary
 
     Scaffold(
         topBar = {
@@ -131,7 +137,7 @@ fun CollectionReaderScreen(collectionId: String, onBack: () -> Unit, onManage: (
             items(entries, key = { it.key }) { entry ->
                 Column {
                     if (entry.section.id != lastSectionId) {
-                        SourceHeader(entry.work, entry.section, script, palette.text)
+                        SourceHeader(entry.work, entry.section, script, palette, accent)
                         Spacer(Modifier.height(10.dp))
                     }
                     ContinuousStanzaCard(entry.stanza, fontFamily, fontSize, lineHeight, palette)
@@ -142,15 +148,61 @@ fun CollectionReaderScreen(collectionId: String, onBack: () -> Unit, onManage: (
     }
 }
 
+/**
+ * A numbered section's own title carries both parts already, as one string
+ * — e.g. "1-9. வட்டூநடுவே" is the decad number and its theme-word suffix
+ * together, not two separate pieces of data. Splits that string rather than
+ * looking up anything else (checked directly against the corpus: this is
+ * genuinely the same title, not a coincidentally-similar essence entry).
+ * A handful of standalone works (Iyarpa's individual andhadhis, every
+ * Desika work) don't carry a number prefix at all — those get no subtitle.
+ */
+private data class SectionTitleParts(val number: String?, val theme: String?)
+
+private fun splitSectionTitle(sectionTitle: String): SectionTitleParts {
+    val match = Regex("""^(\d+-\d+)\.\s*(.*)$""").find(sectionTitle)
+        ?: return SectionTitleParts(null, null)
+    val theme = match.groupValues[2].trim()
+    return SectionTitleParts(match.groupValues[1], theme.ifEmpty { null })
+}
+
 @Composable
-private fun SourceHeader(work: Work?, section: BookSection, script: ScriptChoice, textColor: Color) {
-    val label = work?.title(script) ?: section.title(script)
-    Text(
-        label,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold,
-        color = textColor.copy(alpha = 0.7f),
-    )
+private fun SourceHeader(work: Work?, section: BookSection, script: ScriptChoice, palette: ReaderPalette, accent: Color) {
+    val sectionTitle = section.title(script)
+    val parts = remember(sectionTitle) { splitSectionTitle(sectionTitle) }
+    val mainTitle = remember(work, sectionTitle, parts.number) {
+        val base = work?.title(script) ?: sectionTitle
+        if (parts.number != null) "$base ${parts.number}" else base
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            mainTitle,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = palette.text,
+            textAlign = TextAlign.Center,
+        )
+        if (parts.theme != null) {
+            Text(
+                parts.theme,
+                style = MaterialTheme.typography.bodyMedium,
+                color = accent,
+                textAlign = TextAlign.Center,
+            )
+            Box(
+                Modifier
+                    .padding(top = 2.dp)
+                    .width(48.dp)
+                    .height(2.dp)
+                    .background(accent),
+            )
+        }
+    }
 }
 
 @Composable
@@ -164,7 +216,7 @@ private fun ContinuousStanzaCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = palette.card,
+        color = if (stanza.repeatsTwice) repeatHighlight(palette) else palette.card,
         tonalElevation = if (palette.cardBorder == null) 1.dp else 0.dp,
     ) {
         SelectionContainer {

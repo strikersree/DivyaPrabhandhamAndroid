@@ -87,6 +87,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.ReadingFonts
 import com.srinivaskannan.divyaprabhandham.ui.theme.currentReaderTheme
 import com.srinivaskannan.divyaprabhandham.ui.theme.ReaderPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
+import com.srinivaskannan.divyaprabhandham.ui.theme.repeatHighlight
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -435,7 +436,7 @@ private fun StanzaCard(
             .fillMaxWidth()
             .combinedClickable(onClick = {}, onLongClick = { addToCollectionOpen = true }),
         shape = MaterialTheme.shapes.large,
-        color = palette.card,
+        color = if (stanza.repeatsTwice) repeatHighlight(palette) else palette.card,
         border = palette.cardBorder?.let { border ->
             androidx.compose.foundation.BorderStroke(
                 width = if (bookmarked) 2.5.dp else 1.5.dp,

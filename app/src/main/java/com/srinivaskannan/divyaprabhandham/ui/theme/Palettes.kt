@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import com.srinivaskannan.divyaprabhandham.prefs.AccentChoice
 import com.srinivaskannan.divyaprabhandham.prefs.ReaderThemeChoice
 
@@ -79,6 +80,19 @@ fun readerPalette(theme: ReaderThemeChoice): ReaderPalette {
         )
     }
 }
+
+/**
+ * Background for a pasuram card that must be recited twice by tradition
+ * (any stanza whose text opens with "*" — see [Stanza.repeatsTwice]).
+ * Blended against the active [ReaderPalette]'s own card colour rather than
+ * a fixed value, so it reads as a light lavender tint in Light/Sepia and a
+ * muted violet in Night, instead of a colour that only makes sense in one
+ * theme. Deliberately a cool purple — every other accent already in use
+ * across this app (gold, terracotta, garnet…) is warm, so this reads as
+ * distinct rather than blending into an existing meaning.
+ */
+fun repeatHighlight(palette: ReaderPalette): Color =
+    lerp(palette.card, Color(0xFF9575CD), 0.18f)
 
 /** The accent seed, as a Compose colour. */
 val AccentChoice.color: Color

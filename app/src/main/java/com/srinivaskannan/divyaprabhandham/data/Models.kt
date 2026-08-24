@@ -164,7 +164,19 @@ data class Stanza(
      *  The marker itself is stripped during parsing, so [text] is always
      *  clean — this is the only place the split survives. */
     val preludeEnd: Int? = null,
-)
+) {
+    /**
+     * Traditional recitation convention: a pasuram whose text begins with a
+     * leading "*" (the same caesura mark used throughout this corpus,
+     * appearing here at the very start rather than mid-verse) is recited
+     * twice. Applies corpus-wide, not to any one division — the reader and
+     * the collection reader both use this to give such cards a distinct
+     * highlight. Checked against [text] itself, which is always clean of
+     * the prelude marker by the time it reaches here (see [preludeEnd]).
+     */
+    val repeatsTwice: Boolean
+        get() = text.trimStart().startsWith("*")
+}
 
 /**
  * A recorded recitation for a work.
