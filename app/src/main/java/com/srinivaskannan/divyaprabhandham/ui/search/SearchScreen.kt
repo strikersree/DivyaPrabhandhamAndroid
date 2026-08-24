@@ -103,6 +103,7 @@ fun SearchScreen(
     val voice = remember { com.srinivaskannan.divyaprabhandham.ask.VoiceRecognizer(context) }
     val speaker = remember { com.srinivaskannan.divyaprabhandham.ask.TtsSpeaker(context) }
     var voiceMode by remember { mutableStateOf(false) }
+    var ttsUnavailable by remember { mutableStateOf(false) }
     // Release both engines when the screen leaves composition.
     DisposableEffect(Unit) {
         onDispose {
@@ -159,6 +160,7 @@ fun SearchScreen(
 
         appState.noteSearch(q)
         conversation.addUser(q)
+        ttsUnavailable = false
 
         val matchIds = repository.filteredWorks(q, appState.scriptChoice)
             .flatMap { it.sections }.map { it.id }.distinct().take(6)
@@ -176,8 +178,14 @@ fun SearchScreen(
                     askHistory.record(q, result.text)
                     // Voice mode: read the answer aloud (script-matched, English
                     // fallback when no Tamil voice). Strip markdown first so it
-                    // does not speak "asterisk asterisk".
-                    if (voiceMode) speaker.speak(plainSpeech(result.text))
+                    // does not speak "asterisk asterisk". speak() returning
+                    // false (no usable TTS voice/engine on this device) was
+                    // previously discarded entirely -- the mode would show as
+                    // "on" with nothing ever audibly happening and no way to
+                    // tell why. Now surfaced via ttsUnavailable below.
+                    if (voiceMode) {
+                        ttsUnavailable = !speaker.speak(plainSpeech(result.text))
+                    }
                 }
                 is AskResult.Error -> conversation.addFailure(result.kind)
             }
@@ -201,13 +209,6 @@ fun SearchScreen(
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         AskTopBar(
             signedIn = appState.syncEnabled,
-            voiceMode = voiceMode,
-            speaking = speaker.speaking,
-            onToggleVoice = {
-                voiceMode = !voiceMode
-                if (!voiceMode) speaker.stop()
-            },
-            onStopSpeaking = { speaker.stop() },
             onHistory = {
                 askHistory.load()
                 showHistory = true
@@ -249,6 +250,30 @@ fun SearchScreen(
             LiveMatchStrip(liveMatches, onOpenSection)
         }
 
+        if (ttsUnavailable) {
+            Surface(color = MaterialTheme.colorScheme.errorContainer) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        appState.ui(Ui.ASK_TTS_UNAVAILABLE),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = { ttsUnavailable = false }) {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
+        }
+
         InputBar(
             value = query,
             onValueChange = { query = it },
@@ -258,6 +283,20 @@ fun SearchScreen(
             level = voice.level,
             onMicStart = ::startVoice,
             onMicStop = { voice.stop() },
+            voiceMode = voiceMode,
+            speaking = speaker.speaking,
+            onToggleVoice = {
+                if (speaker.speaking) {
+                    // Interrupt just this utterance -- voiceMode stays as it
+                    // was, so the next answer is still read aloud if it was
+                    // on. Matches tapping a "now playing" control to stop
+                    // playback without changing the setting that started it.
+                    speaker.stop()
+                } else {
+                    voiceMode = !voiceMode
+                    if (!voiceMode) speaker.stop()
+                }
+            },
         )
     }
 }
@@ -504,6 +543,9 @@ private fun InputBar(
     level: Float,
     onMicStart: () -> Unit,
     onMicStop: () -> Unit,
+    voiceMode: Boolean,
+    speaking: Boolean,
+    onToggleVoice: () -> Unit,
 ) {
     val appState = LocalAppState.current
     val hasText = value.isNotBlank()
@@ -558,6 +600,28 @@ private fun InputBar(
                     )
                 }
             }
+            // Speaker toggle sits right beside the mic/send slot, matching
+            // how voice-input and voice-output controls are paired directly
+            // in the input bar in other assistant apps, rather than in the
+            // top bar where they were easy to miss and disconnected from
+            // the mic they're the counterpart to. Tapping while an answer
+            // is actively being read interrupts just that utterance without
+            // necessarily turning the mode off; tapping while idle toggles
+            // whether future answers are read aloud at all.
+            IconButton(onClick = onToggleVoice) {
+                Icon(
+                    when {
+                        speaking -> Icons.Filled.Stop
+                        voiceMode -> Icons.Filled.VolumeUp
+                        else -> Icons.Filled.VolumeOff
+                    },
+                    contentDescription = appState.ui(
+                        if (speaking) Ui.ASK_VOICE_STOP else Ui.ASK_VOICE_MODE,
+                    ),
+                    tint = if (voiceMode || speaking) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -574,32 +638,12 @@ private fun errorText(appState: AppState, kind: AskError): String =
 @Composable
 private fun AskTopBar(
     signedIn: Boolean,
-    voiceMode: Boolean,
-    speaking: Boolean,
-    onToggleVoice: () -> Unit,
-    onStopSpeaking: () -> Unit,
     onHistory: () -> Unit,
 ) {
     val appState = LocalAppState.current
     androidx.compose.material3.TopAppBar(
         title = { Text(appState.ui(Ui.ASK_INTRO_TITLE)) },
         actions = {
-            // Stop button appears only while actually speaking.
-            if (speaking) {
-                IconButton(onClick = onStopSpeaking) {
-                    Icon(Icons.Filled.Stop, contentDescription = appState.ui(Ui.ASK_VOICE_STOP))
-                }
-            }
-            // Voice-mode toggle: speak answers aloud.
-            IconButton(onClick = onToggleVoice) {
-                Icon(
-                    if (voiceMode) Icons.Filled.VolumeUp
-                    else Icons.Filled.VolumeOff,
-                    contentDescription = appState.ui(Ui.ASK_VOICE_MODE),
-                    tint = if (voiceMode) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             // History lives in the user's Google account, so the button is only
             // meaningful when signed in — hidden otherwise rather than dangling.
             if (signedIn) {
