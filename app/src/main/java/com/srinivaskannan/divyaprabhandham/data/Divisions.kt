@@ -96,6 +96,17 @@ data class Division(
                 resource = "desika_prabandham",
                 usesGlobalNumbering = false,
             ),
+            Division(
+                id = "d6",
+                title = "பொது தனியன்கள்",
+                detail = "பாசுரங்கள் ஓதுமுன் சேவிக்கும் ஆசார்ய வணக்கத் தனியன்கள்",
+                titleR = "Podhu Thaniyangal",
+                titleS = "Potu Taṉiyaṉkaḷ",
+                detailR = "paasurangal oadhumun chaevikkum aasaarya vanakkath thaniyangal",
+                detailS = "pācuraṅkaḷ ōtumuṉ cēvikkum ācārya vaṇakkat taṉiyaṉkaḷ",
+                resource = "podhu_thaniyangal",
+                usesGlobalNumbering = false,
+            ),
         )
 
         fun byId(id: String?): Division? = all.firstOrNull { it.id == id }

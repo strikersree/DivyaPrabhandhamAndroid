@@ -378,6 +378,10 @@ class AppState private constructor(
                 isBuiltIn = true,
             )
             commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
+            // Pin by default on first creation only — a person who later
+            // unpins it deliberately shouldn't have it silently reappear on
+            // the next launch, so this never re-pins on subsequent syncs.
+            if (!isCollectionPinned(id)) togglePinCollection(id)
             return
         }
         val missing = seedKeys.filterNot { it in existing.pasuramKeys }

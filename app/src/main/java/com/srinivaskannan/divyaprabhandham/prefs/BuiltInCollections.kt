@@ -18,6 +18,22 @@ package com.srinivaskannan.divyaprabhandham.prefs
 object BuiltInCollections {
 
     const val PRABHANDHA_SAARAM_ID = "builtin-prabhandha-saaram"
+    const val PODHU_THANIYANGAL_ID = "builtin-podhu-thaniyangal"
+
+    /**
+     * The five guru-vandana thaniyans recited before starting the Prabandham,
+     * as their own division (d6, podhu_thaniyangal.json) — Thenkalai's,
+     * Vadakalai's, then three shared across both sects, in that exact order
+     * per explicit instruction. All five verified present and correctly
+     * ordered against the actual corpus before being hardcoded here.
+     */
+    val podhuThaniyangalKeys: List<String> = listOf(
+        "d6w1s1#1", // Thenkalai -- Azhagiya Manavala Perumal Nayanar
+        "d6w1s1#2", // Vadakalai -- Brahmatantra Swatantra Swami
+        "d6w1s1#3", // shared -- Kurathazhwan
+        "d6w1s1#4", // shared -- Aalavandhar
+        "d6w1s1#5", // shared -- Parasarabattar
+    )
 
     /**
      * 62 of 63 confirmed entries (2674.78 pending, see class doc). Every key
