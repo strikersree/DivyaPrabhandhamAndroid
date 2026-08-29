@@ -10,6 +10,7 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeParams
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
@@ -52,7 +53,16 @@ class TipJar(context: Context, private val appState: AppState) {
 
     private val client = BillingClient.newBuilder(context.applicationContext)
         .setListener(purchasesUpdated)
-        .enablePendingPurchases()
+        // PBL 8 removed the no-arg enablePendingPurchases(). Per the official
+        // migration guide, the old call was functionally equivalent to exactly
+        // this — one-time products only, which is all the tip jar sells.
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder().enableOneTimeProducts().build(),
+        )
+        // Recommended in the PBL 8 migration guide: re-establish the service
+        // connection automatically if an API call happens while disconnected,
+        // instead of the call simply failing with SERVICE_DISCONNECTED.
+        .enableAutoServiceReconnection()
         .build()
 
     fun connect(activity: Activity) {
@@ -85,9 +95,13 @@ class TipJar(context: Context, private val appState: AppState) {
             )
             .build()
 
-        client.queryProductDetailsAsync(params) { result, details ->
+        // PBL 8 changed onProductDetailsResponse's signature: the second
+        // argument is now a QueryProductDetailsResult (which also carries
+        // per-product status for items that couldn't be fetched) rather than
+        // a plain List<ProductDetails>. The fetched list is read off it.
+        client.queryProductDetailsAsync(params) { result, queryResult ->
             if (result.responseCode != BillingClient.BillingResponseCode.OK) return@queryProductDetailsAsync
-            products = details
+            products = queryResult.productDetailsList
                 .mapNotNull { product ->
                     val price = product.oneTimePurchaseOfferDetails?.formattedPrice
                         ?: return@mapNotNull null
