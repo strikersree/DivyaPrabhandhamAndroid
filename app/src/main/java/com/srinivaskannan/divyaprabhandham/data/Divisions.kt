@@ -30,6 +30,19 @@ data class Division(
      * the essence lookup both have to filter on it.
      */
     val usesGlobalNumbering: Boolean = true,
+    /**
+     * Whether this division appears as a leather cover in the main
+     * division shelf (Home's carousel) and the widget's random-verse pool.
+     * False for Podhu Thaniyangal (d6) — matching the iOS and PWA builds'
+     * own onShelf: false for it — since it's five short invocatory verses,
+     * not a work someone browses or expects as "today's pasuram" on a
+     * widget; it only makes sense reached through its pinned collection.
+     * Content loading and stanza-key resolution are untouched by this — it
+     * only gates the two display-facing lists ([PrabandhamRepository]'s
+     * `divisions` property and the widget's verse pool), not
+     * [Division.all] itself, which the collection still needs intact.
+     */
+    val onShelf: Boolean = true,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
@@ -106,6 +119,7 @@ data class Division(
                 detailS = "pācuraṅkaḷ ōtumuṉ cēvikkum ācārya vaṇakkat taṉiyaṉkaḷ",
                 resource = "podhu_thaniyangal",
                 usesGlobalNumbering = false,
+                onShelf = false,
             ),
         )
 

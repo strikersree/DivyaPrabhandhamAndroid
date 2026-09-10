@@ -34,8 +34,11 @@ class PrabandhamRepository private constructor(
 
     val title = "நாலாயிர திவ்ய பிரபந்தம்"
 
-    /** All divisions, live or upcoming. */
-    val divisions: List<Division> get() = Division.all
+    /** All divisions shown as a leather cover in the main shelf (Home's
+     *  carousel). Filtered by [Division.onShelf], not the same list as
+     *  [Division.all] — content loading and stanza-key resolution use
+     *  Division.all directly and stay unaffected by this. */
+    val divisions: List<Division> get() = Division.all.filter { it.onShelf }
 
     /** Works for a division, or null if its content is not bundled yet. */
     fun works(division: Division): List<Work>? = loadedWorks[division.id]

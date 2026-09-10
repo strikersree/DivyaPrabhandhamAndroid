@@ -104,7 +104,13 @@ object WidgetBridge {
     ) = withContext(Dispatchers.IO) {
         val script = appState.scriptChoice
 
-        val pools = Division.all.associate { division ->
+        // onShelf divisions only -- Podhu Thaniyangal's five short thaniyans
+        // aren't something anyone expects as "today's pasuram" on a widget,
+        // and it isn't even selectable in the widget's own settings pane
+        // (WidgetAayiram has no D6 entry) — this keeps its pool from being
+        // built at all rather than silently sitting unused, and stops it
+        // being possible for "All Aayirams" mode to surface one anyway.
+        val pools = Division.all.filter { it.onShelf }.associate { division ->
             val works = repository.works(division).orEmpty()
             val verses = mutableListOf<WidgetVerse>()
             // Walk works round-robin rather than taking the first N verses, so
