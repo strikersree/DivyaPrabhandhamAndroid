@@ -9,3 +9,8 @@
 .cxx
 local.properties
 /app/release
+
+# Module build outputs. The root-level /build above does not cover these,
+# and app/build alone reached 494 MB.
+build/
+/backend/functions/node_modules

@@ -8,8 +8,8 @@
 ## typography scales) became stable. See ui/theme/Theme.kt.
 
 [versions]
-agp = "8.11.1"
-kotlin = "2.1.0"
+agp = "9.3.1"
+kotlin = "2.2.10"
 ksp = "2.1.0-1.0.29"
 
 coreKtx = "1.15.0"

@@ -8,13 +8,13 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "firebase-admin": "^12.6.0"
+    "firebase-admin": "^14.2.0"
   },
   "scripts": {
     "start": "functions-framework --target=ask",
     "dev": "GEMINI_API_KEY=$GEMINI_API_KEY functions-framework --target=ask"
   },
   "devDependencies": {
-    "@google-cloud/functions-framework": "^3.4.0"
+    "@google-cloud/functions-framework": "^2.0.0"
   }
 }
