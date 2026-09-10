@@ -1,7 +1,8 @@
 package com.srinivaskannan.divyaprabhandham.ui.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -264,6 +265,7 @@ private fun PinnedSection(
                                 MaterialTheme.colorScheme.primaryContainer,
                             ),
                             onClick = { onOpenCollection(collectionId) },
+                            onLongClick = { appState.togglePinCollection(collectionId) },
                         )
                     }
                 } else {
@@ -278,6 +280,7 @@ private fun PinnedSection(
                             onClick = {
                                 work.sections.firstOrNull()?.let { onOpenSection(it.id) }
                             },
+                            onLongClick = { appState.togglePin(pinEntry) },
                         )
                     }
                 }
@@ -286,12 +289,14 @@ private fun PinnedSection(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PinnedTile(
     title: String,
     author: String,
     palette: List<Color>,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier.width(150.dp),
@@ -305,7 +310,13 @@ private fun PinnedTile(
                 .background(
                     Brush.linearGradient(palette),
                 )
-                .clickable(onClick = onClick),
+                // Long-press unpins directly from Home, where a pinned tile
+                // is actually visible — previously the only way to unpin
+                // anything was to navigate back into the division browser
+                // and find the specific work row to long-press there, which
+                // read as "pinning is one-way" since nothing on Home itself
+                // offered a way back out.
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
             contentAlignment = Alignment.Center,
         ) {
             Text(
