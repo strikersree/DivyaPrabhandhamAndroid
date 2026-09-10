@@ -158,6 +158,7 @@ fun AppScaffold(
                 ) {
                     composable(Routes.HOME) {
                         HomeScreen(
+                            tipJar = tipJar,
                             onOpenDivision = { navController.navigate(Routes.division(it)) },
                             onOpenSection = openSection,
                             onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
@@ -185,12 +186,13 @@ fun AppScaffold(
                     }
 
                     composable(Routes.SEARCH) {
-                        SearchScreen(onOpenSection = openSection)
+                        SearchScreen(tipJar = tipJar, onOpenSection = openSection)
                     }
 
                     composable(Routes.SETTINGS) {
                         SettingsScreen(
                             sync = sync,
+                            tipJar = tipJar,
                             onOpenAbout = { navController.navigate(Routes.ABOUT) },
                             onOpenTipJar = { navController.navigate(Routes.TIP_JAR) },
                         )

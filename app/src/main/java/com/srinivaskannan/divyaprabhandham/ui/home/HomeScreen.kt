@@ -31,7 +31,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.srinivaskannan.divyaprabhandham.ads.AdBanner
+import com.srinivaskannan.divyaprabhandham.ads.AdConfig
+import com.srinivaskannan.divyaprabhandham.ads.AdFreeOfferDialog
+import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +68,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
  */
 @Composable
 fun HomeScreen(
+    tipJar: TipJar,
     onOpenDivision: (String) -> Unit,
     onOpenSection: (sectionId: String, stanzaKey: String?) -> Unit,
     onOpenFavourites: () -> Unit,
@@ -70,6 +78,7 @@ fun HomeScreen(
     val appState = LocalAppState.current
     val repository = LocalRepository.current
     val margazhiDay = repository.margazhiDayToday()
+    var showAdFreeOffer by remember { mutableStateOf(false) }
 
     LazyColumn(
         // Home has no app bar, so nothing else is holding the content clear of
@@ -188,6 +197,17 @@ fun HomeScreen(
                 }
             }
         }
+
+        item(key = "adBanner") {
+            AdBanner(
+                placement = AdConfig.Placement.HOME,
+                onOfferAdFree = { showAdFreeOffer = true },
+            )
+        }
+    }
+
+    if (showAdFreeOffer) {
+        AdFreeOfferDialog(tipJar = tipJar, onDismiss = { showAdFreeOffer = false })
     }
 }
 

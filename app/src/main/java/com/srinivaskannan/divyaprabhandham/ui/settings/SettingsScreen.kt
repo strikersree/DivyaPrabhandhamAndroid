@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
@@ -59,6 +60,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.srinivaskannan.divyaprabhandham.ads.AdBanner
+import com.srinivaskannan.divyaprabhandham.ads.AdConfig
+import com.srinivaskannan.divyaprabhandham.ads.AdFreeOfferDialog
+import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
@@ -94,12 +99,21 @@ private enum class Pane { NONE, SYNC, SCRIPT, APPEARANCE, APP_ICON, FONT, ACCENT
 @Composable
 fun SettingsScreen(
     sync: GoogleSyncManager,
+    tipJar: TipJar,
     onOpenAbout: () -> Unit,
     onOpenTipJar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val appState = LocalAppState.current
     var pane by remember { mutableStateOf(Pane.NONE) }
+    var showAdFreeOffer by remember { mutableStateOf(false) }
+
+    if (showAdFreeOffer) {
+        AdFreeOfferDialog(
+            tipJar = tipJar,
+            onDismiss = { showAdFreeOffer = false },
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -122,6 +136,7 @@ fun SettingsScreen(
                 Pane.NONE -> RootList(
                     appState = appState,
                     sync = sync,
+                    tipJar = tipJar,
                     onPane = { pane = it },
                     onOpenAbout = onOpenAbout,
                     onOpenTipJar = onOpenTipJar,
@@ -135,6 +150,12 @@ fun SettingsScreen(
                 Pane.NOTIFICATIONS -> NotificationsPane(appState)
                 Pane.WIDGET -> WidgetPane(appState)
             }
+            if (pane == Pane.NONE) {
+                AdBanner(
+                    placement = AdConfig.Placement.SETTINGS,
+                    onOfferAdFree = { showAdFreeOffer = true },
+                )
+            }
         }
     }
 }
@@ -143,6 +164,7 @@ fun SettingsScreen(
 private fun RootList(
     appState: AppState,
     sync: GoogleSyncManager,
+    tipJar: TipJar,
     onPane: (Pane) -> Unit,
     onOpenAbout: () -> Unit,
     onOpenTipJar: () -> Unit,
@@ -211,6 +233,27 @@ private fun RootList(
         leading = Icons.Filled.VolunteerActivism,
         onClick = onOpenTipJar,
     )
+    // Three states: already ad-free (purchased, or grandfathered in by
+    // having tipped — nothing to do, just confirm it); the product loaded
+    // and ready to buy; or not loaded yet (Play Console product doesn't
+    // exist yet, or the query is still in flight) — silently absent rather
+    // than a dead button, matching TipJar's own stated policy.
+    if (appState.isAdFree) {
+        ListRow(
+            title = appState.ui(Ui.ALREADY_AD_FREE),
+            leading = Icons.Filled.Block,
+            showChevron = false,
+        )
+    } else {
+        tipJar.adFreeProduct?.let { product ->
+            ListRow(
+                title = appState.ui(Ui.UNLOCK_AD_FREE),
+                subtitle = "${appState.ui(Ui.UNLOCK_AD_FREE_DETAIL)} — ${product.price}",
+                leading = Icons.Filled.Block,
+                onClick = { tipJar.purchase(product) },
+            )
+        }
+    }
     ListRow(
         title = appState.ui(Ui.ABOUT),
         leading = Icons.Filled.Info,

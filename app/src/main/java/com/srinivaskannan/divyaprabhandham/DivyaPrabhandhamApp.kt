@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.google.android.gms.ads.MobileAds
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.PrabandhamRepository
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
@@ -64,6 +65,10 @@ class DivyaPrabhandhamApp : Application() {
     override fun onCreate() {
         super.onCreate()
         ReminderScheduler.ensureChannel(this)
+        // Fire-and-forget: the SDK is internally async and doesn't gate
+        // anything else here. AdBanner checks appState.isAdFree before ever
+        // trying to show anything, so there's no race with startup.
+        MobileAds.initialize(this) {}
         scope.launch { start() }
     }
 

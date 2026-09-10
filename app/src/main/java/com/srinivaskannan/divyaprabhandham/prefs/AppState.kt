@@ -157,9 +157,16 @@ class AppState private constructor(
         private set
 
     var supporterSince: Long? by mutableStateOf(snapshot.supporterSince)
+    /** Non-null once the dedicated ad-free unlock has been bought — distinct
+     *  from [isSupporter], which also grants ad-free access via the
+     *  grandfather rule but for a different reason (see [isAdFree]). */
+    var adFreePurchasedAt: Long? by mutableStateOf(snapshot.adFreePurchasedAt)
         internal set
 
     var lastTipPrompt: Long? by mutableStateOf(snapshot.lastTipPrompt)
+    /** Device-local throttle for the ad-free upsell shown after returning
+     *  from a tapped ad — see [canShowAdFreeOffer]. */
+    var lastAdFreeOffer: Long? by mutableStateOf(snapshot.lastAdFreeOffer)
         private set
 
     var tipPromptSilenced: Boolean by mutableStateOf(snapshot.tipPromptSilenced)
@@ -211,6 +218,27 @@ class AppState private constructor(
     fun isBookmarked(key: String): Boolean = key in bookmarks
 
     val isSupporter: Boolean get() = supporterSince != null
+
+    /** True if ads should be hidden everywhere: bought the dedicated unlock,
+     *  or tipped at any point (grandfathered in — someone who's already
+     *  supported the app directly shouldn't also see ads). */
+    val isAdFree: Boolean get() = isSupporter || adFreePurchasedAt != null
+
+    /**
+     * Whether to show the ad-free upsell right now, after returning from a
+     * tapped ad. Throttled to once a day: the trigger this fires from can
+     * happen several times in one sitting, and repeating a paywall every
+     * time someone comes back from an ad would read as punishing them for
+     * tapping it — which is also self-defeating, since ad taps are the
+     * revenue. The permanent "Remove ads" label under each banner is
+     * unaffected by this and always available.
+     */
+    val canShowAdFreeOffer: Boolean
+        get() {
+            if (isAdFree) return false
+            val last = lastAdFreeOffer ?: return true
+            return System.currentTimeMillis() - last >= 24L * 60 * 60 * 1000
+        }
 
     fun isPinned(workId: String): Boolean = workId in pinnedWorks
 
@@ -485,6 +513,15 @@ class AppState private constructor(
         commit { it[Keys.SUPPORTER_SINCE] = now }
     }
 
+    /** Note the dedicated ad-free unlock purchase. Synced like [recordTip] —
+     *  a purchase made on one device should hide ads on another too. */
+    fun recordAdFreePurchase() {
+        if (adFreePurchasedAt != null) return
+        val now = System.currentTimeMillis()
+        adFreePurchasedAt = now
+        commit { it[Keys.AD_FREE_PURCHASED_AT] = now }
+    }
+
     fun silenceTipPrompt() {
         tipPromptSilenced = true
         commit { it[Keys.TIP_SILENCED] = true }
@@ -520,6 +557,15 @@ class AppState private constructor(
         val now = System.currentTimeMillis()
         lastTipPrompt = now
         persist { it[Keys.LAST_TIP_PROMPT] = now }
+    }
+
+    /** Device-local, matching [noteTipPromptShown] — the offer itself is
+     *  triggered by an on-device ad interaction, so its throttle doesn't
+     *  need to sync either. */
+    fun noteAdFreeOfferShown() {
+        val now = System.currentTimeMillis()
+        lastAdFreeOffer = now
+        persist { it[Keys.LAST_AD_FREE_OFFER] = now }
     }
 
     fun noteLaunch() {
@@ -579,6 +625,7 @@ class AppState private constructor(
         prefs[Keys.APP_ICON] = appIconKey
         prefs[Keys.CHANGED_AT] = changedAt
         supporterSince?.let { prefs[Keys.SUPPORTER_SINCE] = it }
+        adFreePurchasedAt?.let { prefs[Keys.AD_FREE_PURCHASED_AT] = it }
         val read = lastRead
         if (read == null) prefs.remove(Keys.LAST_READ)
         else prefs[Keys.LAST_READ] = json.encodeToString(read)
@@ -607,7 +654,9 @@ class AppState private constructor(
         val widgetAayiram: WidgetAayiram,
         val syncEnabled: Boolean,
         val supporterSince: Long?,
+        val adFreePurchasedAt: Long?,
         val lastTipPrompt: Long?,
+        val lastAdFreeOffer: Long?,
         val tipPromptSilenced: Boolean,
         val onboardingComplete: Boolean,
         val appIconKey: String,
@@ -634,7 +683,9 @@ class AppState private constructor(
         val WIDGET_AAYIRAM = stringPreferencesKey("dp.widgetAayiram")
         val SYNC = booleanPreferencesKey("dp.sync")
         val SUPPORTER_SINCE = longPreferencesKey("dp.supporterSince")
+        val AD_FREE_PURCHASED_AT = longPreferencesKey("dp.adFreePurchasedAt")
         val LAST_TIP_PROMPT = longPreferencesKey("dp.lastTipPrompt")
+        val LAST_AD_FREE_OFFER = longPreferencesKey("dp.lastAdFreeOffer")
         val TIP_SILENCED = booleanPreferencesKey("dp.tipSilenced")
         val ONBOARDING = booleanPreferencesKey("dp.onboardingComplete")
         val APP_ICON = stringPreferencesKey("dp.appIcon")
@@ -729,7 +780,9 @@ class AppState private constructor(
                 widgetAayiram = WidgetAayiram.from(prefs[Keys.WIDGET_AAYIRAM]),
                 syncEnabled = prefs[Keys.SYNC] ?: false,
                 supporterSince = prefs[Keys.SUPPORTER_SINCE],
+                adFreePurchasedAt = prefs[Keys.AD_FREE_PURCHASED_AT],
                 lastTipPrompt = prefs[Keys.LAST_TIP_PROMPT],
+                lastAdFreeOffer = prefs[Keys.LAST_AD_FREE_OFFER],
                 tipPromptSilenced = prefs[Keys.TIP_SILENCED] ?: false,
                 onboardingComplete = prefs[Keys.ONBOARDING] ?: false,
                 appIconKey = prefs[Keys.APP_ICON] ?: "vadakalai",

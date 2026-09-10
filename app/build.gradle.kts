@@ -72,6 +72,10 @@ android {
 
     buildFeatures {
         compose = true
+        // Needed for BuildConfig.DEBUG, which gates real vs. test AdMob ad
+        // unit IDs (ads/AdConfig.kt) — AGP disables BuildConfig generation
+        // by default since 8.0, so this must be explicit.
+        buildConfig = true
     }
 
     packaging {
@@ -125,6 +129,7 @@ dependencies {
 
     // Tip jar. Google Play Billing replaces StoreKit.
     implementation(libs.billing.ktx)
+    implementation(libs.play.services.ads)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 

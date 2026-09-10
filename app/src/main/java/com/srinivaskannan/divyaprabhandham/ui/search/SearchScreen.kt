@@ -64,7 +64,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.ask.AskClient
 import com.srinivaskannan.divyaprabhandham.ask.AskConversation
+import com.srinivaskannan.divyaprabhandham.ads.AdBanner
+import com.srinivaskannan.divyaprabhandham.ads.AdConfig
+import com.srinivaskannan.divyaprabhandham.ads.AdFreeOfferDialog
 import com.srinivaskannan.divyaprabhandham.ask.AskError
+import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.ask.AskMessage
 import com.srinivaskannan.divyaprabhandham.ask.AskResult
 import com.srinivaskannan.divyaprabhandham.data.BookSection
@@ -90,6 +94,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
+    tipJar: TipJar,
     onOpenSection: (sectionId: String, stanzaKey: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -104,6 +109,7 @@ fun SearchScreen(
     val speaker = remember { com.srinivaskannan.divyaprabhandham.ask.TtsSpeaker(context) }
     var voiceMode by remember { mutableStateOf(false) }
     var ttsUnavailable by remember { mutableStateOf(false) }
+    var showAdFreeOffer by remember { mutableStateOf(false) }
     // Release both engines when the screen leaves composition.
     DisposableEffect(Unit) {
         onDispose {
@@ -206,6 +212,10 @@ fun SearchScreen(
         )
     }
 
+    if (showAdFreeOffer) {
+        AdFreeOfferDialog(tipJar = tipJar, onDismiss = { showAdFreeOffer = false })
+    }
+
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         AskTopBar(
             signedIn = appState.syncEnabled,
@@ -213,6 +223,10 @@ fun SearchScreen(
                 askHistory.load()
                 showHistory = true
             },
+        )
+        AdBanner(
+            placement = AdConfig.Placement.SEARCH,
+            onOfferAdFree = { showAdFreeOffer = true },
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             if (conversation.messages.isEmpty()) {

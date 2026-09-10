@@ -50,6 +50,19 @@
         android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.DivyaPrabhandham.Splash">
 
+        <!--
+          Required by the Google Mobile Ads SDK — its absence is a hard crash
+          on init ("Missing application ID"), not a soft failure. This is
+          Google's own published SAMPLE_APP_ID, the same placeholder shown in
+          AdMob's official quick-start guide, safe to ship as-is since it only
+          ever serves test ads. TODO: replace with the real AdMob app ID once
+          the app is registered in the AdMob console — see ads/AdConfig.kt,
+          which needs its own three real ad unit IDs at the same time.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
