@@ -20,6 +20,19 @@
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <!--
+      Advertising ID, for AdMob. The Google Mobile Ads SDK already merges this
+      in, so the built artifact has always carried it — but only since the ads
+      dependency landed, and versionCode 10 was published both before and after
+      that, so the copy live on Play was built without it. Play Console then
+      warned that the AD_ID declaration did not match the artifact, and a zeroed
+      advertising id breaks ad serving. Declared here explicitly so it is
+      visible in this repo and survives any future change to the ads dependency
+      rather than being an invisible side effect of one. Duplicate uses-permission
+      entries are merged, so this adds nothing to the built manifest.
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <!--
       Android 11+ hides other packages unless declared. RecitationLauncher
       checks for these two so it can send playback straight to the app rather
       than bouncing the listener into a browser tab.
