@@ -38,9 +38,13 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.srinivaskannan.divyaprabhandham.R
@@ -121,7 +125,7 @@ fun SacredTomeCard(
         )
 
         Column(
-            modifier = Modifier.align(Alignment.Center).padding(horizontal = 24.dp),
+            modifier = Modifier.align(Alignment.Center).padding(horizontal = TITLE_INSET),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val emblemRes = tomeEmblemRes(division.id)
@@ -149,16 +153,29 @@ fun SacredTomeCard(
             // second, separate animated brush. Below 33, this is the one
             // spot that gets its own shimmer, matching the reference
             // GoldShimmerText, since there's no RenderEffect to carry it.
+            // One line, always. A long Tamil division title (திருவாய்மொழி)
+            // does not fit 24.sp across the card, and wrapping split it
+            // mid-word — "திருவாய்மொ / ழி" — which reads as broken rather
+            // than as two lines. Shrink to fit instead, the same thing iOS
+            // gets from .minimumScaleFactor.
+            val titleSize = fitFontSize(
+                text = title,
+                maxWidth = cardWidth - TITLE_INSET * 2,
+                preferred = 24.sp,
+                minimum = 15.sp,
+                fontWeight = FontWeight.Bold,
+            )
             if (FoilShimmer.isSupported) {
                 Text(
                     text = title,
                     style = TextStyle(
                         color = TomePalette.gold,
-                        fontSize = 24.sp,
+                        fontSize = titleSize,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     ),
-                    maxLines = 2,
+                    maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
@@ -166,11 +183,12 @@ fun SacredTomeCard(
                     text = title,
                     style = TextStyle(
                         brush = FoilShimmer.shimmerBrush(),
-                        fontSize = 24.sp,
+                        fontSize = titleSize,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     ),
-                    maxLines = 2,
+                    maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -184,6 +202,48 @@ fun SacredTomeCard(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+
+/** Side padding inside the tome face. Shared by the title layout and the
+ *  shrink-to-fit measurement so the two cannot drift apart. */
+private val TITLE_INSET = 24.dp
+
+/**
+ * The largest size from [preferred] down to [minimum] at which [text] fits
+ * [maxWidth] on one line, or [minimum] if none does.
+ *
+ * Compose gained BasicText(autoSize = …) after the Compose version this app
+ * builds against, so this measures directly. Stepping by whole sp keeps the
+ * result stable across recompositions — a continuous fit would jitter the
+ * title by a fraction of a point as the shimmer animates.
+ */
+@Composable
+private fun fitFontSize(
+    text: String,
+    maxWidth: androidx.compose.ui.unit.Dp,
+    preferred: TextUnit,
+    minimum: TextUnit,
+    fontWeight: FontWeight,
+): TextUnit {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(text, maxWidth, preferred, minimum, density, measurer) {
+        val widthPx = with(density) { maxWidth.roundToPx() }
+        var size = preferred.value
+        while (size > minimum.value) {
+            val fits = measurer.measure(
+                text = text,
+                style = TextStyle(fontSize = size.sp, fontWeight = fontWeight),
+                maxLines = 1,
+                softWrap = false,
+                constraints = Constraints(maxWidth = Int.MAX_VALUE),
+            ).size.width <= widthPx
+            if (fits) break
+            size -= 1f
+        }
+        size.sp
     }
 }
 
