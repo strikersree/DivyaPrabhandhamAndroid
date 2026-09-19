@@ -61,6 +61,18 @@ object BuiltInCollections {
     const val DESIKA_PRABHANDHA_SAATHTHUMURAI_ID = "builtin-desika-prabhandha-saaththumurai"
 
     /**
+     * Keys an earlier build seeded into the Desika Saaththumurai that are
+     * now wrong, not merely absent. They were resolved against an older
+     * desika_prabandham.json whose verse boundaries differed in two works
+     * (b5w15s1 parsed 23 verses where it now has 21, b5w17s1 nine where it
+     * now has ten), so each still resolves — to the wrong verse. Named here
+     * so seed-or-sync drops them from devices that already have them.
+     */
+    val desikaRetiredKeys: List<String> = listOf(
+        "b5w15s1#22", "b5w15s1#23", "b5w17s1#8",
+    )
+
+    /**
      * The closing verses (phala sruti) of each of the 19 Desika Prabandham
      * minor works (Thiruvaimozhi and Ramanuja Nootrandhadhi are outside this
      * collection's scope). Taken from the iOS build entry for entry, now that

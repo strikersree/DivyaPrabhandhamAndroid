@@ -386,16 +386,35 @@ class AppState private constructor(
     }
 
     /**
-     * Seeds a built-in, permanent collection on first run, or merges in any
-     * new pasuram keys the current app version knows about on every run
-     * after that — "seed-or-sync", not "seed-once", so a code-side addition
-     * (e.g. this build adding more entries to Desika Prabhandha
-     * Saaththumurai) reaches a device that already has the collection from
-     * an earlier version. Never removes a key: if a person somehow has one
-     * beyond what's currently seeded, it stays. Call once at startup for
-     * each built-in collection.
+     * Seeds a built-in, permanent collection on first run, or reconciles it
+     * with what the current app version knows on every run after that —
+     * "seed-or-sync", not "seed-once", so a code-side change reaches a
+     * device that already has the collection from an earlier version.
+     *
+     * Reconciling is not a plain union, for two reasons found on a device
+     * that already had these collections:
+     *
+     * - These are curated recitation sequences, not sets. Appending newly
+     *   added keys at the end put Prabhandha Saaram's twenty-six
+     *   Mudhalaayiram opening verses after its closing ones. [seedKeys]
+     *   order wins, so the sequence is always the one the app intends.
+     * - A key can be superseded rather than merely absent. When the corpus
+     *   corrected two Desika works' verse boundaries, three previously
+     *   seeded keys started pointing at the wrong verse; a union kept them
+     *   and the collection read 43 where it should read 40. [retiredKeys]
+     *   names those explicitly so they are dropped.
+     *
+     * Anything a person added themselves is neither reordered away nor
+     * dropped: keys outside [seedKeys] survive, in their existing order,
+     * after the seeded ones. Call once at startup for each built-in
+     * collection.
      */
-    fun seedOrSyncBuiltInCollection(id: String, name: String, seedKeys: List<String>) {
+    fun seedOrSyncBuiltInCollection(
+        id: String,
+        name: String,
+        seedKeys: List<String>,
+        retiredKeys: List<String> = emptyList(),
+    ) {
         val existing = collection(id)
         if (existing == null) {
             collections = collections + UserCollection(
@@ -412,10 +431,12 @@ class AppState private constructor(
             if (!isCollectionPinned(id)) togglePinCollection(id)
             return
         }
-        val missing = seedKeys.filterNot { it in existing.pasuramKeys }
-        if (missing.isEmpty()) return
+        val seeded = seedKeys.toSet()
+        val userAdded = existing.pasuramKeys.filter { it !in seeded && it !in retiredKeys }
+        val reconciled = seedKeys + userAdded
+        if (reconciled == existing.pasuramKeys) return
         collections = collections.map {
-            if (it.id == id) it.copy(pasuramKeys = it.pasuramKeys + missing) else it
+            if (it.id == id) it.copy(pasuramKeys = reconciled) else it
         }
         commit { it[Keys.COLLECTIONS] = json.encodeToString(collections) }
     }

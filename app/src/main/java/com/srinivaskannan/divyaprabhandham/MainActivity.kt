@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity() {
                             id = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.DESIKA_PRABHANDHA_SAATHTHUMURAI_ID,
                             name = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.DESIKA_SAATHTHUMURAI_NAME),
                             seedKeys = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.desikaPrabhandhaSaaththumuraiKeys,
+                            retiredKeys = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.desikaRetiredKeys,
                         )
                         appState.seedOrSyncBuiltInCollection(
                             id = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.PRABHANDHA_SAARAM_ID,
