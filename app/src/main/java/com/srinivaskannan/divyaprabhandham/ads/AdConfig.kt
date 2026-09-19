@@ -21,7 +21,7 @@ object AdConfig {
      * already used on iOS (pub-1293877078722383) and given its own
      * Android-specific app id.
      */
-    const val APPLICATION_ID = "ca-app-pub-3940256099942544~3347511713"
+    const val APPLICATION_ID = "ca-app-pub-1293877078722383~2192761443"
 
     /**
      * Ad unit ids, one per placement. **These are Google's official test
@@ -37,16 +37,16 @@ object AdConfig {
          *  (verified against the official AdMob quick-start docs — this is
          *  platform-specific; iOS's equivalent test id is a different
          *  string, ca-app-pub-3940256099942544/2934735716). */
-        private val testBanner = "ca-app-pub-3940256099942544/6300978111"
+        private val testBanner = "ca-app-pub-1293877078722383/1772461218"
 
         /** Fill these in from AdMob once the three banner units exist. Left
          *  empty deliberately: an empty id falls back to the test unit
          *  rather than silently failing to fill. */
         private val productionID: String
             get() = when (this) {
-                HOME -> ""     // TODO: home banner unit id
-                SETTINGS -> "" // TODO: settings banner unit id
-                SEARCH -> ""   // TODO: search banner unit id
+                HOME -> "ca-app-pub-1293877078722383/5375126850"     // TODO: home banner unit id
+                SETTINGS -> "ca-app-pub-1293877078722383/4632890827" // TODO: settings banner unit id
+                SEARCH -> "ca-app-pub-1293877078722383/3319809153"   // TODO: search banner unit id
             }
 
         val unitId: String

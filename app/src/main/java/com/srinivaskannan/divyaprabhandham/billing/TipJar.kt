@@ -189,8 +189,8 @@ class TipJar(context: Context, private val appState: AppState) {
     companion object {
         private val TIP_PRODUCT_IDS = listOf(
             "tip_small",
-            "tip_medium",
-            "tip_large",
+            "tip_lamp",
+            "tip_garland",
         )
         const val AD_FREE_PRODUCT_ID = "ad_free_unlock"
         private val ALL_PRODUCT_IDS = TIP_PRODUCT_IDS + AD_FREE_PRODUCT_ID
