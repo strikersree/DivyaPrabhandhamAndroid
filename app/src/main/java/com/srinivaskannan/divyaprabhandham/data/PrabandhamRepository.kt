@@ -208,8 +208,19 @@ class PrabandhamRepository private constructor(
         val hashIndex = key.lastIndexOf('#')
         if (hashIndex < 0) return null
         val section = section(key.substring(0, hashIndex)) ?: return null
+        val suffix = key.substring(hashIndex + 1)
         val tamil = section.stanzas(ScriptChoice.TAMIL)
-        val index = tamil.indexOfFirst { section.key(it) == key }
+        // Two key shapes. "<sectionID>#<n>" matches the first stanza whose
+        // plain number is n — unambiguous for every ordinary pasuram, and for
+        // a split poem's sub-units (which all share one number) it lands on
+        // the first, the sensible target for a plainly-typed jump.
+        // "<sectionID>#<n>.<m>" matches one specific sub-unit by its label,
+        // which is what a Saththumurai entry like 2674.78 needs.
+        val index = if (suffix.contains('.')) {
+            tamil.indexOfFirst { it.displayNumber == suffix }
+        } else {
+            tamil.indexOfFirst { section.key(it) == key }
+        }
         if (index < 0) return null
         val stanza = if (script == ScriptChoice.TAMIL) {
             tamil[index]

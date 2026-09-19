@@ -466,7 +466,7 @@ private fun StanzaCard(
                             },
                         ) {
                             Text(
-                                text = "${appState.ui(Ui.PASURAM)} ${stanza.number}",
+                                text = "${appState.ui(Ui.PASURAM)} ${stanza.label}",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = accent,
@@ -535,7 +535,7 @@ private fun buildShareText(
     section: BookSection,
     work: Work?,
 ): String = buildString {
-    stanza.number?.let { appendLine("${appState.ui(Ui.PASURAM)} $it") }
+    stanza.label?.let { appendLine("${appState.ui(Ui.PASURAM)} $it") }
     appendLine(stanza.text)
     appendLine()
     val source = work?.title(appState.scriptChoice) ?: section.title(appState.scriptChoice)

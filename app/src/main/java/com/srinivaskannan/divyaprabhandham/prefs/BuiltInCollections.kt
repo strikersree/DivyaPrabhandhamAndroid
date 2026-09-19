@@ -6,14 +6,13 @@ package com.srinivaskannan.divyaprabhandham.prefs
  * from MainActivity. Stable ids so re-seeding on a later launch finds and
  * merges into the same collection rather than creating a duplicate.
  *
- * PRABHANDHA_SAARAM is now seeded with 62 of its 63 confirmed entries. The
- * 63rd, 2674.78, is Periya Thirumadal's dotted sub-unit identifier — it
- * can't resolve until that Thirumadal is split into numbered sub-units the
- * same way Siriya Thirumadal was (see 2673.40 below, now resolvable).
- * Periya's book pages haven't been provided yet in this session; once they
- * are and the split lands, adding "b3w10s2#2674.78" to the list below is
- * the entire remaining step — seed-or-sync picks it up automatically on
- * the next launch for anyone who already has the collection.
+ * PRABHANDHA_SAARAM is seeded with all 63 of its confirmed entries. The
+ * 63rd, 2674.78, is Periya Thirumadal's dotted sub-unit identifier, which
+ * could not resolve until that Thirumadal was split into numbered sub-units
+ * the same way Siriya Thirumadal was. The split has now landed with the
+ * corpus, and StanzaParser reads the dotted form, so both 2673.40 and
+ * 2674.78 resolve — seed-or-sync picks the new entry up on the next launch
+ * for anyone who already has the collection.
  */
 object BuiltInCollections {
 
@@ -36,10 +35,9 @@ object BuiltInCollections {
     )
 
     /**
-     * 62 of 63 confirmed entries (2674.78 pending, see class doc). Every key
-     * verified against the actual corpus before being hardcoded here: all
-     * resolve to a real stanza, cross-checked against the resolution
-     * script's own output line-by-line.
+     * All 63 confirmed entries. Every key verified against the actual corpus
+     * before being hardcoded here: all resolve to a real stanza,
+     * cross-checked against the resolution script's own output line-by-line.
      */
     val prabhandhaSaaramKeys: List<String> = listOf(
         "b2w1s7#1006", "b2w1s7#1007",
@@ -61,6 +59,7 @@ object BuiltInCollections {
         "b2w3s1#2080", "b2w3s1#2081",
         "b3w1s2#2180", "b3w1s2#2181",
         "b3w9s2#2673.40",
+        "b3w10s2#2674.78",
         "b4w1s2#2675",
         "b4w1s11#2783", "b4w1s11#2784",
         "b4w1s21#2895", "b4w1s21#2896",

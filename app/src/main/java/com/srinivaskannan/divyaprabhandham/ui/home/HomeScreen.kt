@@ -188,7 +188,7 @@ fun HomeScreen(
                 if (found != null) {
                     val (section, stanza) = found
                     RowCard(
-                        title = stanza.number?.let { "${appState.ui(Ui.PASURAM)} $it" }
+                        title = stanza.label?.let { "${appState.ui(Ui.PASURAM)} $it" }
                             ?: section.title(appState.scriptChoice),
                         subtitle = stanza.text.lineSequence().firstOrNull(),
                         leading = Icons.Filled.Star,

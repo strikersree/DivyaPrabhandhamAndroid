@@ -25,8 +25,14 @@ import java.util.Collections
  */
 object StanzaParser {
 
-    /** A leading 1–4 digit number introduces a new numbered pasuram. */
-    private val numberedLine = Regex("""^(\d{1,4})\s+(.*)$""")
+    /**
+     * A leading 1–4 digit number introduces a new numbered pasuram, with an
+     * optional ".M" sub-unit (the Thirumadals, which the tradition divides
+     * into "2673.1"…"2673.40" and "2674.1"…"2674.78"). The base integer is
+     * the stable identity; the full "N.M" becomes the badge label. A plain
+     * "N" leaves the label null and behaves exactly as it always did.
+     */
+    private val numberedLine = Regex("""^(\d{1,4})(?:\.(\d{1,3}))?\s+(.*)$""")
 
     /** Zero-width non-joiner, which the OCR pipeline leaves in some headings. */
     private const val ZWNJ = '\u200C'
@@ -61,10 +67,13 @@ object StanzaParser {
         val blocks = mutableListOf<Stanza>()
         var current = mutableListOf<String>()
         var currentNumber: Int? = null
+        var currentDisplayNumber: String? = null
 
         fun flush() {
             val raw = current.joinToString("\n").trim()
             current = mutableListOf()
+            val displayNumber = currentDisplayNumber
+            currentDisplayNumber = null
             if (raw.isEmpty()) return
             val markerIndex = raw.indexOf(PRELUDE_MARKER)
             val text = if (markerIndex >= 0) raw.removeRange(markerIndex, markerIndex + 1) else raw
@@ -72,6 +81,7 @@ object StanzaParser {
             blocks += Stanza(
                 index = blocks.size,
                 number = currentNumber,
+                displayNumber = displayNumber,
                 text = text,
                 preludeEnd = preludeEnd,
             )
@@ -97,9 +107,12 @@ object StanzaParser {
                 numbered != null -> {
                     flush()
                     currentNumber = numbered.groupValues[1].toIntOrNull()
-                    // Strip the same leading number from the display line.
+                    val sub = numbered.groupValues[2]
+                    currentDisplayNumber =
+                        if (sub.isEmpty()) null else "${numbered.groupValues[1]}.$sub"
+                    // Strip the same leading marker from the display line.
                     val displayMatch = numberedLine.matchEntire(displayLine)
-                    current = mutableListOf(displayMatch?.groupValues?.get(2) ?: displayLine)
+                    current = mutableListOf(displayMatch?.groupValues?.get(3) ?: displayLine)
                 }
 
                 tamilLine.isEmpty() -> {

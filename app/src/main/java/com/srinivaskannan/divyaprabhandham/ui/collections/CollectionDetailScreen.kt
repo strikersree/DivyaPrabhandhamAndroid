@@ -153,7 +153,7 @@ fun CollectionDetailScreen(
                             )
                             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text(
-                                    text = stanza.number
+                                    text = stanza.label
                                         ?.let { "${appState.ui(Ui.PASURAM)} $it" }
                                         ?: section.title(appState.scriptChoice),
                                     style = MaterialTheme.typography.bodyLarge,

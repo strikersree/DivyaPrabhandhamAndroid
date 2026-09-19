@@ -153,6 +153,15 @@ data class Stanza(
     val index: Int,
     /** Running pasuram number as printed in the source, if any. */
     val number: Int?,
+    /**
+     * Display label overriding the numeric badge, for sub-numbered units.
+     * The Thirumadals are single continuous poems the tradition divides into
+     * numbered sub-units, shown as "2673.1", "2673.2"… [number] stays the
+     * parent poem's Int (2673) so essence lookup, sharing and
+     * jump-to-pasuram all keep resolving on that stable integer; this
+     * carries the precise label. Null for every ordinary pasuram.
+     */
+    val displayNumber: String? = null,
     val text: String,
     /** True for attribution headers ("… அருளிச் செய்தது"). */
     val isHeading: Boolean = false,
@@ -176,6 +185,15 @@ data class Stanza(
      */
     val repeatsTwice: Boolean
         get() = text.trimStart().startsWith("*")
+
+    /**
+     * What the verse badge should read: the sub-unit label where there is one
+     * ("2674.78"), otherwise the plain number. Null for unnumbered blocks.
+     * Every display site goes through this so a split poem never shows the
+     * same number on all of its sub-units.
+     */
+    val label: String?
+        get() = displayNumber ?: number?.toString()
 }
 
 /**
