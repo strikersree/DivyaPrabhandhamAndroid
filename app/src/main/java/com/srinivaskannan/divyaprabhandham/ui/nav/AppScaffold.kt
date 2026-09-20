@@ -91,6 +91,10 @@ fun AppScaffold(
                 }
                 onDeepLinkHandled()
             }
+            is DeepLink.TipJar -> {
+                navController.navigate(Routes.TIP_JAR)
+                onDeepLinkHandled()
+            }
         }
     }
 
@@ -314,5 +318,6 @@ fun AppScaffold(
 /** A link in from the widget or a reminder notification. */
 sealed interface DeepLink {
     data object Resume : DeepLink
+    data object TipJar : DeepLink
     data class OpenVerse(val sectionId: String, val stanzaKey: String?) : DeepLink
 }

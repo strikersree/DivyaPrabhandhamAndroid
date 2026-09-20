@@ -211,12 +211,14 @@ class MainActivity : ComponentActivity() {
      * Reads the widget and notification links:
      *   divyaprabhandham://resume
      *   divyaprabhandham://open?section=<id>&key=<stanzaKey>
+     *   divyaprabhandham://tipjar
      */
     private fun parseDeepLink(intent: Intent?): DeepLink? {
         val uri: Uri = intent?.data ?: return null
         if (uri.scheme != "divyaprabhandham") return null
         return when (uri.host) {
             "resume" -> DeepLink.Resume
+            "tipjar" -> DeepLink.TipJar
             "open" -> {
                 val section = uri.getQueryParameter("section") ?: return null
                 DeepLink.OpenVerse(section, uri.getQueryParameter("key"))

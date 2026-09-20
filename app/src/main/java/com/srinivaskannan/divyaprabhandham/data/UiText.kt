@@ -111,6 +111,8 @@ enum class Ui {
     NOTIFICATIONS_FOOTER,
     DAILY_REMINDERS,
     REMINDER_MESSAGE,
+    TIP_REMINDER_TITLE,
+    TIP_REMINDER_BODY,
     REMINDER_TIME,
     ADD_TIME,
     NOTIFICATIONS_DENIED,
@@ -403,6 +405,15 @@ object UiText {
         Ui.REMINDER_MESSAGE to (
             "திவ்ய பிரபந்தம் தொடர்ந்து படியுங்கள்" to
             "Continue reading Divya Prabhandham"
+        ),
+        Ui.TIP_REMINDER_TITLE to (
+            "இச்செயலி உங்களுடன் இருக்கிறது" to
+            "This app is still here for you"
+        ),
+        Ui.TIP_REMINDER_BODY to (
+            "பாசுரங்கள் என்றும் இலவசம். திரும்பி வந்து, விரும்பினால் ஒரு சிறு அன்பளிப்பு அளிக்கலாம்." to
+            "The verses are always free. Come back when you'd like, and if you're able, " +
+                "a small gift helps keep it going."
         ),
         Ui.REMINDER_TIME to ("நினைவூட்டல் நேரம்" to "Reminder time"),
         Ui.ADD_TIME to ("நேரத்தைச் சேர்" to "Add a time"),

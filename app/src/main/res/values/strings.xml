@@ -11,4 +11,9 @@
     <string name="widget_description">An hourly verse from the Divya Prabandham.</string>
     <string name="notification_channel_reminders">Daily reading reminders</string>
     <string name="notification_channel_reminders_desc">A gentle nudge to continue reading, at the times you choose.</string>
+    <!-- A channel of its own, not the reading one: on Android a channel is
+         what a person mutes, and someone who does not want to be asked for
+         money should not have to give up their reading reminders to stop it. -->
+    <string name="notification_channel_support">Supporting the app</string>
+    <string name="notification_channel_support_desc">A rare note about the tip jar, only if you have been away a while.</string>
 </resources>

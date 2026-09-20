@@ -148,6 +148,11 @@
             android:name=".notify.ReminderReceiver"
             android:exported="false" />
 
+        <!-- Fires the sparse tip-jar nudge, for someone who has been away. -->
+        <receiver
+            android:name=".notify.SupportReminderReceiver"
+            android:exported="false" />
+
         <!-- Re-schedules reminders after reboot, since AlarmManager alarms
              do not survive one. -->
         <receiver
