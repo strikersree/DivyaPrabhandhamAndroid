@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Delete
@@ -30,7 +31,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
@@ -48,32 +48,38 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.srinivaskannan.divyaprabhandham.ads.AdBanner
 import com.srinivaskannan.divyaprabhandham.ads.AdConfig
 import com.srinivaskannan.divyaprabhandham.ads.AdFreeOfferDialog
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
+import com.srinivaskannan.divyaprabhandham.data.TamilProsody
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
 import com.srinivaskannan.divyaprabhandham.prefs.AccentChoice
-import com.srinivaskannan.divyaprabhandham.prefs.UiLanguage
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.AppearanceChoice
 import com.srinivaskannan.divyaprabhandham.prefs.FontChoice
 import com.srinivaskannan.divyaprabhandham.prefs.ReminderTime
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
+import com.srinivaskannan.divyaprabhandham.prefs.UiLanguage
 import com.srinivaskannan.divyaprabhandham.prefs.WidgetAayiram
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
 import com.srinivaskannan.divyaprabhandham.sync.SyncStatus
@@ -352,6 +358,76 @@ private fun ScriptPane(appState: AppState) {
         )
     }
     GroupFooter(appState.ui(Ui.SCRIPT_FOOTER))
+
+    // Syllable numbers for reciters. Sits under the script picker because it
+    // only means anything with Tamil selected, and is disabled rather than
+    // hidden under the other scripts so the setting does not appear to vanish.
+    val tamil = appState.scriptChoice == ScriptChoice.TAMIL
+    GroupHeader(appState.ui(Ui.SYLLABLE_HEADER))
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = appState.ui(Ui.SYLLABLE_LABEL),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (tamil) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = appState.ui(Ui.SYLLABLE_DETAIL),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = appState.showSyllableMarks,
+                    enabled = tamil,
+                    onCheckedChange = { appState.updateSyllableMarks(it) },
+                )
+            }
+            if (tamil && appState.showSyllableMarks) {
+                SyllablePreview()
+            }
+        }
+    }
+    GroupFooter(appState.ui(Ui.SYLLABLE_FOOTER))
+}
+
+/**
+ * One marked line, so the reader can see what the setting does before
+ * turning it on. Thiruppallandu's opening, which anyone opening this app has
+ * already met.
+ */
+@Composable
+private fun SyllablePreview() {
+    val sample = "பல்லாண்டு பல்லாண்டு பல்லாயிரத்தாண்டு"
+    val mark = SpanStyle(
+        fontSize = 8.sp,
+        baselineShift = BaselineShift(-0.38f),
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+        text = buildAnnotatedString {
+            for (segment in TamilProsody.scan(sample)) {
+                when (segment) {
+                    is TamilProsody.Segment.Other -> append(segment.text)
+                    is TamilProsody.Segment.Syllable -> {
+                        append(segment.text)
+                        withStyle(mark) { append(if (segment.long) "2" else "1") }
+                    }
+                }
+            }
+        },
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 14.dp),
+    )
 }
 
 @Composable

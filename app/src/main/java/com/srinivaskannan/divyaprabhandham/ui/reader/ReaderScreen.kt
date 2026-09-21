@@ -2,6 +2,8 @@ package com.srinivaskannan.divyaprabhandham.ui.reader
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,12 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -30,6 +27,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
@@ -43,6 +41,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -53,43 +54,51 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.srinivaskannan.divyaprabhandham.data.BookSection
 import com.srinivaskannan.divyaprabhandham.data.Essence
 import com.srinivaskannan.divyaprabhandham.data.Stanza
+import com.srinivaskannan.divyaprabhandham.data.TamilProsody
 import com.srinivaskannan.divyaprabhandham.data.Ui
-import com.srinivaskannan.divyaprabhandham.ui.collections.AddToCollectionSheet
 import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.LastRead
 import com.srinivaskannan.divyaprabhandham.prefs.ReaderThemeChoice
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
+import com.srinivaskannan.divyaprabhandham.ui.collections.AddToCollectionSheet
 import com.srinivaskannan.divyaprabhandham.ui.components.shareText
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
+import com.srinivaskannan.divyaprabhandham.ui.theme.ReaderPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.ReadingFonts
 import com.srinivaskannan.divyaprabhandham.ui.theme.currentReaderTheme
-import com.srinivaskannan.divyaprabhandham.ui.theme.ReaderPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
+import com.srinivaskannan.divyaprabhandham.ui.theme.readerThemeIsForced
 import com.srinivaskannan.divyaprabhandham.ui.theme.repeatHighlight
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /**
  * The reader.
@@ -130,6 +139,12 @@ fun ReaderScreen(
     val verseCount = remember(stanzas) {
         stanzas.count { !it.isHeading && !it.isDescription }
     }
+
+    // The prosody switch's confirmation. The marks are small, and on a line
+    // that happens to be all short syllables the difference between on and
+    // off is a row of 1s that is easy to miss, so the switch says what it did.
+    val prosodyHost = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val listState = rememberLazyListState()
     val previous = remember(section.id) { repository.previousSection(section.id) }
@@ -188,6 +203,7 @@ fun ReaderScreen(
     Scaffold(
         modifier = modifier,
         containerColor = palette.background,
+        snackbarHost = { SnackbarHost(prosodyHost) },
         topBar = {
             TopAppBar(
                 title = {
@@ -205,10 +221,10 @@ fun ReaderScreen(
                     }
                 },
                 actions = {
-                    // While the global high-contrast appearance is active the
-                    // reader palette is fixed, so the picker is hidden rather
-                    // than sitting there appearing to do nothing.
-                    if (!appState.isHighContrast) {
+                    // While a global appearance dictates the palette (High
+                    // Contrast, or a forced Dark) the reader's own picker is
+                    // hidden rather than sitting there appearing to do nothing.
+                    if (!readerThemeIsForced(appState)) {
                         Box {
                             IconButton(onClick = { themeMenuOpen = true }) {
                                 Icon(
@@ -233,6 +249,30 @@ fun ReaderScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                    // Only under Tamil: the romanisations show vowel length in
+                    // their spelling already, and the marks would be annotating
+                    // a script the verse was not composed in. Hidden rather
+                    // than disabled -- a dead control in the app bar reads as
+                    // broken, and the script is only ever changed from
+                    // Settings, so nobody watches the bar reflow.
+                    if (appState.scriptChoice == ScriptChoice.TAMIL) {
+                        IconButton(onClick = {
+                            val on = appState.toggleSyllableMarks()
+                            scope.launch {
+                                prosodyHost.currentSnackbarData?.dismiss()
+                                prosodyHost.showSnackbar(
+                                    appState.ui(if (on) Ui.PROSODY_ON else Ui.PROSODY_OFF),
+                                    duration = SnackbarDuration.Short,
+                                )
+                            }
+                        }) {
+                            Icon(
+                                Icons.Filled.Numbers,
+                                contentDescription = appState.ui(Ui.PROSODY_TOGGLE),
+                                tint = if (appState.showSyllableMarks) accent else palette.secondaryText,
+                            )
                         }
                     }
                 },
@@ -515,7 +555,19 @@ private fun StanzaCard(
 
             SelectionContainer {
                 Text(
-                    text = stanzaAnnotatedText(stanza),
+                    text = stanzaAnnotatedText(
+                        stanza,
+                        marks = if (appState.syllableMarksActive) {
+                            SpanStyle(
+                                fontSize = size * 0.42f,
+                                baselineShift = BaselineShift(-0.38f),
+                                fontWeight = FontWeight.SemiBold,
+                                color = palette.secondaryText,
+                            )
+                        } else {
+                            null
+                        },
+                    ),
                     style = TextStyle(
                         fontFamily = fontFamily,
                         fontSize = size,
@@ -616,14 +668,42 @@ private fun DecadeDescription(
  * is always clean); this renders that leading span in italics and the rest
  * normally. Stanzas without a prelude render unchanged.
  */
-private fun stanzaAnnotatedText(stanza: Stanza): AnnotatedString {
+private fun stanzaAnnotatedText(stanza: Stanza, marks: SpanStyle?): AnnotatedString {
+    fun body(s: String) = if (marks == null) AnnotatedString(s) else syllableMarked(s, marks)
     val end = stanza.preludeEnd
-    if (end == null || end <= 0 || end > stanza.text.length) return AnnotatedString(stanza.text)
+    if (end == null || end <= 0 || end > stanza.text.length) return body(stanza.text)
     return buildAnnotatedString {
-        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(stanza.text.substring(0, end)) }
-        append(stanza.text.substring(end))
+        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(body(stanza.text.substring(0, end))) }
+        append(body(stanza.text.substring(end)))
     }
 }
+
+/**
+ * The verse with a small number after each syllable: 1 for குறில், 2 for
+ * நெடில்.
+ *
+ * Inline rather than positioned under each syllable, which is what keeps it
+ * to a single AnnotatedString -- selection, wrapping and the reader's themes
+ * all keep working, and nothing is placed by coordinate, so Tamil's pre-base
+ * vowel signs (ெ ே ை ொ ோ ௌ, stored after their consonant but drawn before
+ * it) never have to be reasoned about.
+ *
+ * Built here, in the UI, and never in the model: share text, the clipboard
+ * and search all keep reading [Stanza.text], so the numbers cannot leak into
+ * anything a reader sends or searches.
+ */
+private fun syllableMarked(text: String, mark: SpanStyle): AnnotatedString =
+    buildAnnotatedString {
+        for (segment in TamilProsody.scan(text)) {
+            when (segment) {
+                is TamilProsody.Segment.Other -> append(segment.text)
+                is TamilProsody.Segment.Syllable -> {
+                    append(segment.text)
+                    withStyle(mark) { append(if (segment.long) "2" else "1") }
+                }
+            }
+        }
+    }
 
 @Composable
 private fun AttributionHeader(text: String, accent: Color) {

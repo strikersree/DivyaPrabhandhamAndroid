@@ -133,6 +133,21 @@ class AppState private constructor(
     var scriptChoice: ScriptChoice by mutableStateOf(snapshot.script)
         internal set
 
+    /**
+     * Numbers each Tamil syllable in the verse body with its length -- 1 for
+     * குறில், 2 for நெடில் -- so someone learning to recite can see where the
+     * syllables divide and how long to hold each. Tamil only: the
+     * romanisations already show vowel length in their spelling, and the same
+     * marks over Telugu or Malayalam would be annotating a script the verse
+     * was not composed in.
+     */
+    var showSyllableMarks: Boolean by mutableStateOf(snapshot.syllableMarks)
+        internal set
+
+    /** Whether the marks should actually be drawn right now. */
+    val syllableMarksActive: Boolean
+        get() = showSyllableMarks && scriptChoice == ScriptChoice.TAMIL
+
     /** Language of the app chrome (menus/labels), independent of the content
      *  script. */
     var uiLanguage: UiLanguage by mutableStateOf(snapshot.uiLanguage)
@@ -477,6 +492,17 @@ class AppState private constructor(
         persist { it[Keys.SEARCHES] = "" }
     }
 
+    fun toggleSyllableMarks(): Boolean {
+        showSyllableMarks = !showSyllableMarks
+        commit { it[Keys.SYLLABLE_MARKS] = showSyllableMarks }
+        return showSyllableMarks
+    }
+
+    fun updateSyllableMarks(value: Boolean) {
+        showSyllableMarks = value
+        commit { it[Keys.SYLLABLE_MARKS] = value }
+    }
+
     fun updateTheme(value: ReaderThemeChoice) {
         theme = value
         commit { it[Keys.THEME] = value.key }
@@ -668,6 +694,7 @@ class AppState private constructor(
         val accent: AccentChoice,
         val appearance: AppearanceChoice,
         val script: ScriptChoice,
+        val syllableMarks: Boolean,
         val uiLanguage: UiLanguage,
         val font: FontChoice,
         val notificationsEnabled: Boolean,
@@ -698,6 +725,7 @@ class AppState private constructor(
         val ACCENT = stringPreferencesKey("dp.accent")
         val APPEARANCE = stringPreferencesKey("dp.appearance")
         val SCRIPT = stringPreferencesKey("dp.script")
+        val SYLLABLE_MARKS = booleanPreferencesKey("dp.syllableMarks")
         val FONT_FAMILY = stringPreferencesKey("dp.fontFamily")
         val NOTIFY_ENABLED = booleanPreferencesKey("dp.notifyEnabled")
         val NOTIFY_TIMES = stringPreferencesKey("dp.notifyTimes")
@@ -784,6 +812,7 @@ class AppState private constructor(
                 accent = AccentChoice.from(prefs[Keys.ACCENT]),
                 appearance = AppearanceChoice.from(prefs[Keys.APPEARANCE]),
                 script = ScriptChoice.from(prefs[Keys.SCRIPT]),
+                syllableMarks = prefs[Keys.SYLLABLE_MARKS] ?: false,
                 uiLanguage = UiLanguage.from(prefs[Keys.UI_LANG]) ?: run {
                     val freshInstall = prefs.asMap().isEmpty()
                     val script = ScriptChoice.from(prefs[Keys.SCRIPT])

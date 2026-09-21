@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.PrabandhamRepository
 import com.srinivaskannan.divyaprabhandham.prefs.AccentChoice
+import com.srinivaskannan.divyaprabhandham.prefs.AppearanceChoice
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.ReaderThemeChoice
 
@@ -181,14 +182,33 @@ fun DivyaPrabhandhamTheme(
 /**
  * The reader palette in force right now.
  *
- * While the global High Contrast appearance is active the reader palette is
- * fixed to match the system light/dark scheme; the person's own theme choice is
- * kept untouched in storage and comes back the moment contrast is turned off.
+ * Two global appearances override the reader's own theme. High Contrast fixes
+ * the palette to match the system light/dark scheme. A forced Dark appearance
+ * renders Night, because a light reading page inside an app the person has
+ * told to be dark is the same mismatch the rest of the chrome already avoids
+ * -- light cards floating on a night-black page. Either way the choice is
+ * only overridden, never overwritten: it is kept untouched in storage and
+ * comes back the moment the appearance returns to Auto or Light.
+ *
+ * Auto is deliberately left alone. Following the system into dark is not the
+ * same as asking for a dark app, and the reader theme is meant to be
+ * independent there -- reading in Night under a Light system is the case that
+ * decoupling exists for.
  */
 @Composable
 fun currentReaderTheme(appState: AppState): ReaderThemeChoice {
     val systemDark = isSystemInDarkTheme()
-    if (!appState.isHighContrast) return appState.theme
-    val dark = appState.forcedDarkMode ?: systemDark
-    return if (dark) ReaderThemeChoice.CONTRAST_DARK else ReaderThemeChoice.CONTRAST_LIGHT
+    if (appState.isHighContrast) {
+        val dark = appState.forcedDarkMode ?: systemDark
+        return if (dark) ReaderThemeChoice.CONTRAST_DARK else ReaderThemeChoice.CONTRAST_LIGHT
+    }
+    if (appState.appearance == AppearanceChoice.DARK) return ReaderThemeChoice.NIGHT
+    return appState.theme
 }
+
+/**
+ * Whether a global appearance is dictating the palette, so the reader's own
+ * theme picker is hidden rather than appearing to do nothing.
+ */
+fun readerThemeIsForced(appState: AppState): Boolean =
+    appState.isHighContrast || appState.appearance == AppearanceChoice.DARK

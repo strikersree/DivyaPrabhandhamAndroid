@@ -18,6 +18,13 @@ import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
  * Generated from the iOS build's Localization.swift so the two stay in step.
  */
 enum class Ui {
+    PROSODY_ON,
+    PROSODY_OFF,
+    PROSODY_TOGGLE,
+    SYLLABLE_HEADER,
+    SYLLABLE_LABEL,
+    SYLLABLE_DETAIL,
+    SYLLABLE_FOOTER,
     HOME,
     BOOK,
     FAVOURITES,
@@ -289,6 +296,19 @@ object UiText {
         Ui.ACCOUNT_FOOTER to (
             "உங்கள் வாசிப்புத் தரவு உங்கள் சொந்த Google Drive-இல் மட்டுமே சேமிக்கப்படுகிறது. எங்கள் சேவையகங்களுக்கு எந்தத் தரவும் அனுப்பப்படுவதில்லை." to
             "Your reading data lives in your own Google Drive and nowhere else. Nothing is sent to our servers."
+        ),
+        Ui.PROSODY_ON to ("அசை எண்கள் இயக்கத்தில்" to "Prosody enabled"),
+        Ui.PROSODY_OFF to ("அசை எண்கள் நிறுத்தப்பட்டன" to "Prosody disabled"),
+        Ui.PROSODY_TOGGLE to ("அசை எண்கள் மாற்ற" to "Toggle prosody"),
+        Ui.SYLLABLE_HEADER to ("அசை எண்கள்" to "Syllable Numbers"),
+        Ui.SYLLABLE_LABEL to ("அசை எண்கள் காட்டு" to "Show syllable numbers"),
+        Ui.SYLLABLE_DETAIL to (
+            "ஒவ்வொரு அசைக்கும் பின் ஒன்று — 1 குறில், 2 நெடில்" to
+                "1 for a short syllable (குறில்), 2 for a long one (நெடில்)"
+        ),
+        Ui.SYLLABLE_FOOTER to (
+            "தமிழ் உரைக்கு மட்டும். எண்கள் திரையில் மட்டும் — பகிர்வதிலும் நகலெடுப்பதிலும் இல்லை." to
+                "Tamil only. The numbers are on screen alone — they never appear in anything you copy or share."
         ),
         Ui.SCRIPT_HEADER to ("எழுத்து / மொழி" to "Script & Language"),
         Ui.SCRIPT_FOOTER to (

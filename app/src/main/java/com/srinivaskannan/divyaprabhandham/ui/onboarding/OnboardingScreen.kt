@@ -5,9 +5,9 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,14 +17,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
@@ -54,8 +56,8 @@ import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.UiText
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
-import com.srinivaskannan.divyaprabhandham.prefs.ReminderTime
 import com.srinivaskannan.divyaprabhandham.prefs.ReaderThemeChoice
+import com.srinivaskannan.divyaprabhandham.prefs.ReminderTime
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
@@ -269,7 +271,13 @@ private fun FontStep(appState: AppState) {
 
 @Composable
 private fun ScriptStep(appState: AppState) {
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+    // Scrollable: five scripts and the prosody toggle no longer fit a short
+    // screen, and the step host gives each step a fixed box rather than a
+    // scrolling one.
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         StepHeader(appState.ui(Ui.ONB_SCRIPT_TITLE), appState.ui(Ui.ONB_SCRIPT_BODY))
         Spacer(Modifier.height(20.dp))
         ScriptChoice.entries.forEach { choice ->
@@ -289,6 +297,29 @@ private fun ScriptStep(appState: AppState) {
                     Text(choice.detail, style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+        }
+        // Offered here as well as in Settings because it is the sort of thing
+        // someone learning to recite wants on from the first pasuram, not
+        // after they go looking for it. Tamil only, for the reason in
+        // AppState.showSyllableMarks.
+        if (appState.scriptChoice == ScriptChoice.TAMIL) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(appState.ui(Ui.SYLLABLE_LABEL),
+                        style = MaterialTheme.typography.bodyLarge)
+                    Text(appState.ui(Ui.SYLLABLE_DETAIL),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = appState.showSyllableMarks,
+                    onCheckedChange = { appState.updateSyllableMarks(it) },
+                )
             }
         }
     }

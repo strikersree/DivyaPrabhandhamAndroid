@@ -134,5 +134,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    // The android.jar stub throws on every org.json call, so unit tests
+    // that read the bundled corpus need a real implementation.
+    testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.junit)
 }
