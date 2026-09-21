@@ -17,7 +17,8 @@ package com.srinivaskannan.divyaprabhandham.prefs
 enum class ScriptChoice(val key: String) {
     TAMIL("tamil"),
     READABLE("readable"),
-    SCHOLARLY("scholarly");
+    SCHOLARLY("scholarly"),
+    TELUGU("telugu");
 
     /** Whether the app chrome should be in English. */
     val usesEnglishUi: Boolean get() = this != TAMIL
@@ -28,6 +29,7 @@ enum class ScriptChoice(val key: String) {
             TAMIL -> "தமிழ் · Original"
             READABLE -> "English · Readable"
             SCHOLARLY -> "English · Scholarly"
+            TELUGU -> "తెలుగు · Telugu"
         }
 
     val detail: String
@@ -35,6 +37,10 @@ enum class ScriptChoice(val key: String) {
             TAMIL -> "மூல தமிழ் உரை"
             READABLE -> "Reciter-friendly romanisation (vaadinen, thangam)"
             SCHOLARLY -> "ISO-15919 diacritics (vāṭiṉēṉ, taṅkam)"
+            // Telugu script, not a translation: the same Tamil words, spelt
+            // the way they are pronounced, as Sundar Kidambi's Telugu
+            // edition spells them.
+            TELUGU -> "తమిఴ్ మూలం తెలుగు లిపిలో (వాడినేన్, తంగం)"
         }
 
     companion object {

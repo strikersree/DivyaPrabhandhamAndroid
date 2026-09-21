@@ -48,19 +48,23 @@ data class Work(
     val sections: List<BookSection>,
     @SerialName("title_r") val titleR: String? = null,
     @SerialName("title_s") val titleS: String? = null,
+    @SerialName("title_te") val titleTe: String? = null,
     @SerialName("author_r") val authorR: String? = null,
     @SerialName("author_s") val authorS: String? = null,
+    @SerialName("author_te") val authorTe: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
         ScriptChoice.READABLE -> titleR ?: title
         ScriptChoice.SCHOLARLY -> titleS ?: title
+        ScriptChoice.TELUGU -> titleTe ?: title
     }
 
     fun author(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> author
         ScriptChoice.READABLE -> authorR ?: author
         ScriptChoice.SCHOLARLY -> authorS ?: author
+        ScriptChoice.TELUGU -> authorTe ?: author
     }
 
     /** Combined pasuram range across every section in this work. */
@@ -88,31 +92,37 @@ data class BookSection(
     val content: String,
     @SerialName("title_r") val titleR: String? = null,
     @SerialName("title_s") val titleS: String? = null,
+    @SerialName("title_te") val titleTe: String? = null,
     @SerialName("content_r") val contentR: String? = null,
     @SerialName("content_s") val contentS: String? = null,
+    @SerialName("content_te") val contentTe: String? = null,
     /** The invocatory verse that opens a Desika Prabandham work, shown as a
      *  prelude above the first pasuram rather than folded into it. Null for
      *  every other division. */
     val thaniyan: String? = null,
     @SerialName("thaniyan_r") val thaniyanR: String? = null,
     @SerialName("thaniyan_s") val thaniyanS: String? = null,
+    @SerialName("thaniyan_te") val thaniyanTe: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
         ScriptChoice.READABLE -> titleR ?: title
         ScriptChoice.SCHOLARLY -> titleS ?: title
+        ScriptChoice.TELUGU -> titleTe ?: title
     }
 
     fun content(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> content
         ScriptChoice.READABLE -> contentR ?: content
         ScriptChoice.SCHOLARLY -> contentS ?: content
+        ScriptChoice.TELUGU -> contentTe ?: content
     }
 
     fun thaniyan(script: ScriptChoice): String? = when (script) {
         ScriptChoice.TAMIL -> thaniyan
         ScriptChoice.READABLE -> thaniyanR ?: thaniyan
         ScriptChoice.SCHOLARLY -> thaniyanS ?: thaniyan
+        ScriptChoice.TELUGU -> thaniyanTe ?: thaniyan
     }
 
     /**

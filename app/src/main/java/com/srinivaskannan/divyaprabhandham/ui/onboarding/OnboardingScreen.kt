@@ -221,6 +221,14 @@ private fun WelcomeStep() {
 // A recognisable opening line, used as the live type sample across steps.
 private const val SAMPLE_TA = "மார்கழித் திங்கள் மதிநிறைந்த நன்னாளால்"
 private const val SAMPLE_EN = "Maargazhi thingal madhi niraindha nannaalaal"
+private const val SAMPLE_TE = "మార్గఴిత్ తింగళ్ మదినిఱైంద నన్నాళాల్"
+
+/** The preview line in whichever script the reader has chosen. */
+private fun sampleFor(script: ScriptChoice): String = when (script) {
+    ScriptChoice.TAMIL -> SAMPLE_TA
+    ScriptChoice.TELUGU -> SAMPLE_TE
+    else -> SAMPLE_EN
+}
 
 @Composable
 private fun PreviewCard(content: @Composable () -> Unit) {
@@ -240,7 +248,7 @@ private fun FontStep(appState: AppState) {
         Spacer(Modifier.height(24.dp))
         PreviewCard {
             Text(
-                if (appState.scriptChoice == ScriptChoice.TAMIL) SAMPLE_TA else SAMPLE_EN,
+                sampleFor(appState.scriptChoice),
                 fontSize = appState.fontSize.sp,
                 textAlign = TextAlign.Center,
             )
@@ -298,7 +306,7 @@ private fun ThemeStep(appState: AppState) {
         ) {
             Box(Modifier.padding(20.dp), contentAlignment = Alignment.CenterStart) {
                 Text(
-                    if (appState.scriptChoice == ScriptChoice.TAMIL) SAMPLE_TA else SAMPLE_EN,
+                    sampleFor(appState.scriptChoice),
                     color = palette.text,
                     style = MaterialTheme.typography.bodyLarge,
                 )
