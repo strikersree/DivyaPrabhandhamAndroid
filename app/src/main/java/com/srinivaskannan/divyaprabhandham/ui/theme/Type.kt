@@ -45,6 +45,8 @@ object ReadingFonts {
         NOTO_SANS_TAMIL("noto_sans_tamil"),
         NOTO_SERIF_TELUGU("noto_serif_telugu"),
         NOTO_SANS_TELUGU("noto_sans_telugu"),
+        NOTO_SERIF_MALAYALAM("noto_serif_malayalam"),
+        NOTO_SANS_MALAYALAM("noto_sans_malayalam"),
         HIND_MADURAI("hind_madurai"),
         LITERATA("literata"),
         SOURCE_SERIF("source_serif"),
@@ -69,15 +71,22 @@ object ReadingFonts {
                     FontChoice.MODERN -> BundledFace.HIND_MADURAI to FontFamily.SansSerif
                     FontChoice.SANS -> BundledFace.NOTO_SANS_TAMIL to FontFamily.SansSerif
                 }
-                // No Telugu face is bundled, so every choice falls through to
-                // the platform's own Telugu family (Noto Serif / Sans Telugu
-                // on any current device). Keeping the serif/sans split means
-                // the picker still does something visible.
+                // No Indic face is bundled, so every choice falls through to
+                // the platform's own family for that script (Noto Serif /
+                // Sans Telugu and Malayalam on any current device). Keeping
+                // the serif/sans split means the picker still does something
+                // visible.
                 ScriptChoice.TELUGU -> when (choice) {
                     FontChoice.TRADITIONAL -> BundledFace.NOTO_SERIF_TELUGU to FontFamily.Serif
                     FontChoice.CLASSIC -> BundledFace.NOTO_SERIF_TELUGU to FontFamily.Serif
                     FontChoice.MODERN -> BundledFace.NOTO_SANS_TELUGU to FontFamily.SansSerif
                     FontChoice.SANS -> BundledFace.NOTO_SANS_TELUGU to FontFamily.SansSerif
+                }
+                ScriptChoice.MALAYALAM -> when (choice) {
+                    FontChoice.TRADITIONAL -> BundledFace.NOTO_SERIF_MALAYALAM to FontFamily.Serif
+                    FontChoice.CLASSIC -> BundledFace.NOTO_SERIF_MALAYALAM to FontFamily.Serif
+                    FontChoice.MODERN -> BundledFace.NOTO_SANS_MALAYALAM to FontFamily.SansSerif
+                    FontChoice.SANS -> BundledFace.NOTO_SANS_MALAYALAM to FontFamily.SansSerif
                 }
                 else -> when (choice) {
                     FontChoice.TRADITIONAL -> BundledFace.LITERATA to FontFamily.Serif
@@ -93,13 +102,12 @@ object ReadingFonts {
     /**
      * Extra line height for the verse body, as a multiple of the type size.
      * The Indic scripts set taller than Latin — vowel signs sit well above
-     * and below the body and Telugu hangs its conjuncts under the line, and
-     * cramping them is the fastest way to make a pasuram unreadable.
+     * and below the body, and both Telugu and Malayalam hang conjuncts
+     * under the line. Cramping them is the fastest way to make a pasuram
+     * unreadable.
      */
-    fun lineHeightMultiplier(script: ScriptChoice): Float = when (script) {
-        ScriptChoice.TAMIL, ScriptChoice.TELUGU -> 1.62f
-        else -> 1.45f
-    }
+    fun lineHeightMultiplier(script: ScriptChoice): Float =
+        if (script.isIndicScript) 1.62f else 1.45f
 
     private fun resolve(context: Context, face: BundledFace): FontFamily? {
         val id = context.resources.getIdentifier(

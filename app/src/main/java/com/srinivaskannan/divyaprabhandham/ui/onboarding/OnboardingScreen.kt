@@ -223,10 +223,13 @@ private const val SAMPLE_TA = "மார்கழித் திங்கள்
 private const val SAMPLE_EN = "Maargazhi thingal madhi niraindha nannaalaal"
 private const val SAMPLE_TE = "మార్గఴిత్ తింగళ్ మదినిఱైంద నన్నాళాల్"
 
+private const val SAMPLE_ML = "മാർഗഴിത് തിങ്ഗൾ മദിനിറൈന്ദ നന്നാളാൽ"
+
 /** The preview line in whichever script the reader has chosen. */
 private fun sampleFor(script: ScriptChoice): String = when (script) {
     ScriptChoice.TAMIL -> SAMPLE_TA
     ScriptChoice.TELUGU -> SAMPLE_TE
+    ScriptChoice.MALAYALAM -> SAMPLE_ML
     else -> SAMPLE_EN
 }
 

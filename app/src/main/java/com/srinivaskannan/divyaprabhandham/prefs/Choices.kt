@@ -18,10 +18,18 @@ enum class ScriptChoice(val key: String) {
     TAMIL("tamil"),
     READABLE("readable"),
     SCHOLARLY("scholarly"),
-    TELUGU("telugu");
+    TELUGU("telugu"),
+    MALAYALAM("malayalam");
 
     /** Whether the app chrome should be in English. */
     val usesEnglishUi: Boolean get() = this != TAMIL
+
+    /**
+     * Whether this is a script the verses are written in, as against a
+     * phonetic transcription of them. Only one Indic face is available per
+     * script, so the font picker cannot change these.
+     */
+    val isIndicScript: Boolean get() = this == TAMIL || this == TELUGU || this == MALAYALAM
 
     /** Picker label, legible whichever script is currently active. */
     val label: String
@@ -30,6 +38,7 @@ enum class ScriptChoice(val key: String) {
             READABLE -> "English · Readable"
             SCHOLARLY -> "English · Scholarly"
             TELUGU -> "తెలుగు · Telugu"
+            MALAYALAM -> "മലയാളം · Malayalam"
         }
 
     val detail: String
@@ -41,6 +50,10 @@ enum class ScriptChoice(val key: String) {
             // the way they are pronounced, as Sundar Kidambi's Telugu
             // edition spells them.
             TELUGU -> "తమిఴ్ మూలం తెలుగు లిపిలో (వాడినేన్, తంగం)"
+            // Malayalam keeps a letter for every Tamil one -- ള ഴ റ ന്, which
+            // Telugu has to approximate -- so it is the closest of the
+            // three to the original, chillu letters and all.
+            MALAYALAM -> "തമിഴ് മൂലം മലയാള ലിപിയിൽ (വാഡിനേൻ, തങ്ഗം)"
         }
 
     companion object {
