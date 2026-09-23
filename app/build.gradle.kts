@@ -7,14 +7,14 @@ plugins {
 
 android {
     namespace = "com.srinivaskannan.divyaprabhandham"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.srinivaskannan.divyaprabhandham"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "1.0.3"
+        versionCode = 13
+        versionName = "1.0.6"
         vectorDrawables { useSupportLibrary = true }
     }
 
