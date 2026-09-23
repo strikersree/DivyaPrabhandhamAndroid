@@ -25,6 +25,8 @@ data class Division(
     val detailTe: String,
     val titleMl: String,
     val detailMl: String,
+    val titleDe: String,
+    val detailDe: String,
     /** Asset file name, without the .json extension. */
     val resource: String,
     /**
@@ -54,6 +56,7 @@ data class Division(
         ScriptChoice.SCHOLARLY -> titleS
         ScriptChoice.TELUGU -> titleTe
         ScriptChoice.MALAYALAM -> titleMl
+        ScriptChoice.DEVANAGARI -> titleDe
     }
 
     fun detail(script: ScriptChoice): String = when (script) {
@@ -62,6 +65,7 @@ data class Division(
         ScriptChoice.SCHOLARLY -> detailS
         ScriptChoice.TELUGU -> detailTe
         ScriptChoice.MALAYALAM -> detailMl
+        ScriptChoice.DEVANAGARI -> detailDe
     }
 
     companion object {
@@ -78,6 +82,8 @@ data class Division(
                 detailTe = "పెరియాఴ్వార్ ముదల్ మదురగవి వరై · పాశురం 1–947",
                 titleMl = "മുദലായിരം",
                 detailMl = "പെരിയാഴ്വാർ മുദൽ മദുരഗവി വരൈ · പാശുരം 1–947",
+                titleDe = "मुदलायिरम्",
+                detailDe = "पॆरियाऴ्वार् मुदल् मदुरगवि वरै · पाशुरम् 1–947",
                 resource = "prabandham",
             ),
             Division(
@@ -92,6 +98,8 @@ data class Division(
                 detailTe = "పెరియ తిరుమొఴి ముదలియన · తిరుమంగైయాఴ్వార్ · పాశురం 948–2081",
                 titleMl = "ഇരണ്ഡാം ആയിരം",
                 detailMl = "പെരിയ തിരുമൊഴി മുദലിയന · തിരുമങ്ഗൈയാഴ്വാർ · പാശുരം 948–2081",
+                titleDe = "इरण्डाम् आयिरम्",
+                detailDe = "पॆरिय तिरुमॊऴि मुदलियन · तिरुमङ्गैयाऴ्वार् · पाशुरम् 948–2081",
                 resource = "prabandham_irandam",
             ),
             Division(
@@ -106,6 +114,8 @@ data class Division(
                 detailTe = "తిరువందాదిగళ్, తిరువిరుత్తం, తిరుమడల్గళ్ ముదలియన · పాశురం 2082–2674",
                 titleMl = "ഇയറ്പാ",
                 detailMl = "തിരുവന്ദാദിഗൾ, തിരുവിരുത്തം, തിരുമഡൽഗൾ മുദലിയന · പാശുരം 2082–2674",
+                titleDe = "इयऱ्पा",
+                detailDe = "तिरुवन्दादिगळ्, तिरुविरुत्तम्, तिरुमडल्गळ् मुदलियन · पाशुरम् 2082–2674",
                 resource = "prabandham_iyarpa",
             ),
             Division(
@@ -120,6 +130,8 @@ data class Division(
                 detailTe = "తిరువాయ్మొఴి · ఇరామానుశ నూట్రందాది · పాశురం 2675–3884",
                 titleMl = "തിരുവായ്മൊഴി",
                 detailMl = "തിരുവായ്മൊഴി · ഇരാമാനുശ നൂറ്റന്ദാദി · പാശുരം 2675–3884",
+                titleDe = "तिरुवाय्मॊऴि",
+                detailDe = "तिरुवाय्मॊऴि · इरामानुश नूट्रन्दादि · पाशुरम् 2675–3884",
                 resource = "prabandham_thiruvaimozhi",
             ),
             Division(
@@ -134,6 +146,8 @@ data class Division(
                 detailTe = "స్వామి వేదాంద తేశిగర్ అరుళిచ్చెయ్ద నూల్గళ్",
                 titleMl = "തേശിഗ പിരബന്ദം",
                 detailMl = "സ്വാമി വേദാന്ദ തേശിഗർ അരുളിച്ചെയ്ദ നൂൽഗൾ",
+                titleDe = "तेशिग पिरबन्दम्",
+                detailDe = "स्वामि वेदान्द तेशिगर् अरुळिच्चॆय्द नूल्गळ्",
                 resource = "desika_prabandham",
                 usesGlobalNumbering = false,
             ),
@@ -149,6 +163,8 @@ data class Division(
                 detailTe = "పాశురంగళ్ ఓదుమున్ శేవిక్కుం ఆశార్య వణక్కత్ తనియన్గళ్",
                 titleMl = "പൊദു തനിയൻഗൾ",
                 detailMl = "പാശുരങ്ഗൾ ഓദുമുൻ ശേവിക്കും ആശാർയ വണക്കത് തനിയൻഗൾ",
+                titleDe = "पॊदु तनियन्गळ्",
+                detailDe = "पाशुरङ्गळ् ओदुमुन् शेविक्कुम् आशार्य वणक्कत् तनियन्गळ्",
                 resource = "podhu_thaniyangal",
                 usesGlobalNumbering = false,
                 onShelf = false,

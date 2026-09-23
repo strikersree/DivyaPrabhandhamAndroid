@@ -47,6 +47,8 @@ object ReadingFonts {
         NOTO_SANS_TELUGU("noto_sans_telugu"),
         NOTO_SERIF_MALAYALAM("noto_serif_malayalam"),
         NOTO_SANS_MALAYALAM("noto_sans_malayalam"),
+        NOTO_SERIF_DEVANAGARI("noto_serif_devanagari"),
+        NOTO_SANS_DEVANAGARI("noto_sans_devanagari"),
         HIND_MADURAI("hind_madurai"),
         LITERATA("literata"),
         SOURCE_SERIF("source_serif"),
@@ -87,6 +89,12 @@ object ReadingFonts {
                     FontChoice.CLASSIC -> BundledFace.NOTO_SERIF_MALAYALAM to FontFamily.Serif
                     FontChoice.MODERN -> BundledFace.NOTO_SANS_MALAYALAM to FontFamily.SansSerif
                     FontChoice.SANS -> BundledFace.NOTO_SANS_MALAYALAM to FontFamily.SansSerif
+                }
+                ScriptChoice.DEVANAGARI -> when (choice) {
+                    FontChoice.TRADITIONAL -> BundledFace.NOTO_SERIF_DEVANAGARI to FontFamily.Serif
+                    FontChoice.CLASSIC -> BundledFace.NOTO_SERIF_DEVANAGARI to FontFamily.Serif
+                    FontChoice.MODERN -> BundledFace.NOTO_SANS_DEVANAGARI to FontFamily.SansSerif
+                    FontChoice.SANS -> BundledFace.NOTO_SANS_DEVANAGARI to FontFamily.SansSerif
                 }
                 else -> when (choice) {
                     FontChoice.TRADITIONAL -> BundledFace.LITERATA to FontFamily.Serif

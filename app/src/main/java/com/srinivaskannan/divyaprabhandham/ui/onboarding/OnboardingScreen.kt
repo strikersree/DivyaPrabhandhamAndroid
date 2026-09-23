@@ -227,11 +227,14 @@ private const val SAMPLE_TE = "మార్గఴిత్ తింగళ్ �
 
 private const val SAMPLE_ML = "മാർഗഴിത് തിങ്ഗൾ മദിനിറൈന്ദ നന്നാളാൽ"
 
+private const val SAMPLE_DE = "मार्गऴित् तिङ्गळ् मदिनिऱैन्द नन्नाळाल्"
+
 /** The preview line in whichever script the reader has chosen. */
 private fun sampleFor(script: ScriptChoice): String = when (script) {
     ScriptChoice.TAMIL -> SAMPLE_TA
     ScriptChoice.TELUGU -> SAMPLE_TE
     ScriptChoice.MALAYALAM -> SAMPLE_ML
+    ScriptChoice.DEVANAGARI -> SAMPLE_DE
     else -> SAMPLE_EN
 }
 

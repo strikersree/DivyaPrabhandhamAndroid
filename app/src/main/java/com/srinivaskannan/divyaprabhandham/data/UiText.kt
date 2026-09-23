@@ -312,8 +312,8 @@ object UiText {
         ),
         Ui.SCRIPT_HEADER to ("எழுத்து / மொழி" to "Script & Language"),
         Ui.SCRIPT_FOOTER to (
-            "மூல தமிழ், ஆங்கில ஒலிபெயர்ப்பு, அல்லது தெலுங்கு / மலயாள லிபி. தமிழ் அல்லாத தேர்வு செயலியை ஆங்கிலத்தில் காட்டும்." to
-            "Original Tamil, English transliteration, or Telugu or Malayalam script. Anything but Tamil shows the app itself in English."
+            "மூல தமிழ், ஆங்கில ஒலிபெயர்ப்பு, அல்லது தெலுங்கு / மலயாள / தேவநாகரி லிபி. தமிழ் அல்லாத தேர்வு செயலியை ஆங்கிலத்தில் காட்டும்." to
+            "Original Tamil, English transliteration, or Telugu, Malayalam or Devanagari script. Anything but Tamil shows the app itself in English."
         ),
         Ui.SYNC_HEADER to ("" to ""),
         Ui.SYNC_FOOTER to (

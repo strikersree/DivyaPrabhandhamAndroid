@@ -50,10 +50,12 @@ data class Work(
     @SerialName("title_s") val titleS: String? = null,
     @SerialName("title_te") val titleTe: String? = null,
     @SerialName("title_ml") val titleMl: String? = null,
+    @SerialName("title_de") val titleDe: String? = null,
     @SerialName("author_r") val authorR: String? = null,
     @SerialName("author_s") val authorS: String? = null,
     @SerialName("author_te") val authorTe: String? = null,
     @SerialName("author_ml") val authorMl: String? = null,
+    @SerialName("author_de") val authorDe: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
@@ -61,6 +63,7 @@ data class Work(
         ScriptChoice.SCHOLARLY -> titleS ?: title
         ScriptChoice.TELUGU -> titleTe ?: title
         ScriptChoice.MALAYALAM -> titleMl ?: title
+        ScriptChoice.DEVANAGARI -> titleDe ?: title
     }
 
     fun author(script: ScriptChoice): String = when (script) {
@@ -69,6 +72,7 @@ data class Work(
         ScriptChoice.SCHOLARLY -> authorS ?: author
         ScriptChoice.TELUGU -> authorTe ?: author
         ScriptChoice.MALAYALAM -> authorMl ?: author
+        ScriptChoice.DEVANAGARI -> authorDe ?: author
     }
 
     /** Combined pasuram range across every section in this work. */
@@ -98,10 +102,12 @@ data class BookSection(
     @SerialName("title_s") val titleS: String? = null,
     @SerialName("title_te") val titleTe: String? = null,
     @SerialName("title_ml") val titleMl: String? = null,
+    @SerialName("title_de") val titleDe: String? = null,
     @SerialName("content_r") val contentR: String? = null,
     @SerialName("content_s") val contentS: String? = null,
     @SerialName("content_te") val contentTe: String? = null,
     @SerialName("content_ml") val contentMl: String? = null,
+    @SerialName("content_de") val contentDe: String? = null,
     /** The invocatory verse that opens a Desika Prabandham work, shown as a
      *  prelude above the first pasuram rather than folded into it. Null for
      *  every other division. */
@@ -110,6 +116,7 @@ data class BookSection(
     @SerialName("thaniyan_s") val thaniyanS: String? = null,
     @SerialName("thaniyan_te") val thaniyanTe: String? = null,
     @SerialName("thaniyan_ml") val thaniyanMl: String? = null,
+    @SerialName("thaniyan_de") val thaniyanDe: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
@@ -117,6 +124,7 @@ data class BookSection(
         ScriptChoice.SCHOLARLY -> titleS ?: title
         ScriptChoice.TELUGU -> titleTe ?: title
         ScriptChoice.MALAYALAM -> titleMl ?: title
+        ScriptChoice.DEVANAGARI -> titleDe ?: title
     }
 
     fun content(script: ScriptChoice): String = when (script) {
@@ -125,6 +133,7 @@ data class BookSection(
         ScriptChoice.SCHOLARLY -> contentS ?: content
         ScriptChoice.TELUGU -> contentTe ?: content
         ScriptChoice.MALAYALAM -> contentMl ?: content
+        ScriptChoice.DEVANAGARI -> contentDe ?: content
     }
 
     fun thaniyan(script: ScriptChoice): String? = when (script) {
@@ -133,6 +142,7 @@ data class BookSection(
         ScriptChoice.SCHOLARLY -> thaniyanS ?: thaniyan
         ScriptChoice.TELUGU -> thaniyanTe ?: thaniyan
         ScriptChoice.MALAYALAM -> thaniyanMl ?: thaniyan
+        ScriptChoice.DEVANAGARI -> thaniyanDe ?: thaniyan
     }
 
     /**
