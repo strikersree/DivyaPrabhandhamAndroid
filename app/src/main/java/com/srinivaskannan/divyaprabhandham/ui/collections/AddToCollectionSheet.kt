@@ -130,7 +130,7 @@ fun AddToCollectionSheet(pasuramKey: String, onDismiss: () -> Unit) {
                                     else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
-                                    collection.name,
+                                    collection.displayName(appState.scriptChoice),
                                     style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.weight(1f),
                                 )

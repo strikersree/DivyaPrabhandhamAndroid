@@ -53,7 +53,12 @@ data class UserCollection(
      *  additions reach devices that already have it. False for anything the
      *  person created themselves. */
     val isBuiltIn: Boolean = false,
-)
+) {
+    /** The name to show. A built-in follows the reader's script; anything
+     *  the person made keeps the name they gave it. */
+    fun displayName(script: ScriptChoice): String =
+        if (isBuiltIn) BuiltInCollections.displayName(id, script) ?: name else name
+}
 
 /**
  * Everything that should survive relaunch: reading position, bookmarks,

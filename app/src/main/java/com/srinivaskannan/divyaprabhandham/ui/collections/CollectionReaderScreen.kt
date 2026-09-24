@@ -101,7 +101,7 @@ fun CollectionReaderScreen(collectionId: String, onBack: () -> Unit, onManage: (
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(collection.name) },
+                title = { Text(collection.displayName(appState.scriptChoice)) },
                 navigationIcon = { BackButton(onBack) },
                 actions = {
                     if (!collection.isBuiltIn) {

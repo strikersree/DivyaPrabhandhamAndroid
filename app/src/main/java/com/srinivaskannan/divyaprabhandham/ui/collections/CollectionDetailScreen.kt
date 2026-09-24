@@ -91,7 +91,7 @@ fun CollectionDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(collection.name) },
+                title = { Text(collection.displayName(appState.scriptChoice)) },
                 navigationIcon = { BackButton(onBack) },
                 actions = {
                     IconButton(onClick = { showAddWork = true }) {

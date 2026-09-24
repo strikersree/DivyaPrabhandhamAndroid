@@ -258,7 +258,7 @@ private fun PinnedSection(
                     val collection = appState.collection(collectionId)
                     if (collection != null) {
                         PinnedTile(
-                            title = collection.name,
+                            title = collection.displayName(appState.scriptChoice),
                             author = "${collection.pasuramKeys.size} ${appState.ui(Ui.COLLECTION_PASURAM_COUNT)}",
                             palette = listOf(
                                 MaterialTheme.colorScheme.primary,

@@ -102,4 +102,45 @@ object BuiltInCollections {
         "b5w18s1#17", "b5w18s1#18",
         "b5w20s1#18", "b5w20s1#19", "b5w20s1#20",
     )
+
+    /**
+     * The names of the app-curated collections, in every script.
+     *
+     * Held here rather than in the stored collection because the name is
+     * written once, when the collection is first seeded, and the reader may
+     * change script long after. A built-in cannot be renamed, so there is
+     * nothing of the person's to preserve and the script's form can simply
+     * win; a collection the person made keeps its own name whatever the
+     * script, which is the point of having made it.
+     *
+     * The two romanised forms are the app's established spellings, the same
+     * ones the division titles use -- not a mechanical transliteration,
+     * which would give "pirabandha chaaththumurai".
+     */
+    fun displayName(id: String, script: ScriptChoice): String? {
+        val forms = NAMES[id] ?: return null
+        return when (script) {
+            ScriptChoice.TAMIL -> forms[0]
+            ScriptChoice.READABLE -> forms[1]
+            ScriptChoice.SCHOLARLY -> forms[2]
+            ScriptChoice.TELUGU -> forms[3]
+            ScriptChoice.MALAYALAM -> forms[4]
+            ScriptChoice.DEVANAGARI -> forms[5]
+        }
+    }
+
+    private val NAMES: Map<String, List<String>> = mapOf(
+        PRABHANDHA_SAARAM_ID to listOf(
+            "பிரபந்த சாத்துமுறை", "Prabhandha Saaththumurai", "Pirapanta Cāttumuṟai",
+            "పిరబంద శాత్తుముఱై", "പിരബന്ദ ശാത്തുമുറൈ", "पिरबन्द शात्तुमुऱै",
+        ),
+        DESIKA_PRABHANDHA_SAATHTHUMURAI_ID to listOf(
+            "தேசிக பிரபந்த சாத்துமுறை", "Desika Prabhandha Saaththumurai", "Tēcika Pirapanta Cāttumuṟai",
+            "తేశిగ పిరబంద శాత్తుముఱై", "തേശിഗ പിരബന്ദ ശാത്തുമുറൈ", "तेशिग पिरबन्द शात्तुमुऱै",
+        ),
+        PODHU_THANIYANGAL_ID to listOf(
+            "பொது தனியன்கள்", "Podhu Thaniyangal", "Potu Taṉiyaṉkaḷ",
+            "పొదు తనియన్గళ్", "പൊദു തനിയൻഗൾ", "पॊदु तनियन्गळ्",
+        ),
+    )
 }

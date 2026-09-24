@@ -314,20 +314,65 @@ data class DivyaDesam(
     val thaayar: String? = null,
     @SerialName("perumal_ta") val perumalTa: String? = null,
     @SerialName("thaayar_ta") val thaayarTa: String? = null,
+    /**
+     * The three Indic scripts, generated from the Tamil by
+     * tools_generate_scripts.py on the iOS side. The two romanised scripts
+     * deliberately have none: they use [nameEn] and friends, which are real
+     * spellings (Srirangam, Tiruchirappalli) rather than a transliteration
+     * of the Tamil, and so are better than anything that could be generated.
+     */
+    @SerialName("name_te") val nameTe: String? = null,
+    @SerialName("name_ml") val nameMl: String? = null,
+    @SerialName("name_de") val nameDe: String? = null,
+    @SerialName("place_te") val placeTe: String? = null,
+    @SerialName("place_ml") val placeMl: String? = null,
+    @SerialName("place_de") val placeDe: String? = null,
+    @SerialName("region_te") val regionTe: String? = null,
+    @SerialName("region_ml") val regionMl: String? = null,
+    @SerialName("region_de") val regionDe: String? = null,
+    @SerialName("perumal_te") val perumalTe: String? = null,
+    @SerialName("perumal_ml") val perumalMl: String? = null,
+    @SerialName("perumal_de") val perumalDe: String? = null,
+    @SerialName("thaayar_te") val thaayarTe: String? = null,
+    @SerialName("thaayar_ml") val thaayarMl: String? = null,
+    @SerialName("thaayar_de") val thaayarDe: String? = null,
 ) {
-    fun name(script: ScriptChoice) = if (script == ScriptChoice.TAMIL) name else nameEn
-    fun place(script: ScriptChoice) = if (script == ScriptChoice.TAMIL) place else placeEn
-    fun region(script: ScriptChoice) = if (script == ScriptChoice.TAMIL) region else regionEn
+    fun name(script: ScriptChoice) = pick(script, name, nameEn, nameTe, nameMl, nameDe)
+    fun place(script: ScriptChoice) = pick(script, place, placeEn, placeTe, placeMl, placeDe)
+    fun region(script: ScriptChoice) = pick(script, region, regionEn, regionTe, regionMl, regionDe)
 
     /**
      * Deity names follow the app's script, falling back to the Roman spelling
      * where no Tamil form has been recorded.
      */
-    fun perumal(script: ScriptChoice): String? =
-        if (script == ScriptChoice.TAMIL) perumalTa ?: perumal else perumal
+    fun perumal(script: ScriptChoice): String? {
+        val roman = perumal ?: return null
+        val tamil = perumalTa ?: return roman
+        return pick(script, tamil, roman, perumalTe, perumalMl, perumalDe)
+    }
 
-    fun thaayar(script: ScriptChoice): String? =
-        if (script == ScriptChoice.TAMIL) thaayarTa ?: thaayar else thaayar
+    fun thaayar(script: ScriptChoice): String? {
+        val roman = thaayar ?: return null
+        val tamil = thaayarTa ?: return roman
+        return pick(script, tamil, roman, thaayarTe, thaayarMl, thaayarDe)
+    }
+
+    /**
+     * Falls back to the Tamil, not the English, when an Indic form is
+     * missing: these are Tamil place and deity names, and the Tamil is the
+     * closer reading for someone who chose another Indic script.
+     */
+    private fun pick(
+        script: ScriptChoice,
+        tamil: String, en: String,
+        te: String?, ml: String?, de: String?,
+    ): String = when (script) {
+        ScriptChoice.TAMIL -> tamil
+        ScriptChoice.READABLE, ScriptChoice.SCHOLARLY -> en
+        ScriptChoice.TELUGU -> te ?: tamil
+        ScriptChoice.MALAYALAM -> ml ?: tamil
+        ScriptChoice.DEVANAGARI -> de ?: tamil
+    }
 }
 
 /** One of the twelve Aazhwars (plus Ramanuja and Desika in the bundled list). */

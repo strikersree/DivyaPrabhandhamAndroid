@@ -134,7 +134,7 @@ private fun CollectionCard(
     if (deleting) {
         AlertDialog(
             onDismissRequest = { deleting = false },
-            title = { Text(collection.name) },
+            title = { Text(collection.displayName(appState.scriptChoice)) },
             text = { Text(appState.ui(Ui.DELETE_COLLECTION)) },
             confirmButton = {
                 TextButton(onClick = { onDelete(); deleting = false }) {
@@ -168,7 +168,7 @@ private fun CollectionCard(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        collection.name,
+                        collection.displayName(appState.scriptChoice),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
