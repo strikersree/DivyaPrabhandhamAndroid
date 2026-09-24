@@ -26,8 +26,23 @@ import kotlinx.serialization.Serializable
 data class Essence(
     val ta: String,
     val en: String,
+    /**
+     * The Tamil summary in each of the Indic scripts, generated from [ta]
+     * by tools_generate_scripts.py on the iOS side. The romanised scripts
+     * keep [en], which is a real English summary rather than a
+     * transliteration and is the better read for someone who chose them.
+     */
+    @SerialName("ta_te") val taTe: String? = null,
+    @SerialName("ta_ml") val taMl: String? = null,
+    @SerialName("ta_de") val taDe: String? = null,
 ) {
-    fun text(script: ScriptChoice): String = if (script == ScriptChoice.TAMIL) ta else en
+    fun text(script: ScriptChoice): String = when (script) {
+        ScriptChoice.TAMIL -> ta
+        ScriptChoice.READABLE, ScriptChoice.SCHOLARLY -> en
+        ScriptChoice.TELUGU -> taTe ?: ta
+        ScriptChoice.MALAYALAM -> taMl ?: ta
+        ScriptChoice.DEVANAGARI -> taDe ?: ta
+    }
 }
 
 /** Root of each bundled division file. */
