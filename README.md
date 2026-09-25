@@ -166,6 +166,37 @@ byte-identical to the iOS build's values.
 | `MeshGradient` | Nine radial gradients on a Canvas | Compose has no mesh primitive |
 | `ContentUnavailableView` | `EmptyState` | Material has no equivalent |
 | iPhone/iPad split | `NavigationSuiteScaffold` | Adaptive layout removes the need for a separate Book tab |
+| `ShareLink` + `ImageRenderer` | `ACTION_SEND` + Canvas/StaticLayout | See below |
+
+### The share card
+
+The share button offers the plain text it always did, or the verse set into
+one of three supplied backgrounds -- day, evening, night, chosen by the clock
+exactly as on iOS (day 5am-5pm, evening 5pm-9pm, night 9pm-5am).
+
+Drawn with `android.graphics`, not Compose: a Compose tree has to be attached
+to a window before it will lay out, and a share card needs no window. `Canvas`
+plus `StaticLayout` draws straight into a `Bitmap`, and `StaticLayout` is also
+what measures the fit, so what is measured is what is drawn. The two-pass fit
+is the iOS one -- largest size at which every line of the verse still stands on
+its own, because that lineation is the metre, falling back to wrapping only
+below a readable size.
+
+**The geometry is the artwork's own, in pixels, and is the iOS constants
+doubled.** iOS renders at 707x1000 points at scale 2 against the same 1414x2000
+images; `ShareCardRenderer` works directly in pixels. If one moves, both move,
+or the same verse sits differently on the same card on the two platforms.
+
+The art is the same three images, converted to WebP at q92 -- 390 KB for all
+three against 5.5 MB as PNG, with the ground luminance unchanged where it
+matters (the night card measures 190.6 against the source's 190.4, and the ink
+colours are chosen against exactly that). They live in `drawable-nodpi` so
+nothing rescales them.
+
+Sharing goes through a `FileProvider` scoped to one cache directory. `ACTION_SEND`
+cannot carry a `file://` path on any supported version, and a provider is the
+only way to give one other app read access to one file without opening a
+directory to everything on the device.
 
 ### Recitations
 

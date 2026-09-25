@@ -26,7 +26,9 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
@@ -88,6 +90,10 @@ import com.srinivaskannan.divyaprabhandham.prefs.ReaderThemeChoice
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import com.srinivaskannan.divyaprabhandham.ui.collections.AddToCollectionSheet
 import com.srinivaskannan.divyaprabhandham.ui.components.shareText
+import com.srinivaskannan.divyaprabhandham.ui.components.sharePasuramImage
+import com.srinivaskannan.divyaprabhandham.ui.share.ShareCardRenderer
+import com.srinivaskannan.divyaprabhandham.ui.share.ShareCardTime
+import com.srinivaskannan.divyaprabhandham.ui.share.SharedPasuram
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 import com.srinivaskannan.divyaprabhandham.ui.theme.ReaderPalette
@@ -96,9 +102,11 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.currentReaderTheme
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.readerThemeIsForced
 import com.srinivaskannan.divyaprabhandham.ui.theme.repeatHighlight
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The reader.
@@ -459,6 +467,8 @@ private fun StanzaCard(
     val lineHeight = appState.fontSize * ReadingFonts.lineHeightMultiplier(appState.scriptChoice)
 
     var essenceMenuOpen by remember { mutableStateOf(false) }
+    var shareMenuOpen by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     // Long-press anywhere on the card opens Add to Collection, per an
     // explicit decision to use the card rather than the pasuram-number
     // badge. Note this does take over the card's long-press from the verse
@@ -540,16 +550,53 @@ private fun StanzaCard(
                         tint = if (bookmarked) accent else palette.secondaryText,
                     )
                 }
-                IconButton(
-                    onClick = {
-                        shareText(context, buildShareText(appState, stanza, section, work))
-                    },
-                ) {
-                    Icon(
-                        Icons.Filled.Share,
-                        contentDescription = appState.ui(Ui.SHARE),
-                        tint = palette.secondaryText,
-                    )
+                // A menu rather than a single action: there are two honest
+                // answers now, and the system share sheet cannot ask. The
+                // card is offered first because it is the new one and the one
+                // worth seeing; the text share is unchanged underneath it.
+                Box {
+                    IconButton(onClick = { shareMenuOpen = true }) {
+                        Icon(
+                            Icons.Filled.Share,
+                            contentDescription = appState.ui(Ui.SHARE),
+                            tint = palette.secondaryText,
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = shareMenuOpen,
+                        onDismissRequest = { shareMenuOpen = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(appState.ui(Ui.SHARE_AS_IMAGE)) },
+                            leadingIcon = { Icon(Icons.Filled.Image, contentDescription = null) },
+                            onClick = {
+                                shareMenuOpen = false
+                                val pasuram = buildSharedPasuram(appState, stanza, section, work)
+                                val caption = buildShareText(appState, stanza, section, work)
+                                // Off the main thread: a 1414x2000 bitmap and
+                                // its text layout are not free, and this runs
+                                // from a tap in a scrolling list.
+                                scope.launch {
+                                    val bitmap = withContext(Dispatchers.Default) {
+                                        ShareCardRenderer.render(context, pasuram)
+                                    }
+                                    if (bitmap != null) {
+                                        sharePasuramImage(context, bitmap, pasuram.fileName, caption)
+                                    } else {
+                                        shareText(context, caption)
+                                    }
+                                }
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(appState.ui(Ui.SHARE_AS_TEXT)) },
+                            leadingIcon = { Icon(Icons.Filled.Notes, contentDescription = null) },
+                            onClick = {
+                                shareMenuOpen = false
+                                shareText(context, buildShareText(appState, stanza, section, work))
+                            },
+                        )
+                    }
                 }
             }
 
@@ -579,6 +626,31 @@ private fun StanzaCard(
             }
         }
     }
+}
+
+/**
+ * The same pasuram as a card. Values only -- no composable, no repository --
+ * so the render can be handed to a background dispatcher.
+ */
+private fun buildSharedPasuram(
+    appState: AppState,
+    stanza: Stanza,
+    section: BookSection,
+    work: Work?,
+): SharedPasuram {
+    val prelude = stanza.preludeEnd?.let { stanza.text.substring(0, it).trim() }
+    val verse = stanza.preludeEnd?.let { stanza.text.substring(it).trim() } ?: stanza.text
+    return SharedPasuram(
+        heading = stanza.label?.let { "${appState.ui(Ui.PASURAM)} $it" }
+            ?: section.title(appState.scriptChoice),
+        prelude = prelude,
+        verse = verse,
+        attribution = "— ${work?.title(appState.scriptChoice) ?: section.title(appState.scriptChoice)}, " +
+            appState.ui(Ui.FULL_BOOK_NAME),
+        script = appState.scriptChoice,
+        font = appState.fontChoice,
+        time = ShareCardTime.current(),
+    )
 }
 
 private fun buildShareText(

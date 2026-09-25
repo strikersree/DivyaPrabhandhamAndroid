@@ -72,6 +72,8 @@ enum class Ui {
     REMOVE_BOOKMARK,
     GO_TO_BOOKMARK,
     SHARE,
+    SHARE_AS_IMAGE,
+    SHARE_AS_TEXT,
     FONT_SIZE,
     TODAY_THIRUPPAVAI,
     TODAY_THIRUPPAVAI_HINT,
@@ -347,6 +349,8 @@ object UiText {
         Ui.REMOVE_BOOKMARK to ("நினைவுக்குறியை நீக்கு" to "Remove bookmark"),
         Ui.GO_TO_BOOKMARK to ("நினைவுக்குறிக்குச் செல்" to "Go to bookmark"),
         Ui.SHARE to ("பாசுரத்தைப் பகிர்" to "Share pasuram"),
+        Ui.SHARE_AS_IMAGE to ("படமாகப் பகிர்" to "Share as image"),
+        Ui.SHARE_AS_TEXT to ("உரையாகப் பகிர்" to "Share as text"),
         Ui.FONT_SIZE to ("எழுத்து அளவு" to "Font size"),
         Ui.TODAY_THIRUPPAVAI to (
             "இன்றைய திருப்பாவை பாசுரத்தைப் படிக்க" to

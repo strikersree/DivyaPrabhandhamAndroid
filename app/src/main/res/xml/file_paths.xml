@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The one directory the FileProvider will hand out: rendered share cards,
+    written to the cache and nothing else. Scoped this narrowly on purpose —
+    a provider that exposes the whole cache or, worse, files-path, hands every
+    app on the device a readable window into this one's storage the moment a
+    URI leaks.
+-->
+<paths>
+    <cache-path name="share_cards" path="share_cards/" />
+</paths>

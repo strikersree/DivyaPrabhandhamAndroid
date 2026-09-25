@@ -164,5 +164,23 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!--
+            Serves the rendered pasuram cards to whichever app the person
+            picks out of the share sheet. grantUriPermissions with
+            FLAG_GRANT_READ_URI_PERMISSION on the intent means the receiving
+            app gets read access to that one file and nothing else, for as
+            long as it holds the URI; exported=false keeps anything that was
+            not handed a URI out entirely.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>
