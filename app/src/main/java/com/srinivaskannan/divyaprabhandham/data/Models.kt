@@ -35,6 +35,7 @@ data class Essence(
     @SerialName("ta_te") val taTe: String? = null,
     @SerialName("ta_ml") val taMl: String? = null,
     @SerialName("ta_de") val taDe: String? = null,
+    @SerialName("ta_kn") val taKn: String? = null,
 ) {
     fun text(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> ta
@@ -42,6 +43,7 @@ data class Essence(
         ScriptChoice.TELUGU -> taTe ?: ta
         ScriptChoice.MALAYALAM -> taMl ?: ta
         ScriptChoice.DEVANAGARI -> taDe ?: ta
+        ScriptChoice.KANNADA -> taKn ?: ta
     }
 }
 
@@ -66,11 +68,13 @@ data class Work(
     @SerialName("title_te") val titleTe: String? = null,
     @SerialName("title_ml") val titleMl: String? = null,
     @SerialName("title_de") val titleDe: String? = null,
+    @SerialName("title_kn") val titleKn: String? = null,
     @SerialName("author_r") val authorR: String? = null,
     @SerialName("author_s") val authorS: String? = null,
     @SerialName("author_te") val authorTe: String? = null,
     @SerialName("author_ml") val authorMl: String? = null,
     @SerialName("author_de") val authorDe: String? = null,
+    @SerialName("author_kn") val authorKn: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
@@ -79,6 +83,7 @@ data class Work(
         ScriptChoice.TELUGU -> titleTe ?: title
         ScriptChoice.MALAYALAM -> titleMl ?: title
         ScriptChoice.DEVANAGARI -> titleDe ?: title
+        ScriptChoice.KANNADA -> titleKn ?: title
     }
 
     fun author(script: ScriptChoice): String = when (script) {
@@ -88,6 +93,7 @@ data class Work(
         ScriptChoice.TELUGU -> authorTe ?: author
         ScriptChoice.MALAYALAM -> authorMl ?: author
         ScriptChoice.DEVANAGARI -> authorDe ?: author
+        ScriptChoice.KANNADA -> authorKn ?: author
     }
 
     /** Combined pasuram range across every section in this work. */
@@ -118,11 +124,13 @@ data class BookSection(
     @SerialName("title_te") val titleTe: String? = null,
     @SerialName("title_ml") val titleMl: String? = null,
     @SerialName("title_de") val titleDe: String? = null,
+    @SerialName("title_kn") val titleKn: String? = null,
     @SerialName("content_r") val contentR: String? = null,
     @SerialName("content_s") val contentS: String? = null,
     @SerialName("content_te") val contentTe: String? = null,
     @SerialName("content_ml") val contentMl: String? = null,
     @SerialName("content_de") val contentDe: String? = null,
+    @SerialName("content_kn") val contentKn: String? = null,
     /** The invocatory verse that opens a Desika Prabandham work, shown as a
      *  prelude above the first pasuram rather than folded into it. Null for
      *  every other division. */
@@ -132,6 +140,7 @@ data class BookSection(
     @SerialName("thaniyan_te") val thaniyanTe: String? = null,
     @SerialName("thaniyan_ml") val thaniyanMl: String? = null,
     @SerialName("thaniyan_de") val thaniyanDe: String? = null,
+    @SerialName("thaniyan_kn") val thaniyanKn: String? = null,
 ) {
     fun title(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> title
@@ -140,6 +149,7 @@ data class BookSection(
         ScriptChoice.TELUGU -> titleTe ?: title
         ScriptChoice.MALAYALAM -> titleMl ?: title
         ScriptChoice.DEVANAGARI -> titleDe ?: title
+        ScriptChoice.KANNADA -> titleKn ?: title
     }
 
     fun content(script: ScriptChoice): String = when (script) {
@@ -149,6 +159,7 @@ data class BookSection(
         ScriptChoice.TELUGU -> contentTe ?: content
         ScriptChoice.MALAYALAM -> contentMl ?: content
         ScriptChoice.DEVANAGARI -> contentDe ?: content
+        ScriptChoice.KANNADA -> contentKn ?: content
     }
 
     fun thaniyan(script: ScriptChoice): String? = when (script) {
@@ -158,6 +169,7 @@ data class BookSection(
         ScriptChoice.TELUGU -> thaniyanTe ?: thaniyan
         ScriptChoice.MALAYALAM -> thaniyanMl ?: thaniyan
         ScriptChoice.DEVANAGARI -> thaniyanDe ?: thaniyan
+        ScriptChoice.KANNADA -> thaniyanKn ?: thaniyan
     }
 
     /**
@@ -339,22 +351,27 @@ data class DivyaDesam(
     @SerialName("name_te") val nameTe: String? = null,
     @SerialName("name_ml") val nameMl: String? = null,
     @SerialName("name_de") val nameDe: String? = null,
+    @SerialName("name_kn") val nameKn: String? = null,
     @SerialName("place_te") val placeTe: String? = null,
     @SerialName("place_ml") val placeMl: String? = null,
     @SerialName("place_de") val placeDe: String? = null,
+    @SerialName("place_kn") val placeKn: String? = null,
     @SerialName("region_te") val regionTe: String? = null,
     @SerialName("region_ml") val regionMl: String? = null,
     @SerialName("region_de") val regionDe: String? = null,
+    @SerialName("region_kn") val regionKn: String? = null,
     @SerialName("perumal_te") val perumalTe: String? = null,
     @SerialName("perumal_ml") val perumalMl: String? = null,
     @SerialName("perumal_de") val perumalDe: String? = null,
+    @SerialName("perumal_kn") val perumalKn: String? = null,
     @SerialName("thaayar_te") val thaayarTe: String? = null,
     @SerialName("thaayar_ml") val thaayarMl: String? = null,
     @SerialName("thaayar_de") val thaayarDe: String? = null,
+    @SerialName("thaayar_kn") val thaayarKn: String? = null,
 ) {
-    fun name(script: ScriptChoice) = pick(script, name, nameEn, nameTe, nameMl, nameDe)
-    fun place(script: ScriptChoice) = pick(script, place, placeEn, placeTe, placeMl, placeDe)
-    fun region(script: ScriptChoice) = pick(script, region, regionEn, regionTe, regionMl, regionDe)
+    fun name(script: ScriptChoice) = pick(script, name, nameEn, nameTe, nameMl, nameDe, nameKn)
+    fun place(script: ScriptChoice) = pick(script, place, placeEn, placeTe, placeMl, placeDe, placeKn)
+    fun region(script: ScriptChoice) = pick(script, region, regionEn, regionTe, regionMl, regionDe, regionKn)
 
     /**
      * Deity names follow the app's script, falling back to the Roman spelling
@@ -363,13 +380,13 @@ data class DivyaDesam(
     fun perumal(script: ScriptChoice): String? {
         val roman = perumal ?: return null
         val tamil = perumalTa ?: return roman
-        return pick(script, tamil, roman, perumalTe, perumalMl, perumalDe)
+        return pick(script, tamil, roman, perumalTe, perumalMl, perumalDe, perumalKn)
     }
 
     fun thaayar(script: ScriptChoice): String? {
         val roman = thaayar ?: return null
         val tamil = thaayarTa ?: return roman
-        return pick(script, tamil, roman, thaayarTe, thaayarMl, thaayarDe)
+        return pick(script, tamil, roman, thaayarTe, thaayarMl, thaayarDe, thaayarKn)
     }
 
     /**
@@ -380,13 +397,14 @@ data class DivyaDesam(
     private fun pick(
         script: ScriptChoice,
         tamil: String, en: String,
-        te: String?, ml: String?, de: String?,
+        te: String?, ml: String?, de: String?, kn: String?,
     ): String = when (script) {
         ScriptChoice.TAMIL -> tamil
         ScriptChoice.READABLE, ScriptChoice.SCHOLARLY -> en
         ScriptChoice.TELUGU -> te ?: tamil
         ScriptChoice.MALAYALAM -> ml ?: tamil
         ScriptChoice.DEVANAGARI -> de ?: tamil
+        ScriptChoice.KANNADA -> kn ?: tamil
     }
 }
 

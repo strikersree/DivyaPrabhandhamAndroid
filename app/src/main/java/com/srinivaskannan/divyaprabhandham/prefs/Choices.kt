@@ -20,7 +20,8 @@ enum class ScriptChoice(val key: String) {
     SCHOLARLY("scholarly"),
     TELUGU("telugu"),
     MALAYALAM("malayalam"),
-    DEVANAGARI("devanagari");
+    DEVANAGARI("devanagari"),
+    KANNADA("kannada");
 
     /** Whether the app chrome should be in English. */
     val usesEnglishUi: Boolean get() = this != TAMIL
@@ -32,7 +33,7 @@ enum class ScriptChoice(val key: String) {
      */
     val isIndicScript: Boolean
         get() = when (this) {
-            TAMIL, TELUGU, MALAYALAM, DEVANAGARI -> true
+            TAMIL, TELUGU, MALAYALAM, DEVANAGARI, KANNADA -> true
             READABLE, SCHOLARLY -> false
         }
 
@@ -45,6 +46,7 @@ enum class ScriptChoice(val key: String) {
             TELUGU -> "తెలుగు · Telugu"
             MALAYALAM -> "മലയാളം · Malayalam"
             DEVANAGARI -> "देवनागरी · Devanagari"
+            KANNADA -> "ಕನ್ನಡ · Kannada"
         }
 
     val detail: String
@@ -63,6 +65,9 @@ enum class ScriptChoice(val key: String) {
             // The Sanskrit script, so every voiced and aspirated value
             // Tamil's single letter stands for has a letter of its own.
             DEVANAGARI -> "तमिऴ् मूलम् देवनागरी लिपिमें (वाडिनेन्, तङ्गम्)"
+            // Telugu's sister script, and its twin for these verses:
+            // the same short e/o, the same ళ/ಳ and ఱ/ಱ, the same anusvara.
+            KANNADA -> "ತಮಿೞ್ ಮೂಲಂ ಕನ್ನಡ ಲಿಪಿಯಲ್ಲಿ (ವಾಡಿನೇನ್, ತಂಗಂ)"
         }
 
     companion object {

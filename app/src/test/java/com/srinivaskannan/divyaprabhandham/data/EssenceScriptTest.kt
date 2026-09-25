@@ -11,7 +11,7 @@ import java.io.File
  * The essences follow the reader's script.
  *
  * Decoded from the real bundled asset rather than a fixture, so a
- * regenerated corpus that dropped the ta_te/ta_ml/ta_de fields would fail
+ * regenerated corpus that dropped the ta_te/ta_ml/ta_de/ta_kn fields would fail
  * here instead of quietly showing English to a Telugu reader again.
  */
 class EssenceScriptTest {
@@ -36,6 +36,7 @@ class EssenceScriptTest {
                 assertTrue("$name/$id telugu", inBlock(e.text(ScriptChoice.TELUGU), 0x0C00, 0x0C7F))
                 assertTrue("$name/$id malayalam", inBlock(e.text(ScriptChoice.MALAYALAM), 0x0D00, 0x0D7F))
                 assertTrue("$name/$id devanagari", inBlock(e.text(ScriptChoice.DEVANAGARI), 0x0900, 0x097F))
+                assertTrue("$name/$id kannada", inBlock(e.text(ScriptChoice.KANNADA), 0x0C80, 0x0CFF))
             }
             println("$name: ${all.size} essences, all six scripts present")
         }

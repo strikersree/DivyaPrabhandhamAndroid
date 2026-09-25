@@ -126,6 +126,7 @@ object BuiltInCollections {
             ScriptChoice.TELUGU -> forms[3]
             ScriptChoice.MALAYALAM -> forms[4]
             ScriptChoice.DEVANAGARI -> forms[5]
+            ScriptChoice.KANNADA -> forms[6]
         }
     }
 
@@ -133,14 +134,17 @@ object BuiltInCollections {
         PRABHANDHA_SAARAM_ID to listOf(
             "பிரபந்த சாத்துமுறை", "Prabhandha Saaththumurai", "Pirapanta Cāttumuṟai",
             "పిరబంద శాత్తుముఱై", "പിരബന്ദ ശാത്തുമുറൈ", "पिरबन्द शात्तुमुऱै",
+            "ಪಿರಬಂದ ಶಾತ್ತುಮುಱೈ",
         ),
         DESIKA_PRABHANDHA_SAATHTHUMURAI_ID to listOf(
             "தேசிக பிரபந்த சாத்துமுறை", "Desika Prabhandha Saaththumurai", "Tēcika Pirapanta Cāttumuṟai",
             "తేశిగ పిరబంద శాత్తుముఱై", "തേശിഗ പിരബന്ദ ശാത്തുമുറൈ", "तेशिग पिरबन्द शात्तुमुऱै",
+            "ತೇಶಿಗ ಪಿರಬಂದ ಶಾತ್ತುಮುಱೈ",
         ),
         PODHU_THANIYANGAL_ID to listOf(
             "பொது தனியன்கள்", "Podhu Thaniyangal", "Potu Taṉiyaṉkaḷ",
             "పొదు తనియన్గళ్", "പൊദു തനിയൻഗൾ", "पॊदु तनियन्गळ्",
+            "ಪೊದು ತನಿಯನ್ಗಳ್",
         ),
     )
 }
