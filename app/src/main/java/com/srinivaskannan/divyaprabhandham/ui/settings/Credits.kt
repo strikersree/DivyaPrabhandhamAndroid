@@ -45,7 +45,7 @@ object Credits {
     )
 
     val gratitude: List<Credit> = listOf(
-        Credit("மாங்குடி பார்த்தசாரதி ரங்கராஜன்", "Maangudi Parthasarathy Rangarajan",
+        Credit("மாங்குடி பார்த்தசாரதி ரங்கராஜன்", "Mangudi Parthasarathy Rangarajan",
             "மாமா · பாராயணம்", "Uncle · Recitation"),
         Credit("கண்ணன் தேசிகர்", "Kannan Desikar", "தந்தை", "Father"),
         Credit("மைதிலி கண்ணன்", "Mythili Kannan", "தாய்", "Mother"),

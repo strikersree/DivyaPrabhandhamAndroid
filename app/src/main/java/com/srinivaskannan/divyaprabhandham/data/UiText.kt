@@ -535,8 +535,8 @@ object UiText {
         Ui.DESAM_ALL_REGIONS to ("அனைத்தும்" to "All"),
         Ui.ABOUT to ("இந்தச் செயலி பற்றி" to "About"),
         Ui.ABOUT_BLURB to (
-            "நாலாயிர திவ்ய பிரபந்தமும் ஸ்ரீ தேசிகப் பிரபந்தமும் — ஆழ்வார்கள் அருளிச்செய்த பாசுரங்களை அமைதியாகப் படிக்க ஓர் இடம். இணையம் இல்லாமலும் இயங்கும்; விளம்பரங்கள் இல்லை." to
-            "The Naalayira Divya Prabandham and Sri Desika Prabandham — a quiet place to read the verses of the Aazhwars. Works fully offline, with no ads and no tracking."
+            "நாலாயிர திவ்ய பிரபந்தமும் ஸ்ரீ தேசிகப் பிரபந்தமும் — ஆழ்வார்கள் அருளிச்செய்த பாசுரங்களை அமைதியாகப் படிக்க ஓர் இடம். அனைத்து பாசுரங்களும் என்றும் இலவசம்; இணையம் இல்லாமலும் இயங்கும்." to
+            "The Naalayira Divya Prabandham and Sri Desika Prabandham — a quiet place to read the verses of the Aazhwars. Every verse stays free, always, and the App works fully offline."
         ),
         Ui.VERSION to ("பதிப்பு" to "Version"),
         Ui.DECAD_ESSENCE to ("இப்பதிகத்தின் சாரம்" to "About this decad"),

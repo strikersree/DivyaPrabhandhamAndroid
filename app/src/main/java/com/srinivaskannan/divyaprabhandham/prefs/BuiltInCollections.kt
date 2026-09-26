@@ -26,14 +26,17 @@ object BuiltInCollections {
 
     /**
      * The five guru-vandana thaniyans recited before starting the Prabandham,
-     * as their own division (d6, podhu_thaniyangal.json) — Thenkalai's,
-     * Vadakalai's, then three shared across both sects, in that exact order
-     * per explicit instruction. Six keys for five thaniyans: Kurathazhwan's
+     * as their own division (d6, podhu_thaniyangal.json) — Vadakalai's,
+     * Thenkalai's, then three shared across both sects, in that exact order
+     * per explicit instruction. (Originally Thenkalai then Vadakalai; the
+     * printed thaniyan numbers 1 and 2 were swapped in the corpus itself
+     * along with the re-ordering, so this array is unchanged -- only what
+     * each number now names is.) Six keys for five thaniyans: Kurathazhwan's
      * is two verses. All verified to resolve against the actual corpus.
      */
     val podhuThaniyangalKeys: List<String> = listOf(
-        "d6w1s1#1", // Thenkalai -- Azhagiya Manavala Perumal Nayanar
-        "d6w1s1#2", // Vadakalai -- Brahmatantra Swatantra Swami
+        "d6w1s1#1", // Vadakalai -- Brahmatantra Swatantra Swami
+        "d6w1s1#2", // Thenkalai -- Azhagiya Manavala Perumal Nayanar
         "d6w1s1#3", "d6w1s1#4", // shared -- Kurathazhwan, a two-verse thaniyan
         "d6w1s1#5", // shared -- Aalavandhar
         "d6w1s1#6", // shared -- Parasarabattar
