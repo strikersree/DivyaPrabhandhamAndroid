@@ -1,6 +1,7 @@
 package com.srinivaskannan.divyaprabhandham.ui.settings
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -175,6 +178,7 @@ private fun RootList(
     onOpenAbout: () -> Unit,
     onOpenTipJar: () -> Unit,
 ) {
+    val context = LocalContext.current
     ListRow(
         title = appState.ui(Ui.SYNC_TITLE),
         subtitle = if (appState.syncEnabled) appState.ui(Ui.SYNC_ON) else null,
@@ -260,11 +264,35 @@ private fun RootList(
             )
         }
     }
+    // The Play listing is where an update is actually taken, and it is also
+    // the honest answer to "am I on the newest one?" -- Play says so on the
+    // page. The automatic check (see update/InAppUpdate.kt) is the reminder;
+    // this is for somebody who came looking.
+    ListRow(
+        title = appState.ui(Ui.CHECK_FOR_UPDATES),
+        leading = Icons.Filled.SystemUpdate,
+        onClick = { openPlayListing(context) },
+    )
     ListRow(
         title = appState.ui(Ui.ABOUT),
         leading = Icons.Filled.Info,
         onClick = onOpenAbout,
     )
+}
+
+/**
+ * Opens this app's Play listing, preferring the Play app itself and falling
+ * back to the browser where it is absent. The release id is named rather than
+ * read from packageName because a debug build's id carries a .debug suffix and
+ * has no listing.
+ */
+private fun openPlayListing(context: Context) {
+    val id = "com.srinivaskannan.divyaprabhandham"
+    val play = Intent(Intent.ACTION_VIEW, "market://details?id=$id".toUri())
+    val web = Intent(Intent.ACTION_VIEW, "https://play.google.com/store/apps/details?id=$id".toUri())
+    runCatching { context.startActivity(play) }.onFailure {
+        runCatching { context.startActivity(web) }
+    }
 }
 
 @Composable

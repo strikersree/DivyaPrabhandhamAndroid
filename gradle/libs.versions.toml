@@ -27,6 +27,7 @@ work = "2.10.0"
 billing = "8.3.0"
 ads = "24.4.0"
 playAuth = "21.3.0"
+appUpdate = "2.1.0"
 credentials = "1.3.0"
 googleId = "1.1.1"
 splashscreen = "1.0.1"
@@ -77,6 +78,11 @@ play-services-ads = { group = "com.google.android.gms", name = "play-services-ad
 # than the google-api-client stack, which would drag in Guava and friends for
 # three REST endpoints.
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playAuth" }
+# Play In-App Updates. FakeAppUpdateManager ships inside this same artifact
+# (com.google.android.play.core.appupdate.testing) rather than a separate
+# -testing one, and is referenced only from src/debug -- without it this
+# feature could be exercised only through a real Play release.
+play-app-update = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "appUpdate" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
 google-id = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleId" }

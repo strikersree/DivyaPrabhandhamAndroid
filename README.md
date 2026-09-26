@@ -167,6 +167,7 @@ byte-identical to the iOS build's values.
 | `ContentUnavailableView` | `EmptyState` | Material has no equivalent |
 | iPhone/iPad split | `NavigationSuiteScaffold` | Adaptive layout removes the need for a separate Book tab |
 | `ShareLink` + `ImageRenderer` | `ACTION_SEND` + Canvas/StaticLayout | See below |
+| iTunes Lookup + a Home banner | Play In-App Updates, flexible flow | Android has a real API for this; see below |
 
 ### The share card
 
@@ -197,6 +198,33 @@ Sharing goes through a `FileProvider` scoped to one cache directory. `ACTION_SEN
 cannot carry a `file://` path on any supported version, and a provider is the
 only way to give one other app read access to one file without opening a
 directory to everything on the device.
+
+### The update reminder
+
+iOS has no API that tells an app it is out of date, so it asks the iTunes
+Lookup endpoint and shows its own banner. Android does have one, so Play's
+In-App Updates is used instead — the **flexible** flow, which downloads the
+new build in the background while the person keeps reading and only then asks
+them to restart. The **immediate** flow (a blocking full-screen update) is
+deliberately not used: this is a book, and somebody opening it to recite
+before dawn is not going to be stopped at a wall.
+
+The rules match the iOS checker: never blocks, at most one check a day,
+dismissing Play's dialog snoozes that version for a week, and every failure
+is silent — a device without Play, or a sideloaded build, must never see an
+error about an update it cannot install.
+
+`FakeAppUpdateManager` ships inside the `app-update-ktx` artifact and is used
+from `src/debug` only, so the flow can be driven without a Play release:
+
+    adb shell run-as <pkg> rm -f shared_prefs/dp.update.xml
+    adb shell am start -n <pkg>/com.srinivaskannan.divyaprabhandham.MainActivity \
+        --ez fake_update true --ez fake_update_auto true
+
+`fake_update_auto` also plays the part of the person — accepting, downloading,
+finishing — so the install-state listener and the restart snackbar are
+exercised end to end. Clearing the prefs matters: the daily gate is real in
+debug too, and a second run the same day does nothing.
 
 ### Recitations
 

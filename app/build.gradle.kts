@@ -13,7 +13,7 @@ android {
         applicationId = "com.srinivaskannan.divyaprabhandham"
         minSdk = 26
         targetSdk = 36
-        versionCode = 13
+        versionCode = 14
         versionName = "1.0.6"
         vectorDrawables { useSupportLibrary = true }
     }
@@ -123,6 +123,7 @@ dependencies {
 
     // Google account sync, replacing the iOS build's iCloud key-value store.
     implementation(libs.play.services.auth)
+    implementation(libs.play.app.update)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.google.id)

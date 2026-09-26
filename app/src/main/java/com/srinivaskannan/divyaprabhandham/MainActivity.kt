@@ -40,6 +40,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.srinivaskannan.divyaprabhandham.ui.nav.AppScaffold
 import com.srinivaskannan.divyaprabhandham.ui.nav.DeepLink
 import com.srinivaskannan.divyaprabhandham.ui.theme.DivyaPrabhandhamTheme
+import com.srinivaskannan.divyaprabhandham.update.InAppUpdate
+import com.srinivaskannan.divyaprabhandham.update.UpdateRestartBar
+import com.srinivaskannan.divyaprabhandham.update.createAppUpdateManager
 
 /**
  * The single activity.
@@ -60,6 +63,23 @@ class MainActivity : ComponentActivity() {
      * Google's consent screen for the Drive scope. Registered here because the
      * result contract has to be set up before the activity starts.
      */
+    /**
+     * Play's flexible update flow, and the state its listener reports back.
+     * Built lazily so the debug factory can read this activity's intent (see
+     * update/UpdateManagerFactory.kt in src/debug).
+     */
+    private val inAppUpdate by lazy {
+        InAppUpdate(this, createAppUpdateManager(this))
+    }
+
+    /**
+     * The result of Play's own update dialog. A cancel is a "not now" and
+     * snoozes that version for a week rather than asking again tomorrow.
+     */
+    private val updateLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result -> inAppUpdate.onFlowResult(result.resultCode) }
+
     private val consentLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
     ) { result ->
@@ -183,12 +203,37 @@ class MainActivity : ComponentActivity() {
                                 com.srinivaskannan.divyaprabhandham.ui.onboarding.OnboardingHost(
                                     onFinish = { appState.completeOnboarding() },
                                 )
+                            } else {
+                                // Only once they are past onboarding: a first
+                                // run has enough to say already.
+                                UpdateRestartBar(
+                                    state = inAppUpdate.state,
+                                    restartLabel = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.UPDATE_RESTART),
+                                    readyLabel = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.UPDATE_READY),
+                                    onRestart = { inAppUpdate.completeUpdate() },
+                                    onDismiss = { inAppUpdate.dismissRestart() },
+                                    modifier = androidx.compose.ui.Modifier
+                                        .align(androidx.compose.ui.Alignment.BottomCenter),
+                                )
+                                LaunchedEffect(Unit) {
+                                    inAppUpdate.checkIfDue(updateLauncher, this@MainActivity)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        inAppUpdate.start()
+    }
+
+    override fun onStop() {
+        inAppUpdate.stop()
+        super.onStop()
     }
 
     private fun applyBarStyle(dark: Boolean) {
