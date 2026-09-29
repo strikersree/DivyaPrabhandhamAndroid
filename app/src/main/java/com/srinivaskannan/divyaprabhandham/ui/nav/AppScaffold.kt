@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -98,18 +99,31 @@ fun AppScaffold(
         }
     }
 
-    // The navigation bar stays put everywhere, including the reader. iOS hides
-    // the tab bar on a pushed view, but on Android a bottom bar that vanishes
-    // on a detail screen reads as the app losing its footing — the platform
-    // convention is that it persists.
+    // The reader hides the navigation bar (and, on a tablet, the rail) --
+    // reversed from an earlier "the platform convention is that it persists"
+    // decision, on report that the persistent bar was eating into an
+    // already-scarce landscape reading area and interrupting recitation.
+    // NavigationSuiteScaffoldState is the mechanism the library itself
+    // ships for exactly this (Hidden/Visible, animated, and it consumes the
+    // bar's own window insets while hidden so the reader actually reclaims
+    // that space rather than just drawing over an invisible bar) rather
+    // than switching `layoutType` to `.None`, which would hide it but
+    // leave the insets reserved. Keyed on the route, not on orientation,
+    // so it stays hidden across a rotation instead of re-appearing.
     val isReader = currentRoute?.startsWith("reader/") == true
     // The Ask tab is a chat: its input bar sits exactly where the Continue
     // Reading pill would, so the pill is hidden there too — both to avoid the
     // collision and because "continue reading" is out of place mid-conversation.
     val isAsk = currentRoute == Routes.SEARCH
 
+    val navSuiteState = rememberNavigationSuiteScaffoldState()
+    LaunchedEffect(isReader) {
+        if (isReader) navSuiteState.hide() else navSuiteState.show()
+    }
+
     NavigationSuiteScaffold(
         modifier = modifier,
+        state = navSuiteState,
         navigationSuiteItems = {
             TopLevel.entries.forEach { destination ->
                 // A detail screen pushed from a tab should keep that tab lit.
