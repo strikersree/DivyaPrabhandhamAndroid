@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,7 +32,9 @@ import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
@@ -162,6 +167,13 @@ fun ReaderScreen(
     var essenceSheet by remember { mutableStateOf<EssenceTarget?>(null) }
     var fontBarExpanded by remember { mutableStateOf(false) }
     var themeMenuOpen by remember { mutableStateOf(false) }
+    // Hides the app bar, the reading-progress hairline and the font-size
+    // control, leaving only a small floating circle to exit -- matching the
+    // iOS reader, where the same toggle hides its whole toolbar too. The
+    // bottom navigation bar is already hidden for the entire time the
+    // reader is on screen (see AppScaffold's isReader), fullscreen or not,
+    // so there is nothing left for this toggle to do there.
+    var isFullscreen by remember { mutableStateOf(false) }
 
     val thaniyan = remember(section.id, appState.scriptChoice) {
         section.thaniyan(appState.scriptChoice)
@@ -213,84 +225,103 @@ fun ReaderScreen(
         containerColor = palette.background,
         snackbarHost = { SnackbarHost(prosodyHost) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        section.title(appState.scriptChoice),
-                        maxLines = 1,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = appState.ui(Ui.BACK),
-                        )
-                    }
-                },
-                actions = {
-                    // While a global appearance dictates the palette (High
-                    // Contrast, or a forced Dark) the reader's own picker is
-                    // hidden rather than sitting there appearing to do nothing.
-                    if (!readerThemeIsForced(appState)) {
-                        Box {
-                            IconButton(onClick = { themeMenuOpen = true }) {
+            // The whole bar -- back button included -- goes away in
+            // fullscreen; `exitFullscreenButton` in the content Box below is
+            // the only way back once it does. System Back (button or
+            // gesture) still works regardless, so leaving the reader
+            // entirely is never blocked by this.
+            if (!isFullscreen) {
+                TopAppBar(
+                    // No work/section title in the bar -- ReaderHeader (the
+                    // first item in the list below) already carries it, and an
+                    // empty title keeps the bar to just its buttons rather than
+                    // a title that would have to make room for them.
+                    title = {},
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = appState.ui(Ui.BACK),
+                            )
+                        }
+                    },
+                    actions = {
+                        // Fullscreen, Prosody and Theme are the reading-controls
+                        // cluster -- grouped by sitting adjacent in this one
+                        // actions row, in that order, matching the iOS layout
+                        // this was ported from. Fullscreen only ever enters here
+                        // (the bar itself disappears once it's on), so the icon
+                        // never needs to show the "exit" state.
+                        IconButton(onClick = { isFullscreen = true }) {
+                            Icon(
+                                Icons.Filled.OpenInFull,
+                                contentDescription = appState.ui(Ui.FULLSCREEN_TOGGLE),
+                                tint = palette.secondaryText,
+                            )
+                        }
+                        // Only under Tamil: the romanisations show vowel length in
+                        // their spelling already, and the marks would be annotating
+                        // a script the verse was not composed in. Hidden rather
+                        // than disabled -- a dead control in the app bar reads as
+                        // broken, and the script is only ever changed from
+                        // Settings, so nobody watches the bar reflow.
+                        if (appState.scriptChoice == ScriptChoice.TAMIL) {
+                            IconButton(onClick = {
+                                val on = appState.toggleSyllableMarks()
+                                scope.launch {
+                                    prosodyHost.currentSnackbarData?.dismiss()
+                                    prosodyHost.showSnackbar(
+                                        appState.ui(if (on) Ui.PROSODY_ON else Ui.PROSODY_OFF),
+                                        duration = SnackbarDuration.Short,
+                                    )
+                                }
+                            }) {
                                 Icon(
-                                    themeIcon(theme),
-                                    contentDescription = appState.ui(Ui.CHANGE_THEME),
+                                    Icons.Filled.Numbers,
+                                    contentDescription = appState.ui(Ui.PROSODY_TOGGLE),
+                                    tint = if (appState.showSyllableMarks) accent else palette.secondaryText,
                                 )
                             }
-                            DropdownMenu(
-                                expanded = themeMenuOpen,
-                                onDismissRequest = { themeMenuOpen = false },
-                            ) {
-                                ReaderThemeChoice.pickable.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = { Text(themeLabel(appState, option)) },
-                                        leadingIcon = {
-                                            Icon(themeIcon(option), contentDescription = null)
-                                        },
-                                        onClick = {
-                                            appState.updateTheme(option)
-                                            themeMenuOpen = false
-                                        },
+                        }
+                        // While a global appearance dictates the palette (High
+                        // Contrast, or a forced Dark) the reader's own picker is
+                        // hidden rather than sitting there appearing to do nothing.
+                        if (!readerThemeIsForced(appState)) {
+                            Box {
+                                IconButton(onClick = { themeMenuOpen = true }) {
+                                    Icon(
+                                        themeIcon(theme),
+                                        contentDescription = appState.ui(Ui.CHANGE_THEME),
                                     )
+                                }
+                                DropdownMenu(
+                                    expanded = themeMenuOpen,
+                                    onDismissRequest = { themeMenuOpen = false },
+                                ) {
+                                    ReaderThemeChoice.pickable.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(themeLabel(appState, option)) },
+                                            leadingIcon = {
+                                                Icon(themeIcon(option), contentDescription = null)
+                                            },
+                                            onClick = {
+                                                appState.updateTheme(option)
+                                                themeMenuOpen = false
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                    // Only under Tamil: the romanisations show vowel length in
-                    // their spelling already, and the marks would be annotating
-                    // a script the verse was not composed in. Hidden rather
-                    // than disabled -- a dead control in the app bar reads as
-                    // broken, and the script is only ever changed from
-                    // Settings, so nobody watches the bar reflow.
-                    if (appState.scriptChoice == ScriptChoice.TAMIL) {
-                        IconButton(onClick = {
-                            val on = appState.toggleSyllableMarks()
-                            scope.launch {
-                                prosodyHost.currentSnackbarData?.dismiss()
-                                prosodyHost.showSnackbar(
-                                    appState.ui(if (on) Ui.PROSODY_ON else Ui.PROSODY_OFF),
-                                    duration = SnackbarDuration.Short,
-                                )
-                            }
-                        }) {
-                            Icon(
-                                Icons.Filled.Numbers,
-                                contentDescription = appState.ui(Ui.PROSODY_TOGGLE),
-                                tint = if (appState.showSyllableMarks) accent else palette.secondaryText,
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = palette.background,
-                    titleContentColor = palette.text,
-                    actionIconContentColor = palette.secondaryText,
-                    navigationIconContentColor = palette.text,
-                ),
-            )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = palette.background,
+                        titleContentColor = palette.text,
+                        actionIconContentColor = palette.secondaryText,
+                        navigationIconContentColor = palette.text,
+                    ),
+                )
+            }
         },
     ) { padding ->
         Box(Modifier.padding(padding)) {
@@ -371,32 +402,56 @@ fun ReaderScreen(
             }
 
             // A hairline under the app bar showing how far through the section
-            // the reader has got.
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .background(palette.secondaryText.copy(alpha = 0.15f)),
-            )
-            Box(
-                Modifier
-                    .fillMaxWidth(animatedProgress)
-                    .height(3.dp)
-                    .background(accent)
-                    .semantics {
-                        contentDescription = appState.ui(Ui.READING_PROGRESS)
-                    },
-            )
+            // the reader has got. Suppressed in fullscreen along with the
+            // font-size control below -- see isFullscreen's own comment.
+            if (!isFullscreen) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .background(palette.secondaryText.copy(alpha = 0.15f)),
+                )
+                Box(
+                    Modifier
+                        .fillMaxWidth(animatedProgress)
+                        .height(3.dp)
+                        .background(accent)
+                        .semantics {
+                            contentDescription = appState.ui(Ui.READING_PROGRESS)
+                        },
+                )
 
-            FontSizeControl(
-                expanded = fontBarExpanded,
-                onExpandedChange = { fontBarExpanded = it },
-                palette = palette,
-                appState = appState,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-            )
+                FontSizeControl(
+                    expanded = fontBarExpanded,
+                    onExpandedChange = { fontBarExpanded = it },
+                    palette = palette,
+                    appState = appState,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                )
+            } else {
+                // The only chrome left once fullscreen is on: a small
+                // floating circle over the top-trailing corner of the text,
+                // the one way back to the app bar (besides system Back,
+                // which leaves the reader outright). windowInsetsPadding
+                // stands in for the status-bar clearance the app bar would
+                // otherwise have provided.
+                FilledTonalIconButton(
+                    onClick = { isFullscreen = false },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(16.dp)
+                        .size(40.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.CloseFullscreen,
+                        contentDescription = appState.ui(Ui.EXIT_FULLSCREEN),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 

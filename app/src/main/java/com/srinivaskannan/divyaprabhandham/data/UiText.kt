@@ -21,6 +21,8 @@ enum class Ui {
     PROSODY_ON,
     PROSODY_OFF,
     PROSODY_TOGGLE,
+    FULLSCREEN_TOGGLE,
+    EXIT_FULLSCREEN,
     SYLLABLE_HEADER,
     SYLLABLE_LABEL,
     SYLLABLE_DETAIL,
@@ -305,6 +307,8 @@ object UiText {
         Ui.PROSODY_ON to ("அசை எண்கள் இயக்கத்தில்" to "Prosody enabled"),
         Ui.PROSODY_OFF to ("அசை எண்கள் நிறுத்தப்பட்டன" to "Prosody disabled"),
         Ui.PROSODY_TOGGLE to ("அசை எண்கள் மாற்ற" to "Toggle prosody"),
+        Ui.FULLSCREEN_TOGGLE to ("முழுத்திரை மாற்ற" to "Toggle fullscreen"),
+        Ui.EXIT_FULLSCREEN to ("முழுத்திரையிலிருந்து வெளியேறு" to "Exit fullscreen"),
         Ui.SYLLABLE_HEADER to ("அசை எண்கள்" to "Syllable Numbers"),
         Ui.SYLLABLE_LABEL to ("அசை எண்கள் காட்டு" to "Show syllable numbers"),
         Ui.SYLLABLE_DETAIL to (
