@@ -158,6 +158,16 @@ class MainActivity : ComponentActivity() {
                             name = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.PODHU_THANIYANGAL_NAME),
                             seedKeys = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.podhuThaniyangalKeys,
                         )
+                        appState.seedOrSyncBuiltInCollection(
+                            id = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.NITHYANUSANTHANAM_ID,
+                            name = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.NITHYANUSANTHANAM_NAME),
+                            seedKeys = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.nithyanusanthanamKeys,
+                        )
+                        appState.seedOrSyncBuiltInCollection(
+                            id = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.KOVIL_THIRUVAAYMOZHI_ID,
+                            name = appState.ui(com.srinivaskannan.divyaprabhandham.data.Ui.KOVIL_THIRUVAAYMOZHI_NAME),
+                            seedKeys = com.srinivaskannan.divyaprabhandham.prefs.BuiltInCollections.kovilThiruvaaymozhiKeys,
+                        )
                     }
 
                     // A pending Drive grant needs an activity to launch from,

@@ -1,7 +1,8 @@
 package com.srinivaskannan.divyaprabhandham.prefs
 
 /**
- * The app's two permanent, undeletable recitation collections (Saththumurai)
+ * The app's permanent, undeletable collections (the Saththumurai recitations, Podhu
+ * Thaniyangal, Nithyanusanthanam and Kovil Thiruvaaymozhi)
  * — seeded via [AppState.seedOrSyncBuiltInCollection], called once per launch
  * from MainActivity. Stable ids so re-seeding on a later launch finds and
  * merges into the same collection rather than creating a duplicate.
@@ -23,6 +24,8 @@ object BuiltInCollections {
 
     const val PRABHANDHA_SAARAM_ID = "builtin-prabhandha-saaram"
     const val PODHU_THANIYANGAL_ID = "builtin-podhu-thaniyangal"
+    const val NITHYANUSANTHANAM_ID = "builtin-nithyanusanthanam"
+    const val KOVIL_THIRUVAAYMOZHI_ID = "builtin-kovil-thiruvaaymozhi"
 
     /**
      * The five guru-vandana thaniyans recited before starting the Prabandham,
@@ -59,6 +62,59 @@ object BuiltInCollections {
         "b3w9s2#2673.40", "b3w10s2#2674.78", "b4w1s11#2783", "b4w1s11#2784", "b4w1s21#2895", "b4w1s21#2896", "b4w1s31#3005", "b4w1s31#3006", "b4w1s41#3115", "b4w1s41#3116",
         "b4w1s51#3225", "b4w1s51#3226", "b4w1s61#3335", "b4w1s61#3336", "b4w1s71#3445", "b4w1s71#3446", "b4w1s81#3555", "b4w1s81#3556", "b4w1s91#3665", "b4w1s91#3666",
         "b4w1s101#3775", "b4w1s101#3776", "b4w1s2#2675", "b4w2s2#3882", "b4w2s2#3883", "b4w2s2#3884", "b4w2s2#3777",
+    )
+
+    /**
+     * நித்யானுசந்தானம் — the daily recitation, 104 pasurams in this order. Same list as the
+     * iOS build's `nithyanusanthanamRanges`, written out as section-id keys: Thiruppallaandu,
+     * Thiruppalliyezhuchi, Thiruppaavai, three decads of Periyaazhvaar Thirumozhi, then
+     * Amalanaadhipiraan and Kanninun Siruthaambu.
+     */
+    val nithyanusanthanamKeys: List<String> = listOf(
+        // Thiruppallaandu (1-12)
+        "w1s2#1", "w1s2#2", "w1s2#3", "w1s2#4", "w1s2#5", "w1s2#6", "w1s2#7", "w1s2#8", "w1s2#9", "w1s2#10", "w1s2#11", "w1s2#12",
+        // Thiruppalliyezhuchi (917-926)
+        "w8s2#917", "w8s2#918", "w8s2#919", "w8s2#920", "w8s2#921", "w8s2#922", "w8s2#923", "w8s2#924", "w8s2#925", "w8s2#926",
+        // Thiruppaavai (474-503)
+        "w3s2#474", "w3s2#475", "w3s2#476", "w3s2#477", "w3s2#478", "w3s2#479", "w3s2#480", "w3s2#481", "w3s2#482", "w3s2#483", "w3s2#484", "w3s2#485", "w3s2#486", "w3s2#487", "w3s2#488", "w3s2#489", "w3s2#490", "w3s2#491", "w3s2#492", "w3s2#493", "w3s2#494", "w3s2#495", "w3s2#496", "w3s2#497", "w3s2#498", "w3s2#499", "w3s2#500", "w3s2#501", "w3s2#502", "w3s2#503",
+        // Poochoodal -- Periyaazhvaar Thirumozhi 2-7 (182-191)
+        "w2s16#182", "w2s16#183", "w2s16#184", "w2s16#185", "w2s16#186", "w2s16#187", "w2s16#188", "w2s16#189", "w2s16#190", "w2s16#191",
+        // Kaappidal -- Periyaazhvaar Thirumozhi 2-8 (192-201)
+        "w2s17#192", "w2s17#193", "w2s17#194", "w2s17#195", "w2s17#196", "w2s17#197", "w2s17#198", "w2s17#199", "w2s17#200", "w2s17#201",
+        // Senniyongu -- Periyaazhvaar Thirumozhi 5-4, the last decad of the fifth pathu (463-473)
+        "w2s43#463", "w2s43#464", "w2s43#465", "w2s43#466", "w2s43#467", "w2s43#468", "w2s43#469", "w2s43#470", "w2s43#471", "w2s43#472", "w2s43#473",
+        // Amalanaadhipiraan (927-936)
+        "w9s2#927", "w9s2#928", "w9s2#929", "w9s2#930", "w9s2#931", "w9s2#932", "w9s2#933", "w9s2#934", "w9s2#935", "w9s2#936",
+        // Kanninun Siruthaambu (937-947)
+        "w10s2#937", "w10s2#938", "w10s2#939", "w10s2#940", "w10s2#941", "w10s2#942", "w10s2#943", "w10s2#944", "w10s2#945", "w10s2#946", "w10s2#947",
+    )
+
+    /**
+     * கோயில் திருவாய்மொழி — ten Thiruvaaymozhi decads, whole (ten pasurams and the phala sruti
+     * each, 110 in all): 1-1, 1-2, 2-10, 3-3, 4-1, 4-10, 5-5, 7-2, 8-10, 10-10. Same as the iOS
+     * build's `kovilThiruvaaymozhiRanges`.
+     */
+    val kovilThiruvaaymozhiKeys: List<String> = listOf(
+        // Thiruvaaymozhi 1-1
+        "b4w1s2#2675", "b4w1s2#2676", "b4w1s2#2677", "b4w1s2#2678", "b4w1s2#2679", "b4w1s2#2680", "b4w1s2#2681", "b4w1s2#2682", "b4w1s2#2683", "b4w1s2#2684", "b4w1s2#2685",
+        // 1-2
+        "b4w1s3#2686", "b4w1s3#2687", "b4w1s3#2688", "b4w1s3#2689", "b4w1s3#2690", "b4w1s3#2691", "b4w1s3#2692", "b4w1s3#2693", "b4w1s3#2694", "b4w1s3#2695", "b4w1s3#2696",
+        // 2-10
+        "b4w1s21#2886", "b4w1s21#2887", "b4w1s21#2888", "b4w1s21#2889", "b4w1s21#2890", "b4w1s21#2891", "b4w1s21#2892", "b4w1s21#2893", "b4w1s21#2894", "b4w1s21#2895", "b4w1s21#2896",
+        // 3-3
+        "b4w1s24#2919", "b4w1s24#2920", "b4w1s24#2921", "b4w1s24#2922", "b4w1s24#2923", "b4w1s24#2924", "b4w1s24#2925", "b4w1s24#2926", "b4w1s24#2927", "b4w1s24#2928", "b4w1s24#2929",
+        // 4-1
+        "b4w1s32#3007", "b4w1s32#3008", "b4w1s32#3009", "b4w1s32#3010", "b4w1s32#3011", "b4w1s32#3012", "b4w1s32#3013", "b4w1s32#3014", "b4w1s32#3015", "b4w1s32#3016", "b4w1s32#3017",
+        // 4-10
+        "b4w1s41#3106", "b4w1s41#3107", "b4w1s41#3108", "b4w1s41#3109", "b4w1s41#3110", "b4w1s41#3111", "b4w1s41#3112", "b4w1s41#3113", "b4w1s41#3114", "b4w1s41#3115", "b4w1s41#3116",
+        // 5-5
+        "b4w1s46#3161", "b4w1s46#3162", "b4w1s46#3163", "b4w1s46#3164", "b4w1s46#3165", "b4w1s46#3166", "b4w1s46#3167", "b4w1s46#3168", "b4w1s46#3169", "b4w1s46#3170", "b4w1s46#3171",
+        // 7-2
+        "b4w1s63#3348", "b4w1s63#3349", "b4w1s63#3350", "b4w1s63#3351", "b4w1s63#3352", "b4w1s63#3353", "b4w1s63#3354", "b4w1s63#3355", "b4w1s63#3356", "b4w1s63#3357", "b4w1s63#3358",
+        // 8-10
+        "b4w1s81#3546", "b4w1s81#3547", "b4w1s81#3548", "b4w1s81#3549", "b4w1s81#3550", "b4w1s81#3551", "b4w1s81#3552", "b4w1s81#3553", "b4w1s81#3554", "b4w1s81#3555", "b4w1s81#3556",
+        // 10-10
+        "b4w1s101#3766", "b4w1s101#3767", "b4w1s101#3768", "b4w1s101#3769", "b4w1s101#3770", "b4w1s101#3771", "b4w1s101#3772", "b4w1s101#3773", "b4w1s101#3774", "b4w1s101#3775", "b4w1s101#3776",
     )
 
     const val DESIKA_PRABHANDHA_SAATHTHUMURAI_ID = "builtin-desika-prabhandha-saaththumurai"
@@ -148,6 +204,18 @@ object BuiltInCollections {
             "பொது தனியன்கள்", "Podhu Thaniyangal", "Potu Taṉiyaṉkaḷ",
             "పొదు తనియన్గళ్", "പൊദു തനിയൻഗൾ", "पॊदु तनियन्गळ्",
             "ಪೊದು ತನಿಯನ್ಗಳ್",
+        ),
+        // The Sanskrit-origin word is spelled as Sanskrit in the Indic scripts (నిత్య, not the
+        // Tamil-phonetic నిద్య a mechanical conversion would give). Same forms as the iOS build.
+        NITHYANUSANTHANAM_ID to listOf(
+            "நித்யானுசந்தானம்", "Nithyaanusandhaanam", "Nityānusandhānam",
+            "నిత్యానుసంధానం", "നിത്യാനുസന്ധാനം", "नित्यानुसन्धानम्",
+            "ನಿತ್ಯಾನುಸಂಧಾನಂ",
+        ),
+        KOVIL_THIRUVAAYMOZHI_ID to listOf(
+            "கோயில் திருவாய்மொழி", "Kovil Thiruvaaymozhi", "Kōyil Tiruvāymoḻi",
+            "కోయిల్ తిరువాయ్మొఴి", "കോയിൽ തിരുവായ്മൊഴി", "कोयिल् तिरुवाय्मॊऴि",
+            "ಕೋಯಿಲ್ ತಿರುವಾಯ್ಮೊೞಿ",
         ),
     )
 }
