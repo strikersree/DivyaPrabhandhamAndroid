@@ -30,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.srinivaskannan.divyaprabhandham.data.DivyaDesam
 import com.srinivaskannan.divyaprabhandham.data.Ui
+import com.srinivaskannan.divyaprabhandham.data.searchFolded
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The Divya Desams the Aazhwars sang, grouped by traditional region.
@@ -110,19 +114,21 @@ fun DesamsScreen(
         repository.divyaDesams.map { it.region(script) }.distinct()
     }
 
-    val groups = remember(query, region, script) {
-        val needle = query.trim().lowercase()
+    // The verses' text arrives a moment after the screen opens; until then a
+    // query matches the temples' own fields only.
+    var verseText by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    LaunchedEffect(Unit) {
+        verseText = withContext(Dispatchers.Default) { repository.desamVerseText }
+    }
+
+    val groups = remember(query, region, script, verseText) {
+        val needle = query.trim().searchFolded()
         repository.desamsByRegion(script).mapNotNull { (groupRegion, desams) ->
             if (region != null && groupRegion != region) return@mapNotNull null
             if (needle.isEmpty()) return@mapNotNull groupRegion to desams
-            // Matches name, place, region and both deity names, so "Kerala",
-            // "Ranganatha" and "நாங்கூர்" all find their temples.
-            val hits = desams.filter { desam ->
-                listOf(
-                    desam.name(script), desam.place(script), desam.region(script),
-                    desam.perumal(script).orEmpty(), desam.thaayar(script).orEmpty(),
-                ).any { it.lowercase().contains(needle) }
-            }
+            // Name, place, naadu or deity in Tamil or English, whatever the
+            // script on screen, or a phrase from one of the temple's verses.
+            val hits = desams.filter { repository.desamMatches(it, needle, verseText) }
             if (hits.isEmpty()) null else groupRegion to hits
         }
     }

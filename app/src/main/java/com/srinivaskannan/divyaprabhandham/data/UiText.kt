@@ -539,7 +539,7 @@ object UiText {
         Ui.DESAM_VERSES to ("பாசுரங்கள்" to "verses"),
         Ui.PERUMAL to ("பெருமாள்" to "Perumal"),
         Ui.THAAYAR to ("தாயார்" to "Thaayar"),
-        Ui.DESAM_SEARCH_PROMPT to ("கோயில், ஊர் அல்லது பெருமாள் பெயர்" to "Temple, place or deity"),
+        Ui.DESAM_SEARCH_PROMPT to ("கோயில், ஊர், பெருமாள் பெயர் அல்லது பாசுரம்" to "Temple, place, deity or pasuram"),
         Ui.DESAM_ALL_REGIONS to ("அனைத்தும்" to "All"),
         Ui.ABOUT to ("இந்தச் செயலி பற்றி" to "About"),
         Ui.ABOUT_BLURB to (

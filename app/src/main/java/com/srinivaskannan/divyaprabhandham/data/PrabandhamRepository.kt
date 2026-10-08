@@ -257,6 +257,50 @@ class PrabandhamRepository private constructor(
         return order.map { it to (groups[it] ?: emptyList()) }
     }
 
+    /**
+     * Divya Desam id -> its name, place, naadu and deity fields in Tamil and
+     * English, folded and joined once. Both languages whatever the reader's
+     * script, so "Ranganatha" and "நாங்கூர்" find their temples in any mode.
+     */
+    private val desamFieldText: Map<String, String> by lazy {
+        divyaDesams.associate { desam ->
+            desam.id to listOf(
+                desam.name, desam.nameEn, desam.place, desam.placeEn, desam.region, desam.regionEn,
+                desam.perumalTa.orEmpty(), desam.perumal.orEmpty(),
+                desam.thaayarTa.orEmpty(), desam.thaayar.orEmpty(),
+            ).joinToString("\n") { it.searchFolded() }
+        }
+    }
+
+    /**
+     * Divya Desam id -> the folded Tamil and reader-friendly English text of
+     * every verse of its mangalasasanam. Parses every referenced section in
+     * two scripts, so build it off the main thread the first time.
+     */
+    val desamVerseText: Map<String, String> by lazy {
+        divyaDesams.associate { desam ->
+            desam.id to desam.verseIdentifiers.mapNotNull { identifier ->
+                stanzaKeyForIdentifier(identifier)?.let { key ->
+                    listOfNotNull(
+                        stanzaForKey(key, ScriptChoice.TAMIL)?.second?.text,
+                        stanzaForKey(key, ScriptChoice.READABLE)?.second?.text,
+                    ).joinToString("\n") { it.searchFolded() }
+                }
+            }.joinToString("\n")
+        }
+    }
+
+    /**
+     * Whether a Divya Desam matches an already-[searchFolded] query: its own
+     * fields in Tamil or English, or the text of any of its verses once
+     * [verseText] (normally [desamVerseText]) is available.
+     */
+    fun desamMatches(desam: DivyaDesam, foldedQuery: String, verseText: Map<String, String>): Boolean {
+        if (foldedQuery.isEmpty()) return true
+        return desamFieldText[desam.id].orEmpty().contains(foldedQuery) ||
+            verseText[desam.id].orEmpty().contains(foldedQuery)
+    }
+
     // MARK: - Search
 
     fun filteredWorks(query: String, script: ScriptChoice = ScriptChoice.TAMIL): List<Work> {
@@ -433,3 +477,11 @@ class PrabandhamRepository private constructor(
         }
     }
 }
+
+/**
+ * Text folded for searching: lowercased, with the zero-width non-joiner the
+ * corpus writes after a word-final pulli removed. Nobody types it, so a
+ * Tamil phrase crossing a word boundary matched nothing until both sides
+ * were folded alike.
+ */
+fun String.searchFolded(): String = replace("\u200C", "").lowercase()
