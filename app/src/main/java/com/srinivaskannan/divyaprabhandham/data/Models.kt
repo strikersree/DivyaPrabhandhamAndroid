@@ -200,6 +200,17 @@ data class BookSection(
     fun key(stanza: Stanza): String =
         if (stanza.number != null) "$id#${stanza.number}" else "$id#i${stanza.index}"
 
+    /**
+     * Like [key], but unique for each sub-unit of a split poem: "…#2674.71"
+     * rather than every Periya Thirumadal couplet sharing "…#2674". For
+     * addressing one exact stanza -- a list item, a scroll target, a Divya
+     * Desam verse -- and never for bookmarks or the reading position, which
+     * have always stored [key]. [PrabandhamRepository.stanzaForKey] resolves
+     * both shapes.
+     */
+    fun addressKey(stanza: Stanza): String =
+        stanza.displayNumber?.let { "$id#$it" } ?: key(stanza)
+
     override fun equals(other: Any?): Boolean = other is BookSection && other.id == id
     override fun hashCode(): Int = id.hashCode()
 }
@@ -337,6 +348,13 @@ data class DivyaDesam(
     @SerialName("region_en") val regionEn: String,
     /** Global pasuram numbers of its mangalasasanam, in order. */
     val pasurams: List<Int> = emptyList(),
+    /**
+     * Thirumadal couplets that name this temple ("2674.71"). Kept apart from
+     * [pasurams] because an Int can only reach a split poem's *first*
+     * couplet: Thiru Aadhanoor's only mangalasasanam is Periya Thirumadal
+     * 2674.71, which 2674 would have shown as 2674.1, a different verse.
+     */
+    val couplets: List<String> = emptyList(),
     val perumal: String? = null,
     val thaayar: String? = null,
     @SerialName("perumal_ta") val perumalTa: String? = null,
@@ -369,6 +387,14 @@ data class DivyaDesam(
     @SerialName("thaayar_de") val thaayarDe: String? = null,
     @SerialName("thaayar_kn") val thaayarKn: String? = null,
 ) {
+    /**
+     * Every verse of its mangalasasanam, as identifiers that
+     * [PrabandhamRepository.stanzaKeyForIdentifier] resolves: the whole
+     * pasurams, then the couplets.
+     */
+    val verseIdentifiers: List<String>
+        get() = pasurams.map { it.toString() } + couplets
+
     fun name(script: ScriptChoice) = pick(script, name, nameEn, nameTe, nameMl, nameDe, nameKn)
     fun place(script: ScriptChoice) = pick(script, place, placeEn, placeTe, placeMl, placeDe, placeKn)
     fun region(script: ScriptChoice) = pick(script, region, regionEn, regionTe, regionMl, regionDe, regionKn)

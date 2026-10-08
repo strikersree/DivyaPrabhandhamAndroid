@@ -203,7 +203,12 @@ fun ReaderScreen(
         val key = initialStanzaKey
             ?: appState.lastRead?.takeIf { it.sectionId == section.id }?.stanzaKey
         if (key != null) {
-            val index = stanzas.indexOfFirst { section.key(it) == key }
+            // An exact couplet ("…#2674.71", from a Divya Desam) by its
+            // address; a plain key (a bookmark, the reading position) by
+            // the first stanza it names, as it always has.
+            val index = stanzas.indexOfFirst { section.addressKey(it) == key }
+                .takeIf { it >= 0 }
+                ?: stanzas.indexOfFirst { section.key(it) == key }
             if (index >= 0) listState.scrollToItem(index + leadingRows)
         }
     }
@@ -369,7 +374,9 @@ fun ReaderScreen(
 
                 items(
                     count = stanzas.size,
-                    key = { section.key(stanzas[it]) },
+                    // addressKey, not key: every Thirumadal couplet shares
+                    // the plain key "…#2674", and a repeated item key throws.
+                    key = { section.addressKey(stanzas[it]) },
                 ) { index ->
                     val stanza = stanzas[index]
                     when {

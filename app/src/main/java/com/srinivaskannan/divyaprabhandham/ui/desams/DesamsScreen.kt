@@ -287,7 +287,7 @@ private fun DesamRow(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             ) {
                 Text(
-                    text = "${desam.pasurams.size}",
+                    text = "${desam.verseIdentifiers.size}",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),

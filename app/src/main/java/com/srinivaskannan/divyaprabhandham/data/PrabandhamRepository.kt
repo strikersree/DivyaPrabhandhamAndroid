@@ -186,6 +186,19 @@ class PrabandhamRepository private constructor(
     }
 
     /**
+     * The stanza key for a pasuram identifier: a plain global number ("1138")
+     * or one sub-unit of a split poem ("2674.71"). Null when it does not
+     * resolve to a real stanza, so a typo in the data cannot produce a card
+     * that opens nowhere.
+     */
+    fun stanzaKeyForIdentifier(identifier: String): String? {
+        val number = identifier.substringBefore('.').toIntOrNull() ?: return null
+        val sectionId = pasuramIndex[number] ?: return null
+        val key = "$sectionId#$identifier"
+        return if (stanzaForKey(key) != null) key else null
+    }
+
+    /**
      * Resolves a bookmark/scroll key ("<sectionID>#<n>" or "<sectionID>#i<i>")
      * back to its section and stanza.
      *
@@ -317,7 +330,7 @@ class PrabandhamRepository private constructor(
                     append(" (${desam.place(script)})")
                     desam.perumal(script)?.let { append("; Perumal: $it") }
                     desam.thaayar(script)?.let { append("; Thaayar: $it") }
-                    append("; ${desam.pasurams.size} pasurams")
+                    append("; ${desam.verseIdentifiers.size} pasurams")
                 }
             }
 

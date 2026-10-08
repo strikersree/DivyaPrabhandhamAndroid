@@ -50,10 +50,10 @@ fun DesamDetailScreen(
     val script = appState.scriptChoice
 
     val verses = remember(desam.id, script) {
-        desam.pasurams.mapNotNull { number ->
-            repository.location(number)?.let { (sectionId, key) ->
+        desam.verseIdentifiers.mapNotNull { identifier ->
+            repository.stanzaKeyForIdentifier(identifier)?.let { key ->
                 repository.stanzaForKey(key, script)?.let { (section, stanza) ->
-                    Triple(number, section, stanza)
+                    Triple(identifier, section, stanza)
                 }
             }
         }
@@ -95,7 +95,7 @@ fun DesamDetailScreen(
                         )
                     }
                     Text(
-                        text = "${desam.pasurams.size} ${appState.ui(Ui.DESAM_VERSES)}",
+                        text = "${desam.verseIdentifiers.size} ${appState.ui(Ui.DESAM_VERSES)}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -103,9 +103,9 @@ fun DesamDetailScreen(
             }
 
             items(verses.size, key = { "v-${verses[it].first}" }) { index ->
-                val (number, section, stanza) = verses[index]
+                val (identifier, section, stanza) = verses[index]
                 Surface(
-                    onClick = { onOpenSection(section.id, section.key(stanza)) },
+                    onClick = { onOpenSection(section.id, section.addressKey(stanza)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -115,7 +115,7 @@ fun DesamDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = "${appState.ui(Ui.PASURAM)} $number",
+                            text = "${appState.ui(Ui.PASURAM)} $identifier",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,

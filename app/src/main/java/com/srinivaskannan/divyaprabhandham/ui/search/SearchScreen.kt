@@ -77,7 +77,10 @@ import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The Ask tab: one input that does the cheap thing while typing and the smart
@@ -141,11 +144,24 @@ fun SearchScreen(
     val jumpTarget = remember(trimmed) {
         trimmed.toIntOrNull()?.let { number -> repository.location(number)?.let { number to it } }
     }
-    val liveMatches = remember(trimmed, appState.scriptChoice) {
-        if (trimmed.isEmpty() || trimmed.toIntOrNull() != null) emptyList()
-        else repository.filteredWorks(trimmed, appState.scriptChoice)
-            .flatMap { work -> work.sections.map { work to it } }
-            .take(8)
+    // Debounced and off the main thread: matching scans every section's text
+    // in two scripts, ~60 ms a keystroke on an emulator when it ran inside
+    // composition, which showed as typing that stuttered letter by letter.
+    // LaunchedEffect cancels the previous run whenever the query changes, so
+    // only the query the person paused on is ever computed.
+    var liveMatches by remember { mutableStateOf<List<Pair<Work, BookSection>>>(emptyList()) }
+    LaunchedEffect(trimmed, appState.scriptChoice) {
+        if (trimmed.isEmpty() || trimmed.toIntOrNull() != null) {
+            liveMatches = emptyList()
+            return@LaunchedEffect
+        }
+        delay(250)
+        val script = appState.scriptChoice
+        liveMatches = withContext(Dispatchers.Default) {
+            repository.filteredWorks(trimmed, script)
+                .flatMap { work -> work.sections.map { work to it } }
+                .take(8)
+        }
     }
 
     val listState = rememberLazyListState()
