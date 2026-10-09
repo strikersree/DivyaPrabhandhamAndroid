@@ -122,6 +122,16 @@ fun HomeScreen(
             )
         }
 
+        // Below the tomes and the pilgrimage card, past the primary content
+        // but still near the top, rather than at the foot of a list that
+        // grows with every bookmark.
+        item(key = "adBanner") {
+            AdBanner(
+                placement = AdConfig.Placement.HOME,
+                onOfferAdFree = { showAdFreeOffer = true },
+            )
+        }
+
         item(key = "favourites") {
             ListRow(
                 title = appState.ui(Ui.FAVOURITES),
@@ -197,13 +207,6 @@ fun HomeScreen(
                     )
                 }
             }
-        }
-
-        item(key = "adBanner") {
-            AdBanner(
-                placement = AdConfig.Placement.HOME,
-                onOfferAdFree = { showAdFreeOffer = true },
-            )
         }
     }
 
