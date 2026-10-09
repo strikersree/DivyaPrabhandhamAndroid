@@ -270,7 +270,6 @@ fun AppScaffold(
                             DesamDetailScreen(
                                 desam = desam,
                                 onBack = { navController.popBackStack() },
-                                onOpenSection = openSection,
                             )
                         }
                     }

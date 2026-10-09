@@ -506,10 +506,13 @@ private fun ReaderHeader(
     }
 }
 
-/** One pasuram, with bookmark, share and the essence affordance. */
+/**
+ * One pasuram, with bookmark, share and the essence affordance. Also used by
+ * a Divya Desam's page, so a temple's pasurams read exactly as in the reader.
+ */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun StanzaCard(
+internal fun StanzaCard(
     stanza: Stanza,
     section: BookSection,
     work: Work?,
