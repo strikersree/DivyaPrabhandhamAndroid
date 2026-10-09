@@ -5,8 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -34,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -98,7 +97,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Draw behind the system bars. Their transparency and the display
+        // cutout mode come from the activity theme (values*/themes.xml), not
+        // androidx's enableEdgeToEdge(): on older Android it sets them through
+        // Window.setStatusBarColor/setNavigationBarColor and
+        // LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, all deprecated in
+        // Android 15 and flagged by Play Console.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val app = application as DivyaPrabhandhamApp
 
@@ -246,14 +251,12 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
+    /** Light or dark system-bar icons to suit the page behind them. */
     private fun applyBarStyle(dark: Boolean) {
-        val transparent = android.graphics.Color.TRANSPARENT
-        enableEdgeToEdge(
-            statusBarStyle = if (dark) SystemBarStyle.dark(transparent)
-            else SystemBarStyle.light(transparent, transparent),
-            navigationBarStyle = if (dark) SystemBarStyle.dark(transparent)
-            else SystemBarStyle.light(transparent, transparent),
-        )
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

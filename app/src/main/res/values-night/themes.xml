@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.DivyaPrabhandham" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
+        <!-- Draw into the display cutout, as enableEdgeToEdge() used to set in
+             code. "always" rather than the shortEdges that Android 15 deprecates. -->
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="r">always</item>
     </style>
 </resources>

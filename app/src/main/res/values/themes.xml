@@ -11,6 +11,9 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+        <!-- Draw into the display cutout, as enableEdgeToEdge() used to set in
+             code. "always" rather than the shortEdges that Android 15 deprecates. -->
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="r">always</item>
     </style>
 
     <style name="Theme.DivyaPrabhandham.Splash" parent="Theme.SplashScreen">
