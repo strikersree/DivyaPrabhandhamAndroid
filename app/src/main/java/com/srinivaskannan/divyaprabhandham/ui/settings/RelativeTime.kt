@@ -1,10 +1,12 @@
 package com.srinivaskannan.divyaprabhandham.ui.settings
 
-import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
+import com.srinivaskannan.divyaprabhandham.prefs.UiLanguage
 import java.util.concurrent.TimeUnit
 
 /**
- * A short "synced N ago" phrase, in Tamil or English per the app's script.
+ * A short "synced N ago" phrase, in Tamil or English per the menu language
+ * (not the verse script: someone reading Tamil verses with English menus
+ * should see English here, like the rest of Settings).
  *
  * Deliberately coarse — just now, minutes, hours, days, weeks — because a
  * last-synced line does not need second precision and the coarse buckets read
@@ -13,8 +15,8 @@ import java.util.concurrent.TimeUnit
  */
 object RelativeTime {
 
-    fun syncedAgo(nowMs: Long, thenMs: Long, script: ScriptChoice): String {
-        val tamil = script == ScriptChoice.TAMIL
+    fun syncedAgo(nowMs: Long, thenMs: Long, language: UiLanguage): String {
+        val tamil = language == UiLanguage.TAMIL
         val delta = (nowMs - thenMs).coerceAtLeast(0)
 
         val minutes = TimeUnit.MILLISECONDS.toMinutes(delta)

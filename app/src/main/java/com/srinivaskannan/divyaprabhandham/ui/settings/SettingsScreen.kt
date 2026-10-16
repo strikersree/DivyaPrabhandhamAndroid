@@ -350,7 +350,7 @@ private fun SyncPane(appState: AppState, sync: GoogleSyncManager) {
             trailingText = when {
                 sync.isSyncing -> appState.ui(Ui.SYNC_SYNCING)
                 isProblem -> null
-                syncedAt != null -> RelativeTime.syncedAgo(now, syncedAt, appState.scriptChoice)
+                syncedAt != null -> RelativeTime.syncedAgo(now, syncedAt, appState.uiLanguage)
                 else -> appState.ui(Ui.SYNC_NEVER)
             },
             showChevron = false,
