@@ -53,6 +53,7 @@ import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
 import com.srinivaskannan.divyaprabhandham.ui.components.ListRow
+import com.srinivaskannan.divyaprabhandham.ui.streak.ReadingStatsCard
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.DivisionPalette
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
@@ -115,14 +116,12 @@ fun HomeScreen(
             }
         }
 
-        item(key = "pilgrimage") {
-            PilgrimageProgressCard(
-                visited = appState.visitedCount,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
+        // The pilgrimage card lives on the Divya Desams tab, with the temples.
+        item(key = "readingStats") {
+            ReadingStatsCard(modifier = Modifier.padding(horizontal = 16.dp))
         }
 
-        // Below the tomes and the pilgrimage card, past the primary content
+        // Below the tomes and the reading stats, past the primary content
         // but still near the top, rather than at the foot of a list that
         // grows with every bookmark.
         item(key = "adBanner") {

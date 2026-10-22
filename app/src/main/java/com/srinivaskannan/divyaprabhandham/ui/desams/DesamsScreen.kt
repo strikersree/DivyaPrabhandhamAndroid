@@ -189,6 +189,17 @@ fun DesamsScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
             ) {
+                // The pilgrimage progress sits with the temples it counts.
+                // Hidden while searching or filtering, where it would only
+                // push the matches down.
+                if (query.isBlank() && region == null) {
+                    item(key = "pilgrimage") {
+                        com.srinivaskannan.divyaprabhandham.ui.home.PilgrimageProgressCard(
+                            visited = appState.visitedCount,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                }
                 groups.forEach { (groupRegion, desams) ->
                     item(key = "region-$groupRegion") {
                         Text(

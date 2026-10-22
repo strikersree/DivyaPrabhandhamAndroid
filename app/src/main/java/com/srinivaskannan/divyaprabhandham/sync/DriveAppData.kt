@@ -181,6 +181,64 @@ internal object DriveAppData {
             ) != null
         }
 
+    // --- Reading logs -----------------------------------------------------
+    // One file per install, "reading-log-<deviceId>.json", because reading
+    // time adds up across devices rather than one device's copy winning.
+
+    const val READING_LOG_PREFIX = "reading-log-"
+
+    @Serializable
+    data class NamedFile(val id: String, val name: String)
+
+    @Serializable
+    private data class NamedFileList(val files: List<NamedFile> = emptyList())
+
+    /** Every device's reading log file in this account, or null on failure. */
+    suspend fun listReadingLogs(token: String): List<NamedFile>? = withContext(Dispatchers.IO) {
+        val query = URLEncoder.encode("name contains '$READING_LOG_PREFIX'", "UTF-8")
+        val url = "$FILES?spaces=appDataFolder&q=$query&fields=files(id,name)&pageSize=100"
+        val body = request(url, "GET", token) ?: return@withContext null
+        runCatching { json.decodeFromString<NamedFileList>(body).files }.getOrNull()
+    }
+
+    suspend fun downloadText(token: String, fileId: String): String? = withContext(Dispatchers.IO) {
+        request("$FILES/$fileId?alt=media", "GET", token)
+    }
+
+    /** Creates an appDataFolder file named [name] holding [content]. */
+    suspend fun createText(token: String, name: String, content: String): String? =
+        withContext(Dispatchers.IO) {
+            val metadata = """{"name":"$name","parents":["appDataFolder"]}"""
+            val multipart = buildString {
+                append("--$BOUNDARY\r\n")
+                append("Content-Type: application/json; charset=UTF-8\r\n\r\n")
+                append(metadata).append("\r\n")
+                append("--$BOUNDARY\r\n")
+                append("Content-Type: application/json; charset=UTF-8\r\n\r\n")
+                append(content).append("\r\n")
+                append("--$BOUNDARY--")
+            }
+            val body = request(
+                url = "$UPLOAD?uploadType=multipart&fields=id",
+                method = "POST",
+                token = token,
+                contentType = "multipart/related; boundary=$BOUNDARY",
+                payload = multipart,
+            ) ?: return@withContext null
+            runCatching { json.decodeFromString<FileRef>(body).id }.getOrNull()
+        }
+
+    suspend fun updateText(token: String, fileId: String, content: String): Boolean =
+        withContext(Dispatchers.IO) {
+            request(
+                url = "$UPLOAD/$fileId?uploadType=media",
+                method = "PATCH",
+                token = token,
+                contentType = "application/json; charset=UTF-8",
+                payload = content,
+            ) != null
+        }
+
     private fun request(
         url: String,
         method: String,

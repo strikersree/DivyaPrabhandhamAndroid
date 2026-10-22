@@ -1,5 +1,7 @@
 package com.srinivaskannan.divyaprabhandham.ui.reader
 
+import com.srinivaskannan.divyaprabhandham.prefs.ReadingPlace
+import com.srinivaskannan.divyaprabhandham.ui.streak.ReadingTimeEffect
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -158,6 +160,15 @@ fun ReaderScreen(
     // off is a row of 1s that is easy to miss, so the switch says what it did.
     val prosodyHost = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // Time on this page counts toward the day's reading, under its division.
+    ReadingTimeEffect(
+        remember(section.id) {
+            repository.workContaining(section.id)?.id
+                ?.let { repository.divisionForWork(it) }
+                ?.let { ReadingPlace.Division(it.id) }
+        },
+    )
 
     val listState = rememberLazyListState()
     val previous = remember(section.id) { repository.previousSection(section.id) }

@@ -75,6 +75,8 @@ object ReminderScheduler {
     fun reschedule(context: Context, appState: AppState) {
         ensureChannel(context)
         cancelAll(context)
+        // Its own switch, on by default, independent of the daily reminders.
+        StreakReminder.schedule(context, appState)
         if (!appState.notificationsEnabled) return
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 

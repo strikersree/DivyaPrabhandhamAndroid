@@ -169,6 +169,11 @@ class AppState private constructor(
     var reminderTimes: List<ReminderTime> by mutableStateOf(snapshot.reminderTimes)
         private set
 
+    /** The 9 PM reminder when today's two minutes are not yet read. On by
+     *  default, apart from the daily reminders. */
+    var streakRemindersEnabled: Boolean by mutableStateOf(snapshot.streakRemindersEnabled)
+        private set
+
     var widgetAayiram: WidgetAayiram by mutableStateOf(snapshot.widgetAayiram)
         internal set
 
@@ -605,6 +610,11 @@ class AppState private constructor(
         persist { it[Keys.NOTIFY_TIMES] = json.encodeToString(reminderTimes) }
     }
 
+    fun updateStreakRemindersEnabled(value: Boolean) {
+        streakRemindersEnabled = value
+        persist { it[Keys.STREAK_REMINDERS] = value }
+    }
+
     fun noteTipPromptShown() {
         val now = System.currentTimeMillis()
         lastTipPrompt = now
@@ -704,6 +714,7 @@ class AppState private constructor(
         val font: FontChoice,
         val notificationsEnabled: Boolean,
         val reminderTimes: List<ReminderTime>,
+        val streakRemindersEnabled: Boolean,
         val widgetAayiram: WidgetAayiram,
         val syncEnabled: Boolean,
         val supporterSince: Long?,
@@ -734,6 +745,7 @@ class AppState private constructor(
         val FONT_FAMILY = stringPreferencesKey("dp.fontFamily")
         val NOTIFY_ENABLED = booleanPreferencesKey("dp.notifyEnabled")
         val NOTIFY_TIMES = stringPreferencesKey("dp.notifyTimes")
+        val STREAK_REMINDERS = booleanPreferencesKey("dp.streakReminders")
         val WIDGET_AAYIRAM = stringPreferencesKey("dp.widgetAayiram")
         val SYNC = booleanPreferencesKey("dp.sync")
         val SUPPORTER_SINCE = longPreferencesKey("dp.supporterSince")
@@ -832,6 +844,7 @@ class AppState private constructor(
                 reminderTimes = prefs[Keys.NOTIFY_TIMES]?.let {
                     runCatching { json.decodeFromString<List<ReminderTime>>(it) }.getOrNull()
                 } ?: emptyList(),
+                streakRemindersEnabled = prefs[Keys.STREAK_REMINDERS] ?: true,
                 widgetAayiram = WidgetAayiram.from(prefs[Keys.WIDGET_AAYIRAM]),
                 syncEnabled = prefs[Keys.SYNC] ?: false,
                 supporterSince = prefs[Keys.SUPPORTER_SINCE],

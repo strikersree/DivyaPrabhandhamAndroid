@@ -1,5 +1,7 @@
 package com.srinivaskannan.divyaprabhandham.ui.desams
 
+import com.srinivaskannan.divyaprabhandham.prefs.ReadingPlace
+import com.srinivaskannan.divyaprabhandham.ui.streak.ReadingTimeEffect
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,6 +54,8 @@ fun DesamDetailScreen(
     val accent = MaterialTheme.colorScheme.primary
 
     var essenceSheet by remember { mutableStateOf<Pair<Int?, Essence?>?>(null) }
+
+    ReadingTimeEffect(ReadingPlace.Desam(desam.id))
 
     val verses = remember(desam.id, script) {
         desam.verseIdentifiers.mapNotNull { identifier ->

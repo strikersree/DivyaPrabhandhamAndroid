@@ -14,14 +14,20 @@ import com.srinivaskannan.divyaprabhandham.prefs.AppState
 import com.srinivaskannan.divyaprabhandham.prefs.AppearanceChoice
 import com.srinivaskannan.divyaprabhandham.prefs.FontChoice
 import com.srinivaskannan.divyaprabhandham.prefs.LastRead
+import com.srinivaskannan.divyaprabhandham.prefs.ReadingDay
+import com.srinivaskannan.divyaprabhandham.prefs.ReadingLog
 import com.srinivaskannan.divyaprabhandham.prefs.ReaderThemeChoice
 import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import com.srinivaskannan.divyaprabhandham.prefs.WidgetAayiram
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
 /**
@@ -76,6 +82,10 @@ class GoogleSyncManager(
     private var cachedToken: String? = null
     private var cachedFileId: String? = null
     private var pushJob: Job? = null
+    private var readingLogJob: Job? = null
+    private var readingLogFileId: String? = null
+    /** One reading-log sync at a time, so two can't both create the file. */
+    private val readingLogLock = Mutex()
 
     private val request = AuthorizationRequest.builder()
         .setRequestedScopes(listOf(Scope(DRIVE_APPDATA_SCOPE)))
@@ -167,6 +177,7 @@ class GoogleSyncManager(
                         return@launch
                     }
                     cachedFileId = created
+                    readingLogLock.withLock { syncReadingLogs(token) }
                     lastSyncedAt = System.currentTimeMillis()
                     status = SyncStatus.Synced
                     return@launch
@@ -179,6 +190,7 @@ class GoogleSyncManager(
                 if (remote.updatedAt > appState.changedAt) {
                     apply(remote, appState)
                 }
+                readingLogLock.withLock { syncReadingLogs(token) }
                 lastSyncedAt = System.currentTimeMillis()
                 status = SyncStatus.Synced
             } finally {
@@ -209,12 +221,64 @@ class GoogleSyncManager(
         }
     }
 
+    /**
+     * Adds every other device's reading log to this one's, and uploads this
+     * device's own. Part of every pull.
+     */
+    private suspend fun syncReadingLogs(token: String) {
+        val files = DriveAppData.listReadingLogs(token) ?: return
+        val ownName = ownReadingLogName()
+        val others = mutableMapOf<String, Map<String, ReadingDay>>()
+        readingLogFileId = null
+        for (file in files) {
+            if (file.name == ownName) {
+                readingLogFileId = file.id
+                continue
+            }
+            val raw = DriveAppData.downloadText(token, file.id) ?: continue
+            ReadingLog.decode(raw)?.let { others[file.name] = it }
+        }
+        withContext(Dispatchers.Main) { ReadingLog.applyOtherDevices(others) }
+        pushReadingLog(token)
+    }
+
+    private suspend fun pushReadingLog(token: String) {
+        val content = withContext(Dispatchers.Main) { ReadingLog.ownJson() }
+        val fileId = readingLogFileId
+        if (fileId == null) {
+            readingLogFileId = DriveAppData.createText(token, ownReadingLogName(), content)
+        } else {
+            DriveAppData.updateText(token, fileId, content)
+        }
+    }
+
+    private fun ownReadingLogName() =
+        "${DriveAppData.READING_LOG_PREFIX}${ReadingLog.deviceId}.json"
+
+    /**
+     * Uploads this device's reading log at most once a minute while reading —
+     * throttled rather than debounced, since reading time keeps arriving every
+     * ten seconds for as long as the page is open.
+     */
+    fun scheduleReadingLogPush(appState: AppState) {
+        if (!appState.syncEnabled || readingLogJob?.isActive == true) return
+        readingLogJob = scope.launch {
+            delay(READING_LOG_PUSH_INTERVAL_MS)
+            val token = accessToken(interactive = false) ?: return@launch
+            readingLogLock.withLock {
+                if (readingLogFileId == null) syncReadingLogs(token) else pushReadingLog(token)
+            }
+        }
+    }
+
     /** Forgets local credentials. The remote document is left alone. */
     fun disconnect() {
         pendingConsent = null
         cachedToken = null
         cachedFileId = null
+        readingLogFileId = null
         pushJob?.cancel()
+        readingLogJob?.cancel()
         lastSyncedAt = null
         status = SyncStatus.Idle
     }
@@ -290,6 +354,8 @@ class GoogleSyncManager(
          * still gets the bookmark up.
          */
         private const val PUSH_DEBOUNCE_MS = 4_000L
+
+        private const val READING_LOG_PUSH_INTERVAL_MS = 60_000L
     }
 }
 

@@ -253,6 +253,23 @@ enum class Ui {
     ASK_ERR_TIMEOUT,
     ASK_ERR_RATE,
     ASK_ERR_SERVER,
+    READING_STREAK,
+    DAY_STREAK,
+    TOTAL_TIME,
+    FAVOURITE_DIVISION,
+    READING_CALENDAR,
+    LONGEST_STREAK,
+    DAYS_READ,
+    TODAY_GOAL_MET,
+    LEGEND_READ,
+    LEGEND_SHORT,
+    LEGEND_MISSED,
+    TAP_DAY_HINT,
+    NO_READING_THAT_DAY,
+    STREAK_REMINDER,
+    STREAK_REMINDER_FOOTER,
+    STREAK_NOTIFY_BODY,
+    STREAK_CELEBRATION,
 }
 
 object UiText {
@@ -328,8 +345,8 @@ object UiText {
         ),
         Ui.SYNC_HEADER to ("" to ""),
         Ui.SYNC_FOOTER to (
-            "நினைவுக்குறிகள், வாசிப்பு நிலை மற்றும் விருப்பங்கள் உங்கள் Google Drive-இன் மறைவான செயலிக் கோப்புறையில் சேமிக்கப்படும். உங்கள் சாதனங்களுக்கு இடையே ஒத்திசைக்கப்படும்; வேறு யாரும் அதைப் பார்க்க முடியாது." to
-            "Bookmarks, reading position and preferences are kept in a hidden app folder in your own Google Drive, so they follow you between devices. Nobody else can see it, and it never touches a server of ours."
+            "நினைவுக்குறிகள், வாசிப்பு நிலை, வாசிப்பு வரலாறு மற்றும் விருப்பங்கள் உங்கள் Google Drive-இன் மறைவான செயலிக் கோப்புறையில் சேமிக்கப்படும். உங்கள் சாதனங்களுக்கு இடையே ஒத்திசைக்கப்படும்; வேறு யாரும் அதைப் பார்க்க முடியாது." to
+            "Bookmarks, reading position, reading history and preferences are kept in a hidden app folder in your own Google Drive, so they follow you between devices. Nobody else can see it, and it never touches a server of ours."
         ),
         Ui.SYNC_TOGGLE to (
             "Google ஒத்திசைவு" to
@@ -602,5 +619,22 @@ object UiText {
         Ui.ASK_ERR_TIMEOUT to ("பதில் தாமதமானது. மீண்டும் முயற்சிக்கவும்." to "That took too long. Please try again."),
         Ui.ASK_ERR_RATE to ("சற்று பொறுத்து மீண்டும் கேளுங்கள்." to "A lot of questions just now — please wait a moment and try again."),
         Ui.ASK_ERR_SERVER to ("பதிலளிக்க முடியவில்லை. பிறகு முயற்சிக்கவும்." to "Couldn't get an answer right now. Please try again later."),
+        Ui.READING_STREAK to ("படிப்புத் தொடர்" to "Reading Streak"),
+        Ui.DAY_STREAK to ("நாள் தொடர்" to "day streak"),
+        Ui.TOTAL_TIME to ("மொத்த நேரம்" to "Total time"),
+        Ui.FAVOURITE_DIVISION to ("விருப்பமான ஆயிரம்" to "Favourite"),
+        Ui.READING_CALENDAR to ("படிப்பு நாட்காட்டி" to "Reading Calendar"),
+        Ui.LONGEST_STREAK to ("நீண்ட தொடர்" to "Longest"),
+        Ui.DAYS_READ to ("படித்த நாட்கள்" to "Days read"),
+        Ui.TODAY_GOAL_MET to ("இன்றைய 2 நிமிட இலக்கு நிறைவு" to "Today's 2 minutes done"),
+        Ui.LEGEND_READ to ("படித்தது" to "Read"),
+        Ui.LEGEND_SHORT to ("2 நிமிடத்திற்குக் குறைவு" to "Under 2 min"),
+        Ui.LEGEND_MISSED to ("தவறியது" to "Missed"),
+        Ui.TAP_DAY_HINT to ("ஒரு நாளைத் தொட்டு அன்று படித்ததைக் காணுங்கள்" to "Tap a day to see what you read"),
+        Ui.NO_READING_THAT_DAY to ("அன்று படிக்கவில்லை" to "Nothing read that day"),
+        Ui.STREAK_REMINDER to ("தொடர் நினைவூட்டல்" to "Streak reminder"),
+        Ui.STREAK_REMINDER_FOOTER to ("இன்று 2 நிமிடம் படிக்காவிட்டால், நாள் முடிய 3 மணி நேரம் முன் (இரவு 9 மணிக்கு) நள்ளிரவு வரையிலான கவுண்ட்டவுனுடன் நினைவூட்டும்." to "If you haven't read for 2 minutes today, a reminder with a countdown to midnight arrives 3 hours before the day ends, at 9 PM."),
+        Ui.STREAK_NOTIFY_BODY to ("தொடரைக் காக்க ஒரு பாசுரத்தை 2 நிமிடம் படியுங்கள்." to "Read a pasuram for 2 minutes to keep it going."),
+        Ui.STREAK_CELEBRATION to ("இன்றைய படிப்பு நிறைவு" to "Today's reading is done"),
     )
 }

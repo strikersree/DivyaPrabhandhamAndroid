@@ -233,6 +233,10 @@ class MainActivity : ComponentActivity() {
                                 LaunchedEffect(Unit) {
                                     inAppUpdate.checkIfDue(updateLauncher, this@MainActivity)
                                 }
+                                com.srinivaskannan.divyaprabhandham.ui.streak.StreakCelebrationBanner(
+                                    modifier = androidx.compose.ui.Modifier
+                                        .align(androidx.compose.ui.Alignment.TopCenter),
+                                )
                             }
                         }
                     }

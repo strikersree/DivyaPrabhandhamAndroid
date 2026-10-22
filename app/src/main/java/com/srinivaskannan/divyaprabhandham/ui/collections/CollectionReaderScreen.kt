@@ -1,5 +1,7 @@
 package com.srinivaskannan.divyaprabhandham.ui.collections
 
+import com.srinivaskannan.divyaprabhandham.prefs.ReadingPlace
+import com.srinivaskannan.divyaprabhandham.ui.streak.ReadingTimeEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,6 +93,8 @@ fun CollectionReaderScreen(collectionId: String, onBack: () -> Unit, onManage: (
             ResolvedEntry(key, section, stanza, repository.workContaining(section.id))
         }
     }
+
+    ReadingTimeEffect(ReadingPlace.Collection(collection.id))
 
     val fontFamily = ReadingFonts.family(context, appState.fontChoice, script)
     val fontSize = appState.fontSize.sp

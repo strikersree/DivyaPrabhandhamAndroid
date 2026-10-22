@@ -148,6 +148,11 @@
             android:name=".notify.ReminderReceiver"
             android:exported="false" />
 
+        <!-- Fires the 9 PM streak reminder when today is still unread. -->
+        <receiver
+            android:name=".notify.StreakReminderReceiver"
+            android:exported="false" />
+
         <!-- Fires the sparse tip-jar nudge, for someone who has been away. -->
         <receiver
             android:name=".notify.SupportReminderReceiver"

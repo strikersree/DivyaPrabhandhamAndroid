@@ -1,5 +1,6 @@
 package com.srinivaskannan.divyaprabhandham.ui.settings
 
+import androidx.core.app.NotificationManagerCompat
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -570,6 +571,41 @@ private fun NotificationsPane(appState: AppState) {
             permissionDenied = true
         }
     }
+
+    val streakPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) ReminderScheduler.reschedule(context, appState) else permissionDenied = true
+    }
+
+    // The streak reminder: its own switch, on by default.
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = appState.ui(Ui.STREAK_REMINDER),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(
+                checked = appState.streakRemindersEnabled,
+                onCheckedChange = { wanted ->
+                    appState.updateStreakRemindersEnabled(wanted)
+                    ReminderScheduler.reschedule(context, appState)
+                    if (wanted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        !NotificationManagerCompat.from(context).areNotificationsEnabled()
+                    ) {
+                        streakPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+            )
+        }
+    }
+    GroupFooter(appState.ui(Ui.STREAK_REMINDER_FOOTER))
 
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(

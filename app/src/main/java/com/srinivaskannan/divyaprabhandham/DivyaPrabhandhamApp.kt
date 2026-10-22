@@ -8,7 +8,9 @@ import com.google.android.gms.ads.MobileAds
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.PrabandhamRepository
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
+import com.srinivaskannan.divyaprabhandham.notify.StreakReminder
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
+import com.srinivaskannan.divyaprabhandham.prefs.ReadingLog
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
 import com.srinivaskannan.divyaprabhandham.widget.WidgetBridge
 import kotlinx.coroutines.CoroutineScope
@@ -64,6 +66,7 @@ class DivyaPrabhandhamApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        ReadingLog.init(this)
         ReminderScheduler.ensureChannel(this)
         // Fire-and-forget: the SDK is internally async and doesn't gate
         // anything else here. AdBanner checks appState.isAdFree before ever
@@ -87,6 +90,10 @@ class DivyaPrabhandhamApp : Application() {
                 syncManager.schedulePush(state)
                 scheduleWidgetRefresh(repo, state)
             }
+            // Reading time is synced on its own, per device (see ReadingLog).
+            ReadingLog.onOwnChanged = { syncManager.scheduleReadingLogPush(state) }
+            // Read on this device or another: tonight's reminder is moot.
+            ReadingLog.onGoalMet = { StreakReminder.withdraw(this) }
 
             Startup.Ready(
                 appState = state,

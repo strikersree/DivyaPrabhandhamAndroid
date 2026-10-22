@@ -49,9 +49,10 @@ import com.srinivaskannan.divyaprabhandham.prefs.ScriptChoice
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 
 /**
- * The pilgrimage progress card on Home: how many Divya Desams visited, a bar
- * toward the next level, and the current level name. Tapping it opens the cards
- * sheet — the earned and still-locked level cards.
+ * The pilgrimage progress card at the top of the Divya Desams list: how many
+ * Divya Desams visited, a bar toward the next level, and the current level
+ * name. Tapping it opens the cards sheet — the earned and still-locked level
+ * cards.
  */
 @Composable
 fun PilgrimageProgressCard(visited: Int, modifier: Modifier = Modifier) {
