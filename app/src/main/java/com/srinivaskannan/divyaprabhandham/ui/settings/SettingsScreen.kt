@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
@@ -76,6 +77,7 @@ import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.TamilProsody
 import com.srinivaskannan.divyaprabhandham.data.Ui
+import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
 import com.srinivaskannan.divyaprabhandham.notify.ReminderScheduler
 import com.srinivaskannan.divyaprabhandham.prefs.AccentChoice
 import com.srinivaskannan.divyaprabhandham.prefs.AppState
@@ -91,6 +93,7 @@ import com.srinivaskannan.divyaprabhandham.ui.components.BackButton
 import com.srinivaskannan.divyaprabhandham.ui.components.GroupFooter
 import com.srinivaskannan.divyaprabhandham.ui.components.GroupHeader
 import com.srinivaskannan.divyaprabhandham.ui.components.ListRow
+import com.srinivaskannan.divyaprabhandham.ui.components.PlayerAccessDialog
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.color
 import com.srinivaskannan.divyaprabhandham.ui.theme.supportsDynamicColor
@@ -236,6 +239,7 @@ private fun RootList(
         leading = Icons.Filled.Widgets,
         onClick = { onPane(Pane.WIDGET) },
     )
+    PlayerControlsRow(appState)
 
     GroupHeader(appState.ui(Ui.ABOUT))
     ListRow(
@@ -287,6 +291,38 @@ private fun RootList(
  * read from packageName because a debug build's id carries a .debug suffix and
  * has no listing.
  */
+/**
+ * Whether the Now Playing pill may see and control Amazon Music. The question
+ * is first asked when a recitation is tapped; this row is where a "no" then
+ * can be changed, and a "yes" taken back. The switch itself is the system's,
+ * so the row only leads there.
+ */
+@Composable
+private fun PlayerControlsRow(appState: AppState) {
+    val remote = LocalAmazonRemote.current
+    // Nothing to control without Amazon Music.
+    if (!remote.isInstalled) return
+    var asking by remember { mutableStateOf(false) }
+
+    ListRow(
+        title = appState.ui(Ui.PLAYER_CONTROLS),
+        leading = Icons.Filled.MusicNote,
+        trailingText = appState.ui(if (remote.hasAccess) Ui.PLAYER_CONTROLS_ON else Ui.REMINDERS_OFF),
+        onClick = { if (remote.hasAccess) remote.openAccessSettings() else asking = true },
+    )
+    if (asking) {
+        PlayerAccessDialog(
+            declineLabel = appState.ui(Ui.NOT_NOW),
+            onTurnOn = {
+                asking = false
+                remote.openAccessSettings()
+            },
+            onDecline = { asking = false },
+            onDismiss = { asking = false },
+        )
+    }
+}
+
 private fun openPlayListing(context: Context) {
     val id = "com.srinivaskannan.divyaprabhandham"
     val play = Intent(Intent.ACTION_VIEW, "market://details?id=$id".toUri())

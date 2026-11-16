@@ -149,6 +149,32 @@ class PrabandhamRepository private constructor(
      */
     fun amazonTarget(workId: String): AmazonWork? = amazon.works[workId]
 
+    /**
+     * What the in-app player needs to start [target] by itself: its album's
+     * exact name and order, and the track to reach in it (the first, for a
+     * work recorded one paththu to a track). Null when the album isn't listed
+     * in amazon_music.json, which leaves only the hand-off.
+     */
+    fun amazonStart(target: AmazonWork): AmazonStart? {
+        val album = amazon.albums[target.album] ?: return null
+        val track = target.track ?: target.tracks.firstOrNull()
+        return if (track != null && track in album.tracks) AmazonStart(album, track) else null
+    }
+
+    /** The work, and paththu, that Amazon Music track [asin] recites. */
+    fun amazonTrack(asin: String?): AmazonTrack? = amazonTracks[asin]
+
+    /** Every album the in-app player can start, for the debug stand-in player. */
+    val amazonAlbums: Collection<AmazonAlbum> get() = amazon.albums.values
+
+    private val amazonTracks: Map<String, AmazonTrack> = buildMap {
+        amazon.also.forEach { (asin, workId) -> put(asin, AmazonTrack(workId)) }
+        amazon.works.forEach { (workId, work) ->
+            work.track?.let { put(it, AmazonTrack(workId)) }
+            work.tracks.forEachIndexed { index, asin -> put(asin, AmazonTrack(workId, index + 1)) }
+        }
+    }
+
     // MARK: - Lookups
 
     fun section(id: String?): BookSection? = id?.let { sectionsById[it] }

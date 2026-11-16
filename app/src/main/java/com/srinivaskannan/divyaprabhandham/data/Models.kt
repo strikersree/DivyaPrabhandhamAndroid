@@ -152,6 +152,11 @@ data class BookSection(
         ScriptChoice.KANNADA -> titleKn ?: title
     }
 
+    /** The paththu this section belongs to, for a work whose sections are
+     *  numbered paththu-thirumozhi ("3-4. தழைகளும்" is in the third). */
+    val paththuNumber: Int?
+        get() = title.substringBefore('-', "").toIntOrNull()
+
     fun content(script: ScriptChoice): String = when (script) {
         ScriptChoice.TAMIL -> content
         ScriptChoice.READABLE -> contentR ?: content
@@ -303,17 +308,78 @@ data class YouTubeCatalogue(
  *  - The two largest works (Periyazhwar Thirumozhi, Periya Thirumozhi) are far
  *    too long for a single track and are given as a curated [playlist] instead.
  * A work has exactly one of [playlist] or [album]+[track] set.
+ *
+ * A work recited one paththu to a track also lists those [tracks] (track
+ * ASINs within [album], in paththu order), so each paththu can be started on
+ * its own. They sit alongside whatever plays the whole work.
  */
 @Serializable
 data class AmazonWork(
     val album: String? = null,
     val track: String? = null,
     val playlist: String? = null,
+    val tracks: List<String> = emptyList(),
+) {
+    /** The hand-off for paththu [index] (0-based) alone, or null when this
+     *  work has no track for it. */
+    fun paththu(index: Int): AmazonWork? {
+        val asin = tracks.getOrNull(index)?.takeIf { it.isNotBlank() } ?: return null
+        return AmazonWork(album = album, track = asin)
+    }
+}
+
+/**
+ * Names of the paththus (பத்து) a long work is divided into, for the browser's
+ * sub-headers. One row per paththu, one column per [ScriptChoice] in
+ * declaration order.
+ */
+object Paththu {
+    private val names = listOf(
+        listOf("முதல் பத்து", "mudhal paththu", "mutal pattu", "ముదల్ పత్తు", "മുദൽ പത്തു", "मुदल् पत्तु", "ಮುದಲ್ ಪತ್ತು"),
+        listOf("இரண்டாம் பத்து", "irandaam paththu", "iraṇṭām pattu", "ఇరండాం పత్తు", "ഇരണ്ഡാം പത്തു", "इरण्डाम् पत्तु", "ಇರಂಡಾಂ ಪತ್ತು"),
+        listOf("மூன்றாம் பத்து", "moondraam paththu", "mūṉṟām pattu", "మూన్ఱాం పత్తు", "മൂന്റാം പത്തു", "मून्ऱाम् पत्तु", "ಮೂನ್ಱಾಂ ಪತ್ತು"),
+        listOf("நான்காம் பத்து", "naangaam paththu", "nāṉkām pattu", "నాన్గాం పత్తు", "നാൻഗാം പത്തു", "नान्गाम् पत्तु", "ನಾನ್ಗಾಂ ಪತ್ತು"),
+        listOf("ஐந்தாம் பத்து", "aindhaam paththu", "aintām pattu", "ఐందాం పత్తు", "ഐന്ദാം പത്തു", "ऐन्दाम् पत्तु", "ಐಂದಾಂ ಪತ್ತು"),
+        listOf("ஆறாம் பத்து", "aaraam paththu", "āṟām pattu", "ఆఱాం పత్తు", "ആറാം പത്തു", "आऱाम् पत्तु", "ಆಱಾಂ ಪತ್ತು"),
+        listOf("ஏழாம் பத்து", "aezhaam paththu", "ēḻām pattu", "ఏఴాం పత్తు", "ഏഴാം പത്തു", "एऴाम् पत्तु", "ಏೞಾಂ ಪತ್ತು"),
+        listOf("எட்டாம் பத்து", "ettaam paththu", "eṭṭām pattu", "ఎట్టాం పత్తు", "എട്ടാം പത്തു", "ऎट्टाम् पत्तु", "ಎಟ್ಟಾಂ ಪತ್ತು"),
+        listOf("ஒன்பதாம் பத்து", "onbadhaam paththu", "oṉpatām pattu", "ఒన్బదాం పత్తు", "ഒൻബദാം പത്തു", "ऒन्बदाम् पत्तु", "ಒನ್ಬದಾಂ ಪತ್ತು"),
+        listOf("பத்தாம் பத்து", "paththaam paththu", "pattām pattu", "పత్తాం పత్తు", "പത്താം പത്തു", "पत्ताम् पत्तु", "ಪತ್ತಾಂ ಪತ್ತು"),
+        listOf("பதினோராம் பத்து", "padhinoaraam paththu", "patiṉōrām pattu", "పదినోరాం పత్తు", "പദിനോരാം പത്തു", "पदिनोराम् पत्तु", "ಪದಿನೋರಾಂ ಪತ್ತು"),
+    )
+
+    /** The name of paththu [number] (1-based), or null past the eleventh. */
+    fun name(number: Int, script: ScriptChoice): String? =
+        names.getOrNull(number - 1)?.get(script.ordinal)
+}
+
+/**
+ * One Amazon Music album as its own player reports it: the exact [name] and
+ * [artist] an album search needs, and its [tracks] (track ASINs) in playing
+ * order. Only a work on an album listed this way can be started without
+ * leaving the app; see media/AmazonRemote.kt.
+ */
+@Serializable
+data class AmazonAlbum(
+    val name: String,
+    val artist: String,
+    val tracks: List<String> = emptyList(),
 )
+
+/** One track to start inside its album: what the in-app player is asked for. */
+data class AmazonStart(val album: AmazonAlbum, val track: String)
+
+/** The work an Amazon Music track recites, and which [paththu] (1-based) when
+ *  the work is recorded one paththu to a track. */
+data class AmazonTrack(val workId: String, val paththu: Int? = null)
 
 @Serializable
 data class AmazonCatalogue(
     val works: Map<String, AmazonWork> = emptyMap(),
+    /** Keyed by album ASIN. */
+    val albums: Map<String, AmazonAlbum> = emptyMap(),
+    /** Track ASIN to work ID, for album tracks that are no work's own recording. */
+    val also: Map<String, String> = emptyMap(),
 )
 
 /**

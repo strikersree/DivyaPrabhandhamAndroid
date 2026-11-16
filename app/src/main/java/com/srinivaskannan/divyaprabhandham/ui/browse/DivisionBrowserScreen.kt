@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
@@ -28,22 +29,39 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.srinivaskannan.divyaprabhandham.data.AmazonWork
+import com.srinivaskannan.divyaprabhandham.data.BookSection
 import com.srinivaskannan.divyaprabhandham.data.Division
+import com.srinivaskannan.divyaprabhandham.data.Paththu
 import com.srinivaskannan.divyaprabhandham.media.AmazonMusicLauncher
+import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
 import com.srinivaskannan.divyaprabhandham.media.RecitationLauncher
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
+import com.srinivaskannan.divyaprabhandham.ui.components.AmazonInstallDialog
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
+import com.srinivaskannan.divyaprabhandham.ui.components.PlayerAccessDialog
 import com.srinivaskannan.divyaprabhandham.ui.components.BackButton
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
@@ -76,6 +94,73 @@ fun DivisionBrowserScreen(
         mutableStateListOf<String>().also { list ->
             works?.singleOrNull()?.let { list.add(it.id) }
         }
+    }
+
+    val remote = LocalAmazonRemote.current
+    var showInstall by remember { mutableStateOf(false) }
+    // The recitation waiting on an answer about player access: first to the
+    // dialog, then — once "Turn on" has opened system Settings — to the switch.
+    var askingAccessFor by remember { mutableStateOf<AmazonWork?>(null) }
+    var awaitingAccessFor by remember { mutableStateOf<AmazonWork?>(null) }
+
+    // Opens a work, or one paththu of it, in Amazon Music itself.
+    val handOff: (AmazonWork) -> Unit = { target ->
+        when (AmazonMusicLauncher.launch(context, target)) {
+            AmazonMusicLauncher.Result.OpenedApp -> Unit
+            AmazonMusicLauncher.Result.NotInstalled -> showInstall = true
+            AmazonMusicLauncher.Result.Failed -> scope.launch {
+                snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
+            }
+        }
+    }
+
+    // Plays it from here where that is possible, with the pill for controls;
+    // otherwise, or if that goes wrong, hands off.
+    val listenOnAmazon: (AmazonWork) -> Unit = { target ->
+        val start = repository.amazonStart(target)
+        when {
+            !remote.isInstalled -> showInstall = true
+            start == null -> handOff(target)
+            remote.hasAccess -> remote.start(start) { handOff(target) }
+            remote.declinedAccess -> handOff(target)
+            else -> askingAccessFor = target
+        }
+    }
+
+    // Back from system Settings: play what was asked for, if access was given.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val onReturn by rememberUpdatedState {
+        awaitingAccessFor?.let { target ->
+            awaitingAccessFor = null
+            remote.refresh()
+            if (remote.hasAccess) listenOnAmazon(target)
+        }
+    }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) onReturn()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    if (showInstall) {
+        AmazonInstallDialog(onDismiss = { showInstall = false })
+    }
+    askingAccessFor?.let { target ->
+        PlayerAccessDialog(
+            declineLabel = appState.ui(Ui.OPEN_AMAZON_MUSIC),
+            onTurnOn = {
+                askingAccessFor = null
+                if (remote.openAccessSettings()) awaitingAccessFor = target else handOff(target)
+            },
+            onDecline = {
+                askingAccessFor = null
+                remote.declineAccess()
+                handOff(target)
+            },
+            onDismiss = { askingAccessFor = null },
+        )
     }
 
     Scaffold(
@@ -136,15 +221,7 @@ fun DivisionBrowserScreen(
                             // the existing YouTube chain unchanged.
                             val amazonWork = repository.amazonTarget(work.id)
                             if (amazonWork != null) {
-                                when (AmazonMusicLauncher.launch(context, amazonWork)) {
-                                    AmazonMusicLauncher.Result.OpenedApp -> Unit
-                                    AmazonMusicLauncher.Result.OpenedPlayStore -> scope.launch {
-                                        snackbars.showSnackbar(appState.ui(Ui.LISTEN_AMAZON_INSTALL))
-                                    }
-                                    AmazonMusicLauncher.Result.Failed -> scope.launch {
-                                        snackbars.showSnackbar(appState.ui(Ui.LISTEN_UNAVAILABLE))
-                                    }
-                                }
+                                listenOnAmazon(amazonWork)
                             } else {
                                 // Hand off to YouTube Music / YouTube / browser.
                                 val target = repository.recitationTarget(work.id)
@@ -164,31 +241,42 @@ fun DivisionBrowserScreen(
                 }
 
                 if (work.id in expanded) {
-                    items(work.sections.size, key = { "s-${work.sections[it].id}" }) { index ->
-                        val section = work.sections[index]
-                        Surface(
-                            onClick = { onOpenSection(section.id) },
-                            color = MaterialTheme.colorScheme.surface,
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 32.dp, end = 20.dp, top = 10.dp, bottom = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(1.dp),
+                    val amazonWork = repository.amazonTarget(work.id)
+                    sectionGroups(work, amazonWork?.tracks?.size ?: 0).forEach { group ->
+                        val paththu = group.paththu
+                        val name = paththu?.let { Paththu.name(it, appState.scriptChoice) }
+                        val track = paththu?.let { amazonWork?.paththu(it - 1) }
+                        if (name != null && track != null) {
+                            item(key = "p-${work.id}-$paththu") {
+                                PaththuHeader(name = name, onListen = { listenOnAmazon(track) })
+                            }
+                        }
+                        items(group.sections.size, key = { "s-${group.sections[it].id}" }) { index ->
+                            val section = group.sections[index]
+                            Surface(
+                                onClick = { onOpenSection(section.id) },
+                                color = MaterialTheme.colorScheme.surface,
                             ) {
-                                Text(
-                                    text = section.title(appState.scriptChoice),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                section.pasuramRange?.let { range ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 32.dp, end = 20.dp, top = 10.dp, bottom = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(1.dp),
+                                ) {
                                     Text(
-                                        text = "${appState.ui(Ui.PASURAM)} ${range.first}–${range.last}" +
-                                            " · ${range.last - range.first + 1}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        text = section.title(appState.scriptChoice),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
+                                    section.pasuramRange?.let { range ->
+                                        Text(
+                                            text = "${appState.ui(Ui.PASURAM)} ${range.first}–${range.last}" +
+                                                " · ${range.last - range.first + 1}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -196,6 +284,71 @@ fun DivisionBrowserScreen(
                 }
 
                 item(key = "divider-${work.id}") { HorizontalDivider() }
+            }
+        }
+    }
+}
+
+/**
+ * A run of a work's sections, under the paththu they belong to (null for
+ * sections outside any paththu, such as the thaniyangal).
+ */
+private class SectionGroup(val paththu: Int?, val sections: List<BookSection>)
+
+/**
+ * The sections in reading order, split by paththu when the work's recitation
+ * has a track for each one — so every paththu gets a sub-header with its own
+ * play button. Any other work (one track, or tracks that don't line up with
+ * the paththus) stays one plain list.
+ */
+private fun sectionGroups(work: Work, trackCount: Int): List<SectionGroup> {
+    val plain = listOf(SectionGroup(null, work.sections))
+    if (trackCount <= 1) return plain
+
+    val groups = mutableListOf<SectionGroup>()
+    var run = mutableListOf<BookSection>()
+    work.sections.forEachIndexed { index, section ->
+        run.add(section)
+        val next = work.sections.getOrNull(index + 1)
+        if (next == null || next.paththuNumber != section.paththuNumber) {
+            groups.add(SectionGroup(section.paththuNumber, run))
+            run = mutableListOf()
+        }
+    }
+    return if (groups.mapNotNull { it.paththu } == (1..trackCount).toList()) groups else plain
+}
+
+/** The name of one paththu, with a button that plays that paththu alone. */
+@Composable
+private fun PaththuHeader(name: String, onListen: () -> Unit) {
+    val appState = LocalAppState.current
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 32.dp, end = 8.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = name.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { heading() },
+            )
+            IconButton(onClick = onListen) {
+                Icon(
+                    Icons.Filled.PlayCircle,
+                    contentDescription = "${appState.ui(Ui.LISTEN)}: $name",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp),
+                )
             }
         }
     }

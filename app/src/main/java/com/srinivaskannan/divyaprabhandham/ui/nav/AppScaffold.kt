@@ -2,18 +2,28 @@ package com.srinivaskannan.divyaprabhandham.ui.nav
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,9 +32,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
+import com.srinivaskannan.divyaprabhandham.media.AmazonRemote
+import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
 import com.srinivaskannan.divyaprabhandham.ui.browse.DivisionBrowserScreen
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
+import com.srinivaskannan.divyaprabhandham.ui.components.MusicPill
 import com.srinivaskannan.divyaprabhandham.ui.components.ResumePill
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamDetailScreen
 import com.srinivaskannan.divyaprabhandham.ui.desams.DesamsScreen
@@ -43,6 +56,40 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 
 /**
+ * The app's screens, with the remote control for Amazon Music that the
+ * recitation buttons and the Now Playing pill share.
+ *
+ * What can be seen of Amazon Music changes while this app is in the
+ * background — the grant in system Settings, playback started over there —
+ * so the remote re-reads it on every return.
+ */
+@Composable
+fun AppScaffold(
+    sync: GoogleSyncManager,
+    tipJar: TipJar,
+    deepLink: DeepLink?,
+    onDeepLinkHandled: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val remote = remember { AmazonRemote(context.applicationContext) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) remote.refresh()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            remote.release()
+        }
+    }
+    CompositionLocalProvider(LocalAmazonRemote provides remote) {
+        NavigationShell(sync, tipJar, deepLink, onDeepLinkHandled, modifier)
+    }
+}
+
+/**
  * The navigation shell.
  *
  * `NavigationSuiteScaffold` is the reason this is one composable rather than
@@ -54,7 +101,7 @@ import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
  * simply move to the side.
  */
 @Composable
-fun AppScaffold(
+private fun NavigationShell(
     sync: GoogleSyncManager,
     tipJar: TipJar,
     deepLink: DeepLink?,
@@ -116,6 +163,9 @@ fun AppScaffold(
     // collision and because "continue reading" is out of place mid-conversation.
     val isAsk = currentRoute == Routes.SEARCH
 
+    // Null unless Amazon Music has one of this app's recitations loaded.
+    val reciting = repository.amazonTrack(LocalAmazonRemote.current.shownTrack)
+
     val navSuiteState = rememberNavigationSuiteScaffoldState()
     LaunchedEffect(isReader) {
         if (isReader) navSuiteState.hide() else navSuiteState.show()
@@ -169,7 +219,18 @@ fun AppScaffold(
         // The IFrame player, parked offscreen. It must be attached to the
         // window to play, but it is a 1px sliver behind everything else.
         Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f)) {
+            // On the reader the pill is the bottom of the screen, there being
+            // no navigation bar under it, so it takes the system bar's inset
+            // and the reader above must not leave room for it a second time.
+            val pillAtBottom = isReader && reciting != null
+            Box(
+                Modifier
+                    .weight(1f)
+                    .then(
+                        if (pillAtBottom) Modifier.consumeWindowInsets(WindowInsets.navigationBars)
+                        else Modifier,
+                    ),
+            ) {
                 NavHost(
                     navController = navController,
                     startDestination = Routes.HOME,
@@ -319,10 +380,20 @@ fun AppScaffold(
                 }
             }
 
-            // Continue Reading sits above the nav bar, app-wide — but not on
-            // the reader, where it would offer to open the current screen.
-            if (!isReader && !isAsk) {
-                ResumePill(onOpen = openSection)
+            // One slot above the nav bar, app-wide, as on iOS: the Now
+            // Playing pill while Amazon Music is reciting, Continue Reading
+            // otherwise. The Ask tab's input bar has that spot, so neither
+            // shows there; and Continue Reading stays off the reader, where
+            // it would offer to open the current screen — but the music pill
+            // is shown there, reading along being what the recitation is for.
+            if (!isAsk) {
+                MusicPill(
+                    track = reciting,
+                    modifier = if (isReader) Modifier.navigationBarsPadding() else Modifier,
+                )
+                if (!isReader && reciting == null) {
+                    ResumePill(onOpen = openSection)
+                }
             }
         }
     }

@@ -1,6 +1,9 @@
 package com.srinivaskannan.divyaprabhandham
 
+import android.app.ActivityManager
 import android.app.Application
+import android.os.Build
+import android.os.Process
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -66,6 +69,9 @@ class DivyaPrabhandhamApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // The media-session listener lives in a process of its own (see the
+        // manifest) which the system keeps running. None of this is for it.
+        if (!isMainProcess()) return
         ReadingLog.init(this)
         ReminderScheduler.ensureChannel(this)
         // Fire-and-forget: the SDK is internally async and doesn't gate
@@ -116,6 +122,18 @@ class DivyaPrabhandhamApp : Application() {
         ready.sync.pull(ready.appState)
         ReminderScheduler.reschedule(this, ready.appState)
         scheduleWidgetRefresh(ready.repository, ready.appState)
+    }
+
+    private fun isMainProcess(): Boolean {
+        val name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getProcessName()
+        } else {
+            val pid = Process.myPid()
+            getSystemService(ActivityManager::class.java)
+                .runningAppProcesses?.firstOrNull { it.pid == pid }?.processName
+        }
+        // Unknown is treated as main: skipping startup there would break the app.
+        return name == null || name == packageName
     }
 
     private fun scheduleWidgetRefresh(repo: PrabandhamRepository, state: AppState) {

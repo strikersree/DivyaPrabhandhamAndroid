@@ -17,6 +17,10 @@ import com.srinivaskannan.divyaprabhandham.data.AmazonWork
  * hand-off costs: no in-app player or controls, and it requires Amazon Music
  * installed plus a Prime/Unlimited subscription for on-demand play.
  *
+ * Where the listener allows it, [AmazonRemote] starts the same recitation
+ * without leaving this app and gives it a pill with controls. This hand-off
+ * is what that falls back on.
+ *
  * The URL host (music.amazon.in) is India-specific; a listener on another
  * Amazon Music region should still have the link routed to their installed
  * app by the OS, but catalogue/subscription availability follows their own
@@ -24,17 +28,18 @@ import com.srinivaskannan.divyaprabhandham.data.AmazonWork
  */
 object AmazonMusicLauncher {
 
-    private const val PKG = "com.amazon.mp3"
+    const val PKG = "com.amazon.mp3"
     private const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=$PKG"
 
     sealed interface Result {
         /** Amazon Music opened directly and should now be playing. */
         data object OpenedApp : Result
 
-        /** Amazon Music isn't installed; sent to its Play Store page instead. */
-        data object OpenedPlayStore : Result
+        /** Amazon Music isn't installed. The caller asks before sending the
+         *  listener to its Play Store page ([openStore]). */
+        data object NotInstalled : Result
 
-        /** Neither Amazon Music nor a browser could handle it. */
+        /** [work] has nothing to open. */
         data object Failed : Result
     }
 
@@ -42,8 +47,7 @@ object AmazonMusicLauncher {
      * Opens [work] in Amazon Music: its playlist when one is set, otherwise its
      * album (jumping straight to the track when one is set). Targets the
      * Amazon Music package directly (skipping the app chooser); if it isn't
-     * installed, falls back to its Play Store listing so the listener can
-     * install it and try again.
+     * installed, says so and opens nothing.
      *
      * Deliberately does not pre-check whether Amazon Music is installed via
      * PackageManager: on Android 11+, that query requires the package to be
@@ -61,12 +65,15 @@ object AmazonMusicLauncher {
             setPackage(PKG)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        if (tryStart(context, toAmazon)) return Result.OpenedApp
+        return if (tryStart(context, toAmazon)) Result.OpenedApp else Result.NotInstalled
+    }
 
+    /** Opens Amazon Music's Play Store page, so the listener can install it. */
+    fun openStore(context: Context): Boolean {
         val toStore = Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_URL)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        return if (tryStart(context, toStore)) Result.OpenedPlayStore else Result.Failed
+        return tryStart(context, toStore)
     }
 
     private fun targetUrl(work: AmazonWork): String? = when {
