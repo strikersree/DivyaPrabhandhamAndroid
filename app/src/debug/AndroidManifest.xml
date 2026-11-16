@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Debug-only test screen for the remote-control pill: what Amazon Music's
+      media session reports and accepts. See
+      docs/mini-player-options-feasibility.md. It uses the app's own listener
+      (media/MediaSessionAccess), and nothing here reaches a release build.
+    -->
+    <application>
+        <!--
+          Its own launcher icon, so the test is one tap away on a phone, and
+          its own task: sharing the app's, the icon just brought the app back
+          whenever the app was already open.
+        -->
+        <activity
+            android:name=".remote.RemoteProbeActivity"
+            android:exported="true"
+            android:taskAffinity="${applicationId}.remotetest"
+            android:label="DP Remote Test"
+            android:theme="@style/Theme.DivyaPrabhandham">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
