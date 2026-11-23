@@ -13,8 +13,8 @@ android {
         applicationId = "com.srinivaskannan.divyaprabhandham"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.0.8"
+        versionCode = 17
+        versionName = "2"
         vectorDrawables { useSupportLibrary = true }
     }
 
