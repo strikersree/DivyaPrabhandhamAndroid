@@ -699,6 +699,10 @@ fun StreakCelebrationBanner(modifier: Modifier = Modifier) {
     val haptics = LocalHapticFeedback.current
     var shown by remember { mutableStateOf<Int?>(null) }
     var visible by remember { mutableStateOf(false) }
+    // Bumped per celebration, so the hide below is keyed on something this
+    // composable owns. Keying it on ReadingLog.celebration cancelled it the
+    // moment that was cleared, and the banner never went away.
+    var showing by remember { mutableStateOf(0) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -719,6 +723,10 @@ fun StreakCelebrationBanner(modifier: Modifier = Modifier) {
             ReadingLog.askedNotificationPermission = true
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+        showing++
+    }
+    LaunchedEffect(showing) {
+        if (showing == 0) return@LaunchedEffect
         delay(3_000)
         visible = false
     }
