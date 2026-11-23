@@ -58,6 +58,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -184,7 +185,9 @@ fun ReaderScreen(
     // bottom navigation bar is already hidden for the entire time the
     // reader is on screen (see AppScaffold's isReader), fullscreen or not,
     // so there is nothing left for this toggle to do there.
-    var isFullscreen by remember { mutableStateOf(false) }
+    // Kept on AppState, so the music pill in AppScaffold can shrink with it.
+    var isFullscreen by appState::readerFullscreen
+    DisposableEffect(Unit) { onDispose { appState.readerFullscreen = false } }
 
     val thaniyan = remember(section.id, appState.scriptChoice) {
         section.thaniyan(appState.scriptChoice)

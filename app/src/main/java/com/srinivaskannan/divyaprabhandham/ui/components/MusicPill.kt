@@ -60,7 +60,7 @@ import kotlinx.coroutines.delay
  * while Amazon Music plays anything else.
  */
 @Composable
-fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier) {
+fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier, compact: Boolean = false) {
     val appState = LocalAppState.current
     val repository = LocalRepository.current
     val remote = LocalAmazonRemote.current
@@ -76,6 +76,14 @@ fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier) {
         if (track == null || work == null) return@AnimatedVisibility
         val isStarting = remote.starting != null
         val now = remote.now
+        if (compact) {
+            CompactPill(
+                isStarting = isStarting,
+                isPlaying = now?.isPlaying == true,
+                onOpen = { showPlayer = true },
+            )
+            return@AnimatedVisibility
+        }
         Surface(
             onClick = { showPlayer = true },
             modifier = Modifier
@@ -167,6 +175,56 @@ fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier) {
             }
         }
         (track ?: last)?.let { PlayerSheet(track = it, onDismiss = { showPlayer = false }) }
+    }
+}
+
+/**
+ * The pill in fullscreen reading: a small capsule at the end of the line with
+ * the note (opens the player sheet) and play/pause, so the text keeps the
+ * screen's width.
+ */
+@Composable
+private fun CompactPill(isStarting: Boolean, isPlaying: Boolean, onOpen: () -> Unit) {
+    val appState = LocalAppState.current
+    val remote = LocalAmazonRemote.current
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+        Surface(
+            onClick = onOpen,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            tonalElevation = 3.dp,
+            shadowElevation = 6.dp,
+        ) {
+            Row(
+                modifier = Modifier.padding(start = 14.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.MusicNote,
+                    contentDescription = appState.ui(Ui.NOW_PLAYING),
+                    modifier = Modifier.size(20.dp),
+                )
+                if (isStarting) {
+                    Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = LocalContentColor.current,
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                } else {
+                    IconButton(onClick = remote::playPause, modifier = Modifier.size(44.dp)) {
+                        if (isPlaying) {
+                            Icon(Icons.Filled.Pause, appState.ui(Ui.PLAYER_PAUSE))
+                        } else {
+                            Icon(Icons.Filled.PlayArrow, appState.ui(Ui.PLAYER_PLAY))
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

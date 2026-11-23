@@ -93,6 +93,10 @@ class AppState private constructor(
      */
     var onChanged: (() -> Unit)? = null
 
+    /** The reader's fullscreen toggle, shared so the app-wide music pill can
+     *  shrink with it. For this session only: the reader resets it on leaving. */
+    var readerFullscreen: Boolean by mutableStateOf(false)
+
     // MARK: - Reading position and collections
 
     var lastRead: LastRead? by mutableStateOf(snapshot.lastRead)

@@ -389,6 +389,9 @@ private fun NavigationShell(
             if (!isAsk) {
                 MusicPill(
                     track = reciting,
+                    // Fullscreen reading gets just a small play/pause button,
+                    // leaving the text the width of the screen.
+                    compact = isReader && appState.readerFullscreen,
                     modifier = if (isReader) Modifier.navigationBarsPadding() else Modifier,
                 )
                 if (!isReader && reciting == null) {
