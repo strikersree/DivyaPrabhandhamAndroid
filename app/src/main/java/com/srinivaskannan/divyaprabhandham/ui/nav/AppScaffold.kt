@@ -146,18 +146,17 @@ private fun NavigationShell(
         }
     }
 
-    // The reader hides the navigation bar (and, on a tablet, the rail) --
-    // reversed from an earlier "the platform convention is that it persists"
-    // decision, on report that the persistent bar was eating into an
-    // already-scarce landscape reading area and interrupting recitation.
-    // NavigationSuiteScaffoldState is the mechanism the library itself
-    // ships for exactly this (Hidden/Visible, animated, and it consumes the
-    // bar's own window insets while hidden so the reader actually reclaims
-    // that space rather than just drawing over an invisible bar) rather
-    // than switching `layoutType` to `.None`, which would hide it but
-    // leave the insets reserved. Keyed on the route, not on orientation,
-    // so it stays hidden across a rotation instead of re-appearing.
+    // The navigation bar (and, on a tablet, the rail) stays on the reader,
+    // as the tab bar does on iOS, so another tab is one tap away rather than
+    // a walk back through every section read. It goes only in fullscreen,
+    // which is what fullscreen is for: the whole screen for the text, the
+    // reason the reader once hid the bar outright. NavigationSuiteScaffoldState
+    // is the library's own mechanism for this (animated, and it consumes the
+    // bar's window insets while hidden so the reader reclaims that space
+    // rather than drawing over an invisible bar), unlike switching
+    // `layoutType` to `.None`, which would leave the insets reserved.
     val isReader = currentRoute?.startsWith("reader/") == true
+    val barHidden = isReader && appState.readerFullscreen
     // The Ask tab is a chat: its input bar sits exactly where the Continue
     // Reading pill would, so the pill is hidden there too — both to avoid the
     // collision and because "continue reading" is out of place mid-conversation.
@@ -167,8 +166,8 @@ private fun NavigationShell(
     val reciting = repository.amazonTrack(LocalAmazonRemote.current.shownTrack)
 
     val navSuiteState = rememberNavigationSuiteScaffoldState()
-    LaunchedEffect(isReader) {
-        if (isReader) navSuiteState.hide() else navSuiteState.show()
+    LaunchedEffect(barHidden) {
+        if (barHidden) navSuiteState.hide() else navSuiteState.show()
     }
 
     NavigationSuiteScaffold(
@@ -219,10 +218,11 @@ private fun NavigationShell(
         // The IFrame player, parked offscreen. It must be attached to the
         // window to play, but it is a 1px sliver behind everything else.
         Column(Modifier.fillMaxSize()) {
-            // On the reader the pill is the bottom of the screen, there being
+            // In fullscreen the pill is the bottom of the screen, there being
             // no navigation bar under it, so it takes the system bar's inset
             // and the reader above must not leave room for it a second time.
-            val pillAtBottom = isReader && reciting != null
+            // Otherwise it sits on top of the navigation bar, as everywhere.
+            val pillAtBottom = barHidden && reciting != null
             Box(
                 Modifier
                     .weight(1f)
@@ -392,7 +392,7 @@ private fun NavigationShell(
                     // Fullscreen reading gets just a small play/pause button,
                     // leaving the text the width of the screen.
                     compact = isReader && appState.readerFullscreen,
-                    modifier = if (isReader) Modifier.navigationBarsPadding() else Modifier,
+                    modifier = if (barHidden) Modifier.navigationBarsPadding() else Modifier,
                 )
                 if (!isReader && reciting == null) {
                     ResumePill(onOpen = openSection)

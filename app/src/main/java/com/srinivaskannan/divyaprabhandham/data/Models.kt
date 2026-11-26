@@ -240,6 +240,10 @@ data class Stanza(
     val isHeading: Boolean = false,
     /** True for the leading decad-heading block, rendered as a description. */
     val isDescription: Boolean = false,
+    /** True for the closing homage after an Azhwar's last pasuram
+     *  ("பெரியாழ்வார் திருவடிகளே சரணம்"). Not recited; shown as a bold line
+     *  outside the pasuram cards. */
+    val isSalutation: Boolean = false,
     /** For the handful of pasurams with an editorial prelude before the verse
      *  itself (see StanzaParser's PRELUDE_MARKER), the character offset in
      *  [text] where the prelude ends and the verse begins. Null otherwise.

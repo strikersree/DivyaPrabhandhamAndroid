@@ -104,6 +104,17 @@ object StanzaParser {
                     )
                 }
 
+                isSalutation(tamilLine) -> {
+                    flush()
+                    currentNumber = null
+                    blocks += Stanza(
+                        index = blocks.size,
+                        number = null,
+                        text = displayLine,
+                        isSalutation = true,
+                    )
+                }
+
                 numbered != null -> {
                     flush()
                     currentNumber = numbered.groupValues[1].toIntOrNull()
@@ -140,6 +151,16 @@ object StanzaParser {
         }
 
         return blocks
+    }
+
+    /**
+     * The closing homage after an Azhwar's last pasuram ("பெரியாழ்வார்
+     * திருவடிகளே சரணம்"): not part of the verse and not recited. A short line
+     * with no asterisk, so a verse line ending the same way could never match.
+     */
+    private fun isSalutation(raw: String): Boolean {
+        val s = raw.replace(ZWNJ.toString(), "").trim()
+        return s.length < 60 && !s.contains("*") && s.endsWith("திருவடிகளே சரணம்")
     }
 
     /**

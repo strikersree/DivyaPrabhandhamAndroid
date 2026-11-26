@@ -153,7 +153,7 @@ fun ReaderScreen(
         section.stanzas(appState.scriptChoice)
     }
     val verseCount = remember(stanzas) {
-        stanzas.count { !it.isHeading && !it.isDescription }
+        stanzas.count { !it.isHeading && !it.isDescription && !it.isSalutation }
     }
 
     // The prosody switch's confirmation. The marks are small, and on a line
@@ -396,6 +396,7 @@ fun ReaderScreen(
                     when {
                         stanza.isDescription -> DecadeDescription(stanza.text, palette, accent)
                         stanza.isHeading -> AttributionHeader(stanza.text, accent)
+                        stanza.isSalutation -> SalutationLine(stanza.text, palette)
                         else -> StanzaCard(
                             stanza = stanza,
                             section = section,
@@ -743,6 +744,26 @@ private fun buildShareText(
     appendLine()
     val source = work?.title(appState.scriptChoice) ?: section.title(appState.scriptChoice)
     append("— $source, ${appState.ui(Ui.FULL_BOOK_NAME)}")
+}
+
+/** The closing homage to the Azhwar ("பெரியாழ்வார் திருவடிகளே சரணம்"), set as
+ *  one bold line under the last pasuram rather than inside its card. */
+@Composable
+private fun SalutationLine(text: String, palette: ReaderPalette) {
+    val appState = LocalAppState.current
+    val context = LocalContext.current
+    Text(
+        text = text,
+        style = TextStyle(
+            fontFamily = ReadingFonts.family(context, appState.fontChoice, appState.scriptChoice),
+            fontSize = appState.fontSize.sp,
+            fontWeight = FontWeight.Bold,
+            color = palette.text,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 6.dp),
+    )
 }
 
 /**
