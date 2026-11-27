@@ -234,8 +234,14 @@
           { "section": "b2w1s108", "track": 10, "start": 1296 },
           { "section": "b2w1s109", "track": 10, "start": 1512 }
       ] },
-    "b2w2": { "album": "B00DIM066U", "track": "B00DIM0C7S" },
-    "b2w3": { "album": "B00DIM066U", "track": "B00DIM0CPA" },
+    "b2w2": { "album": "B00DIM066U", "track": "B00DIM0C7S",
+      "decades": [
+          { "section": "b2w2s1", "track": 0, "start": 7 }
+      ] },
+    "b2w3": { "album": "B00DIM066U", "track": "B00DIM0CPA",
+      "decades": [
+          { "section": "b2w3s1", "track": 0, "start": 5 }
+      ] },
     "b4w1": { "album": "B00DHTZVV4", "tracks": ["B00DHTZX4E", "B00DHTZY8O", "B00DHTZZ4C", "B00DHU006Y", "B00DHU00OQ", "B00DHU02CQ", "B00DHU03TI", "B00DHU05D2", "B00DHU06QS", "B00DHU07JO"] },
     "b4w2": { "album": "B00DHGE2RQ", "track": "B00DHGE6MM" },
     "b3w1": { "album": "B00DHGE2RQ", "track": "B00DHGE35W" },
