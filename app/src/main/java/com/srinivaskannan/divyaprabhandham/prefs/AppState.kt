@@ -153,6 +153,11 @@ class AppState private constructor(
     var showSyllableMarks: Boolean by mutableStateOf(snapshot.syllableMarks)
         internal set
 
+    /** Follow recitation: while a timed recitation plays, the reader rings
+     *  the pasuram being recited and keeps it in view. */
+    var followRecitation: Boolean by mutableStateOf(snapshot.followRecitation)
+        private set
+
     /** Whether the marks should actually be drawn right now. */
     val syllableMarksActive: Boolean
         get() = showSyllableMarks && scriptChoice == ScriptChoice.TAMIL
@@ -512,6 +517,12 @@ class AppState private constructor(
         return showSyllableMarks
     }
 
+    /** Device-local, as on iOS: it follows the listening on this phone. */
+    fun updateFollowRecitation(value: Boolean) {
+        followRecitation = value
+        persist { it[Keys.FOLLOW_RECITATION] = value }
+    }
+
     fun updateSyllableMarks(value: Boolean) {
         showSyllableMarks = value
         commit { it[Keys.SYLLABLE_MARKS] = value }
@@ -714,6 +725,7 @@ class AppState private constructor(
         val appearance: AppearanceChoice,
         val script: ScriptChoice,
         val syllableMarks: Boolean,
+        val followRecitation: Boolean = false,
         val uiLanguage: UiLanguage,
         val font: FontChoice,
         val notificationsEnabled: Boolean,
@@ -746,6 +758,7 @@ class AppState private constructor(
         val APPEARANCE = stringPreferencesKey("dp.appearance")
         val SCRIPT = stringPreferencesKey("dp.script")
         val SYLLABLE_MARKS = booleanPreferencesKey("dp.syllableMarks")
+        val FOLLOW_RECITATION = booleanPreferencesKey("dp.followRecitation")
         val FONT_FAMILY = stringPreferencesKey("dp.fontFamily")
         val NOTIFY_ENABLED = booleanPreferencesKey("dp.notifyEnabled")
         val NOTIFY_TIMES = stringPreferencesKey("dp.notifyTimes")
@@ -834,6 +847,7 @@ class AppState private constructor(
                 appearance = AppearanceChoice.from(prefs[Keys.APPEARANCE]),
                 script = ScriptChoice.from(prefs[Keys.SCRIPT]),
                 syllableMarks = prefs[Keys.SYLLABLE_MARKS] ?: false,
+                followRecitation = prefs[Keys.FOLLOW_RECITATION] ?: false,
                 uiLanguage = UiLanguage.from(prefs[Keys.UI_LANG]) ?: run {
                     val freshInstall = prefs.asMap().isEmpty()
                     val script = ScriptChoice.from(prefs[Keys.SCRIPT])

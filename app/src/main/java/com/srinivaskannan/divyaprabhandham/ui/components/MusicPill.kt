@@ -42,6 +42,8 @@ import com.srinivaskannan.divyaprabhandham.data.AmazonTrack
 import com.srinivaskannan.divyaprabhandham.data.Paththu
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
+import com.srinivaskannan.divyaprabhandham.media.LocalRecitationPosition
+import com.srinivaskannan.divyaprabhandham.media.skipDecade
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
 import kotlinx.coroutines.delay
@@ -65,6 +67,8 @@ fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier, compact: Boole
     val repository = LocalRepository.current
     val remote = LocalAmazonRemote.current
     val work = track?.let { repository.work(it.workId) }
+    // The decade being recited, where the recording is timed.
+    val decade = LocalRecitationPosition.current?.sectionId?.let { repository.section(it) }
     var showPlayer by rememberSaveable { mutableStateOf(false) }
 
     AnimatedVisibility(
@@ -109,6 +113,7 @@ fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier, compact: Boole
                     Text(
                         text = when {
                             isStarting -> appState.ui(Ui.PLAYER_STARTING)
+                            decade != null -> decade.title(appState.scriptChoice)
                             else -> track.paththu?.let { Paththu.name(it, appState.scriptChoice) }
                                 ?: appState.ui(Ui.NOW_PLAYING)
                         },
@@ -136,8 +141,9 @@ fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier, compact: Boole
                     }
                 } else {
                     IconButton(
-                        onClick = remote::previous,
-                        enabled = now?.canSkipPrevious == true,
+                        // A timed recording steps by decade, within the track.
+                        onClick = { if (!remote.skipDecade(repository, track, forward = false)) remote.previous() },
+                        enabled = now?.canSkipPrevious == true || now?.canSeek == true,
                         modifier = Modifier.size(40.dp),
                     ) {
                         Icon(Icons.Filled.SkipPrevious, appState.ui(Ui.PLAYER_PREVIOUS))
@@ -150,8 +156,8 @@ fun MusicPill(track: AmazonTrack?, modifier: Modifier = Modifier, compact: Boole
                         }
                     }
                     IconButton(
-                        onClick = remote::next,
-                        enabled = now?.canSkipNext == true,
+                        onClick = { if (!remote.skipDecade(repository, track, forward = true)) remote.next() },
+                        enabled = now?.canSkipNext == true || now?.canSeek == true,
                         modifier = Modifier.size(40.dp),
                     ) {
                         Icon(Icons.Filled.SkipNext, appState.ui(Ui.PLAYER_NEXT))

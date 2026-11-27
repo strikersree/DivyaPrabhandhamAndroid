@@ -244,6 +244,10 @@ data class Stanza(
      *  ("பெரியாழ்வார் திருவடிகளே சரணம்"). Not recited; shown as a bold line
      *  outside the pasuram cards. */
     val isSalutation: Boolean = false,
+    /** True for a decade's closing அடிவரவு, the index of its pasurams'
+     *  opening words. Not a verse and not recited; shown as a quiet line
+     *  after the last card. */
+    val isAdivaravu: Boolean = false,
     /** For the handful of pasurams with an editorial prelude before the verse
      *  itself (see StanzaParser's PRELUDE_MARKER), the character offset in
      *  [text] where the prelude ends and the verse begins. Null otherwise.
@@ -323,6 +327,12 @@ data class AmazonWork(
     val track: String? = null,
     val playlist: String? = null,
     val tracks: List<String> = emptyList(),
+    /** Where each decade (or thaniyan section) starts in the recording,
+     *  timed by hand. Empty for a work not timed yet. */
+    val decades: List<DecadeMark> = emptyList(),
+    /** Where in the track to start, for a request built by [decade]. Never
+     *  in the catalogue itself. */
+    @kotlinx.serialization.Transient val startMs: Long = 0,
 ) {
     /** The hand-off for paththu [index] (0-based) alone, or null when this
      *  work has no track for it. */
@@ -330,7 +340,47 @@ data class AmazonWork(
         val asin = tracks.getOrNull(index)?.takeIf { it.isNotBlank() } ?: return null
         return AmazonWork(album = album, track = asin)
     }
+
+    /** The track ASIN at [index] in this work's recording: a paththu's track,
+     *  or the work's one track. */
+    fun trackAt(index: Int): String? =
+        if (tracks.isNotEmpty()) tracks.getOrNull(index) else track.takeIf { index == 0 }
+
+    /** The timing of section [sectionId], if it has one. */
+    fun mark(sectionId: String): DecadeMark? = decades.firstOrNull { it.section == sectionId }
+
+    /** The timed sections on track [index], in playback order. */
+    fun marks(onTrack: Int): List<DecadeMark> =
+        decades.filter { it.track == onTrack }.sortedBy { it.start }
+
+    /** A request that plays section [sectionId] from its start, or null when
+     *  it isn't timed. */
+    fun decade(sectionId: String): AmazonWork? {
+        val mark = mark(sectionId) ?: return null
+        val asin = trackAt(mark.track) ?: return null
+        return AmazonWork(album = album, track = asin, startMs = (mark.start * 1000).toLong())
+    }
 }
+
+/**
+ * Where one decade, or a thaniyan section, starts in its work's recording.
+ * Amazon Music has one track per paththu (or per work); these marks split it.
+ */
+@Serializable
+data class DecadeMark(
+    /** The section id ("w2s2"). */
+    val section: String,
+    /** Index into the work's tracks (0 for a one-track work). */
+    val track: Int,
+    /** Seconds from the start of the track. */
+    val start: Double,
+    /**
+     * The pasuram numbers in the order they are recited, for the rare section
+     * whose recitation doesn't simply run through its pasurams. Null
+     * everywhere else, where a pasuram marked `*` is said twice in a row.
+     */
+    val order: List<Int>? = null,
+)
 
 /**
  * Names of the paththus (பத்து) a long work is divided into, for the browser's
@@ -371,7 +421,7 @@ data class AmazonAlbum(
 )
 
 /** One track to start inside its album: what the in-app player is asked for. */
-data class AmazonStart(val album: AmazonAlbum, val track: String)
+data class AmazonStart(val album: AmazonAlbum, val track: String, val startMs: Long = 0)
 
 /** The work an Amazon Music track recites, and which [paththu] (1-based) when
  *  the work is recorded one paththu to a track. */

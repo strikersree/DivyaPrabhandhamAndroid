@@ -126,6 +126,8 @@ class AmazonRemote(private val context: Context) {
     private var browser: MediaBrowser? = null
 
     private var awaitingSession: AmazonStart? = null
+    /** The request being started, so a second tap on the same one is ignored. */
+    private var startingRequest: AmazonStart? = null
     private var pending: Runnable? = null
     private var onStartFailed: (() -> Unit)? = null
 
@@ -296,9 +298,18 @@ class AmazonRemote(private val context: Context) {
     fun start(request: AmazonStart, onFailed: () -> Unit) {
         // A second tap on the same button: asking again would restart the
         // album under the start already on its way.
-        if (starting == request.track) return
+        if (startingRequest == request) return
+        // The track is already loaded (another decade of the same paththu,
+        // say): seek within it rather than restart the album and walk to it.
+        val n = now
+        if (starting == null && n != null && n.isLoaded && n.mediaId == request.track && n.canSeek) {
+            seekTo(request.startMs)
+            if (!n.isPlaying) send { it.play() }
+            return
+        }
         cancelStart()
         starting = request.track
+        startingRequest = request
         onStartFailed = onFailed
         if (controller != null) ask(request) else wake(request)
     }
@@ -309,6 +320,7 @@ class AmazonRemote(private val context: Context) {
         awaitingSession = null
         onStartFailed = null
         starting = null
+        startingRequest = null
     }
 
     private fun failStart() {
@@ -429,6 +441,8 @@ class AmazonRemote(private val context: Context) {
                 n.album != request.album.name || at > target -> failStart()
                 at == target -> {
                     if (!n.isPlaying) send { it.play() }
+                    // A decade starts partway into its track.
+                    if (request.startMs > 0 && n.canSeek) seekTo(request.startMs)
                     cancelStart()
                 }
                 presses >= order.size + SPARE_PRESSES || !n.canSkipNext -> failStart()

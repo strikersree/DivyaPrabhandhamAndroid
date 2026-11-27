@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +58,7 @@ import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.data.Paththu
 import com.srinivaskannan.divyaprabhandham.media.AmazonMusicLauncher
 import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
+import com.srinivaskannan.divyaprabhandham.media.LocalRecitationPosition
 import com.srinivaskannan.divyaprabhandham.media.RecitationLauncher
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.data.Work
@@ -96,12 +99,19 @@ fun DivisionBrowserScreen(
         }
     }
 
+    // The paththus opened, as "workId#paththu". All start closed, so a long
+    // work reads as its paththus first.
+    val openPaththus = remember(division.id) { mutableStateListOf<String>() }
+
     val remote = LocalAmazonRemote.current
+    val recitationPosition = LocalRecitationPosition.current
     var showInstall by remember { mutableStateOf(false) }
     // The recitation waiting on an answer about player access: first to the
     // dialog, then — once "Turn on" has opened system Settings — to the switch.
     var askingAccessFor by remember { mutableStateOf<AmazonWork?>(null) }
     var awaitingAccessFor by remember { mutableStateOf<AmazonWork?>(null) }
+    // The section heard first in what is waiting, to open when it plays.
+    var pendingReader by remember { mutableStateOf<String?>(null) }
 
     // Opens a work, or one paththu of it, in Amazon Music itself.
     val handOff: (AmazonWork) -> Unit = { target ->
@@ -116,14 +126,24 @@ fun DivisionBrowserScreen(
 
     // Plays it from here where that is possible, with the pill for controls;
     // otherwise, or if that goes wrong, hands off.
-    val listenOnAmazon: (AmazonWork) -> Unit = { target ->
+    // While the reader follows the recitation, starting one here also opens
+    // [readerSection], the section heard first, so the text is in front of
+    // the listener as it begins.
+    val listenOnAmazon: (AmazonWork, String?) -> Unit = { target, readerSection ->
         val start = repository.amazonStart(target)
+        pendingReader = null
         when {
             !remote.isInstalled -> showInstall = true
             start == null -> handOff(target)
-            remote.hasAccess -> remote.start(start) { handOff(target) }
+            remote.hasAccess -> {
+                remote.start(start) { handOff(target) }
+                if (appState.followRecitation && readerSection != null) onOpenSection(readerSection)
+            }
             remote.declinedAccess -> handOff(target)
-            else -> askingAccessFor = target
+            else -> {
+                pendingReader = readerSection
+                askingAccessFor = target
+            }
         }
     }
 
@@ -133,7 +153,7 @@ fun DivisionBrowserScreen(
         awaitingAccessFor?.let { target ->
             awaitingAccessFor = null
             remote.refresh()
-            if (remote.hasAccess) listenOnAmazon(target)
+            if (remote.hasAccess) listenOnAmazon(target, pendingReader)
         }
     }
     DisposableEffect(lifecycleOwner) {
@@ -221,7 +241,11 @@ fun DivisionBrowserScreen(
                             // the existing YouTube chain unchanged.
                             val amazonWork = repository.amazonTarget(work.id)
                             if (amazonWork != null) {
-                                listenOnAmazon(amazonWork)
+                                listenOnAmazon(
+                                    amazonWork,
+                                    amazonWork.marks(onTrack = 0).firstOrNull()?.section
+                                        ?: work.sections.firstOrNull()?.id,
+                                )
                             } else {
                                 // Hand off to YouTube Music / YouTube / browser.
                                 val target = repository.recitationTarget(work.id)
@@ -242,25 +266,55 @@ fun DivisionBrowserScreen(
 
                 if (work.id in expanded) {
                     val amazonWork = repository.amazonTarget(work.id)
-                    sectionGroups(work, amazonWork?.tracks?.size ?: 0).forEach { group ->
+                    val groups = sectionGroups(work)
+                    // A paththu plays on its own where the recording has a
+                    // track for each one.
+                    val paththuTracks = amazonWork?.tracks?.size == groups.count { it.paththu != null }
+                    groups.forEach { group ->
                         val paththu = group.paththu
                         val name = paththu?.let { Paththu.name(it, appState.scriptChoice) }
-                        val track = paththu?.let { amazonWork?.paththu(it - 1) }
-                        if (name != null && track != null) {
+                        val openKey = "${work.id}#$paththu"
+                        if (paththu != null && name != null) {
+                            val track = if (paththuTracks) amazonWork?.paththu(paththu - 1) else null
                             item(key = "p-${work.id}-$paththu") {
-                                PaththuHeader(name = name, onListen = { listenOnAmazon(track) })
+                                PaththuHeader(
+                                    name = name,
+                                    isOpen = openKey in openPaththus,
+                                    onToggle = {
+                                        if (openKey in openPaththus) openPaththus.remove(openKey)
+                                        else openPaththus.add(openKey)
+                                    },
+                                    onListen = track?.let {
+                                        {
+                                            listenOnAmazon(
+                                                it,
+                                                amazonWork?.marks(onTrack = paththu - 1)?.firstOrNull()?.section
+                                                    ?: group.sections.firstOrNull()?.id,
+                                            )
+                                        }
+                                    },
+                                )
                             }
                         }
+                        if (paththu != null && openKey !in openPaththus) return@forEach
                         items(group.sections.size, key = { "s-${group.sections[it].id}" }) { index ->
                             val section = group.sections[index]
+                            // A timed decade plays from its own start.
+                            val decade = amazonWork?.decade(section.id)
                             Surface(
                                 onClick = { onOpenSection(section.id) },
                                 color = MaterialTheme.colorScheme.surface,
                             ) {
+                              Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 32.dp, end = 20.dp, top = 10.dp, bottom = 10.dp),
+                                        .weight(1f)
+                                        .padding(
+                                            start = 32.dp,
+                                            end = if (decade != null) 0.dp else 20.dp,
+                                            top = 10.dp,
+                                            bottom = 10.dp,
+                                        ),
                                     verticalArrangement = Arrangement.spacedBy(1.dp),
                                 ) {
                                     Text(
@@ -278,6 +332,16 @@ fun DivisionBrowserScreen(
                                         )
                                     }
                                 }
+                                if (decade != null) {
+                                    DecadePlayButton(
+                                        name = section.title(appState.scriptChoice),
+                                        isPlaying = recitationPosition?.sectionId == section.id &&
+                                            remote.now?.isPlaying == true,
+                                        onPlay = { listenOnAmazon(decade, section.id) },
+                                        onPause = remote::playPause,
+                                    )
+                                }
+                              }
                             }
                         }
                     }
@@ -296,14 +360,12 @@ fun DivisionBrowserScreen(
 private class SectionGroup(val paththu: Int?, val sections: List<BookSection>)
 
 /**
- * The sections in reading order, split by paththu when the work's recitation
- * has a track for each one — so every paththu gets a sub-header with its own
- * play button. Any other work (one track, or tracks that don't line up with
- * the paththus) stays one plain list.
+ * The sections in reading order, split by paththu where the work is numbered
+ * in paththus ("1-1.", "1-2.", … "2-1."), so each paththu gets a row of its
+ * own that opens to its sections. Any other work stays one plain list.
  */
-private fun sectionGroups(work: Work, trackCount: Int): List<SectionGroup> {
+private fun sectionGroups(work: Work): List<SectionGroup> {
     val plain = listOf(SectionGroup(null, work.sections))
-    if (trackCount <= 1) return plain
 
     val groups = mutableListOf<SectionGroup>()
     var run = mutableListOf<BookSection>()
@@ -315,26 +377,46 @@ private fun sectionGroups(work: Work, trackCount: Int): List<SectionGroup> {
             run = mutableListOf()
         }
     }
-    return if (groups.mapNotNull { it.paththu } == (1..trackCount).toList()) groups else plain
+    val paththus = groups.mapNotNull { it.paththu }
+    return if (paththus.size > 1 && paththus == (1..paththus.size).toList()) groups else plain
+}
+
+/** Plays one decade from its start, or pauses it while it is the one playing. */
+@Composable
+private fun DecadePlayButton(name: String, isPlaying: Boolean, onPlay: () -> Unit, onPause: () -> Unit) {
+    val appState = LocalAppState.current
+    IconButton(onClick = if (isPlaying) onPause else onPlay, modifier = Modifier.padding(end = 8.dp)) {
+        Icon(
+            if (isPlaying) Icons.Filled.PauseCircle else Icons.Filled.PlayCircle,
+            contentDescription = "${appState.ui(if (isPlaying) Ui.PLAYER_PAUSE else Ui.LISTEN)}: $name",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(22.dp),
+        )
+    }
 }
 
 /** The name of one paththu, with a button that plays that paththu alone. */
 @Composable
-private fun PaththuHeader(name: String, onListen: () -> Unit) {
+private fun PaththuHeader(
+    name: String,
+    isOpen: Boolean,
+    onToggle: () -> Unit,
+    onListen: (() -> Unit)?,
+) {
     val appState = LocalAppState.current
-    Surface(color = MaterialTheme.colorScheme.surface) {
+    Surface(onClick = onToggle, color = MaterialTheme.colorScheme.surface) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, end = 8.dp, top = 8.dp),
+                .heightIn(min = 48.dp)
+                .padding(start = 32.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = name.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
+                text = name,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -342,14 +424,22 @@ private fun PaththuHeader(name: String, onListen: () -> Unit) {
                     .weight(1f)
                     .semantics { heading() },
             )
-            IconButton(onClick = onListen) {
-                Icon(
-                    Icons.Filled.PlayCircle,
-                    contentDescription = "${appState.ui(Ui.LISTEN)}: $name",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp),
-                )
+            if (onListen != null) {
+                IconButton(onClick = onListen) {
+                    Icon(
+                        Icons.Filled.PlayCircle,
+                        contentDescription = "${appState.ui(Ui.LISTEN)}: $name",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
             }
+            Icon(
+                if (isOpen) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 12.dp),
+            )
         }
     }
 }

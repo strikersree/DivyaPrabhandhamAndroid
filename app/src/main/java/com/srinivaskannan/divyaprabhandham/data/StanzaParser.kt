@@ -68,12 +68,15 @@ object StanzaParser {
         var current = mutableListOf<String>()
         var currentNumber: Int? = null
         var currentDisplayNumber: String? = null
+        var isAdivaravuBlock = false
 
         fun flush() {
             val raw = current.joinToString("\n").trim()
             current = mutableListOf()
             val displayNumber = currentDisplayNumber
             currentDisplayNumber = null
+            val adivaravu = isAdivaravuBlock
+            isAdivaravuBlock = false
             if (raw.isEmpty()) return
             val markerIndex = raw.indexOf(PRELUDE_MARKER)
             val text = if (markerIndex >= 0) raw.removeRange(markerIndex, markerIndex + 1) else raw
@@ -84,6 +87,7 @@ object StanzaParser {
                 displayNumber = displayNumber,
                 text = text,
                 preludeEnd = preludeEnd,
+                isAdivaravu = adivaravu,
             )
         }
 
@@ -124,6 +128,16 @@ object StanzaParser {
                     // Strip the same leading marker from the display line.
                     val displayMatch = numberedLine.matchEntire(displayLine)
                     current = mutableListOf(displayMatch?.groupValues?.get(3) ?: displayLine)
+                }
+
+                // Closes a decade: an index of each pasuram's opening words,
+                // not part of the last pasuram. Detected from the Tamil line,
+                // kept in the display script, as iOS does.
+                tamilLine.startsWith("அடிவரவு") -> {
+                    flush()
+                    currentNumber = null
+                    isAdivaravuBlock = true
+                    current = mutableListOf(displayLine)
                 }
 
                 tamilLine.isEmpty() -> {

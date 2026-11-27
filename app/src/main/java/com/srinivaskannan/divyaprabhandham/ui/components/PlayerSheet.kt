@@ -61,6 +61,8 @@ import com.srinivaskannan.divyaprabhandham.data.AmazonTrack
 import com.srinivaskannan.divyaprabhandham.data.Paththu
 import com.srinivaskannan.divyaprabhandham.data.Ui
 import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
+import com.srinivaskannan.divyaprabhandham.media.LocalRecitationPosition
+import com.srinivaskannan.divyaprabhandham.media.skipDecade
 import com.srinivaskannan.divyaprabhandham.media.NowPlaying
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalAppState
 import com.srinivaskannan.divyaprabhandham.ui.theme.LocalRepository
@@ -138,7 +140,11 @@ fun PlayerSheet(track: AmazonTrack, onDismiss: () -> Unit) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                track.paththu?.let { Paththu.name(it, appState.scriptChoice) }?.let { paththu ->
+                // The decade being recited where the recording is timed,
+                // else the paththu.
+                (LocalRecitationPosition.current?.sectionId
+                    ?.let { repository.section(it)?.title(appState.scriptChoice) }
+                    ?: track.paththu?.let { Paththu.name(it, appState.scriptChoice) })?.let { paththu ->
                     Text(
                         text = paththu,
                         style = MaterialTheme.typography.titleSmall,
@@ -166,8 +172,8 @@ fun PlayerSheet(track: AmazonTrack, onDismiss: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
-                    onClick = remote::previous,
-                    enabled = !isStarting && now?.canSkipPrevious == true,
+                    onClick = { if (!remote.skipDecade(repository, track, forward = false)) remote.previous() },
+                    enabled = !isStarting && (now?.canSkipPrevious == true || canSeek),
                 ) {
                     Icon(Icons.Filled.SkipPrevious, appState.ui(Ui.PLAYER_PREVIOUS))
                 }
@@ -209,8 +215,8 @@ fun PlayerSheet(track: AmazonTrack, onDismiss: () -> Unit) {
                     )
                 }
                 IconButton(
-                    onClick = remote::next,
-                    enabled = !isStarting && now?.canSkipNext == true,
+                    onClick = { if (!remote.skipDecade(repository, track, forward = true)) remote.next() },
+                    enabled = !isStarting && (now?.canSkipNext == true || canSeek),
                 ) {
                     Icon(Icons.Filled.SkipNext, appState.ui(Ui.PLAYER_NEXT))
                 }

@@ -158,7 +158,7 @@ class PrabandhamRepository private constructor(
     fun amazonStart(target: AmazonWork): AmazonStart? {
         val album = amazon.albums[target.album] ?: return null
         val track = target.track ?: target.tracks.firstOrNull()
-        return if (track != null && track in album.tracks) AmazonStart(album, track) else null
+        return if (track != null && track in album.tracks) AmazonStart(album, track, target.startMs) else null
     }
 
     /** The work, and paththu, that Amazon Music track [asin] recites. */
@@ -186,7 +186,7 @@ class PrabandhamRepository private constructor(
     fun allPasuramKeys(workId: String): List<String> {
         val work = worksById[workId] ?: return emptyList()
         return work.sections.flatMap { section ->
-            section.stanzas(ScriptChoice.TAMIL).map { section.key(it) }
+            section.stanzas(ScriptChoice.TAMIL).filterNot { it.isAdivaravu }.map { section.key(it) }
         }
     }
 

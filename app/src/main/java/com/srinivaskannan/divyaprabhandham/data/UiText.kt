@@ -21,6 +21,11 @@ enum class Ui {
     PROSODY_ON,
     PROSODY_OFF,
     PROSODY_TOGGLE,
+    FOLLOW_RECITATION,
+    FOLLOW_RECITATION_FOOTER,
+    FOLLOW_RECITATION_RESUME,
+    FOLLOW_RECITATION_ON,
+    FOLLOW_RECITATION_OFF,
     FULLSCREEN_TOGGLE,
     EXIT_FULLSCREEN,
     SYLLABLE_HEADER,
@@ -342,6 +347,14 @@ object UiText {
         Ui.PROSODY_ON to ("அசை எண்கள் இயக்கத்தில்" to "Prosody enabled"),
         Ui.PROSODY_OFF to ("அசை எண்கள் நிறுத்தப்பட்டன" to "Prosody disabled"),
         Ui.PROSODY_TOGGLE to ("அசை எண்கள் மாற்ற" to "Toggle prosody"),
+        Ui.FOLLOW_RECITATION to ("பாராயணத்துடன் தொடர்" to "Follow recitation"),
+        Ui.FOLLOW_RECITATION_FOOTER to (
+            "பாராயணம் ஒலிக்கும்போது, ஓதப்படும் பாசுரம் ஒளிர்ந்து திரையில் நகர்ந்து வரும். பாசுர நேரங்கள் மதிப்பீடே; சில வினாடிகள் முன்பின் இருக்கலாம். வாசிப்புப் பக்கத்தின் மேலுள்ள அலைவடிவப் பொத்தானாலும் மாற்றலாம்." to
+                "While a recitation plays, the pasuram being recited is highlighted and kept in view. Pasuram timings are estimated and may be a few seconds off. Also switchable from the waveform button at the top of the reader."
+            ),
+        Ui.FOLLOW_RECITATION_RESUME to ("பாராயணத்துக்குத் திரும்பு" to "Back to recitation"),
+        Ui.FOLLOW_RECITATION_ON to ("பாராயணத்துடன் தொடர்தல் இயக்கத்தில்" to "Following the recitation"),
+        Ui.FOLLOW_RECITATION_OFF to ("பாராயணத்துடன் தொடர்தல் நிறுத்தப்பட்டது" to "Stopped following the recitation"),
         Ui.FULLSCREEN_TOGGLE to ("முழுத்திரை மாற்ற" to "Toggle fullscreen"),
         Ui.EXIT_FULLSCREEN to ("முழுத்திரையிலிருந்து வெளியேறு" to "Exit fullscreen"),
         Ui.SYLLABLE_HEADER to ("அசை எண்கள்" to "Syllable Numbers"),

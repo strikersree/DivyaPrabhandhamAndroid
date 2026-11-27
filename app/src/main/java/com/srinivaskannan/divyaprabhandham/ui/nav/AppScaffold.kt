@@ -34,6 +34,8 @@ import com.srinivaskannan.divyaprabhandham.billing.TipJar
 import com.srinivaskannan.divyaprabhandham.data.Division
 import com.srinivaskannan.divyaprabhandham.media.AmazonRemote
 import com.srinivaskannan.divyaprabhandham.media.LocalAmazonRemote
+import com.srinivaskannan.divyaprabhandham.media.LocalRecitationPosition
+import com.srinivaskannan.divyaprabhandham.media.rememberRecitationPosition
 import com.srinivaskannan.divyaprabhandham.sync.GoogleSyncManager
 import com.srinivaskannan.divyaprabhandham.ui.browse.DivisionBrowserScreen
 import com.srinivaskannan.divyaprabhandham.ui.components.EmptyState
@@ -164,12 +166,17 @@ private fun NavigationShell(
 
     // Null unless Amazon Music has one of this app's recitations loaded.
     val reciting = repository.amazonTrack(LocalAmazonRemote.current.shownTrack)
+    // How far it has got, decade and pasuram, where the recording is timed:
+    // for the pill's caption, the section list's play buttons and the
+    // reader's Follow recitation.
+    val recitationPosition by rememberRecitationPosition(reciting)
 
     val navSuiteState = rememberNavigationSuiteScaffoldState()
     LaunchedEffect(barHidden) {
         if (barHidden) navSuiteState.hide() else navSuiteState.show()
     }
 
+    CompositionLocalProvider(LocalRecitationPosition provides recitationPosition) {
     NavigationSuiteScaffold(
         modifier = modifier,
         state = navSuiteState,
@@ -399,6 +406,7 @@ private fun NavigationShell(
                 }
             }
         }
+    }
     }
 }
 

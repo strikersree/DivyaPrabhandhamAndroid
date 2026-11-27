@@ -1,5 +1,12 @@
 package com.srinivaskannan.divyaprabhandham.ui.reader
 
+import com.srinivaskannan.divyaprabhandham.media.LocalRecitationPosition
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.gestures.animateScrollBy
 import com.srinivaskannan.divyaprabhandham.prefs.ReadingPlace
 import com.srinivaskannan.divyaprabhandham.ui.streak.ReadingTimeEffect
 import androidx.compose.animation.core.animateFloatAsState
@@ -153,7 +160,7 @@ fun ReaderScreen(
         section.stanzas(appState.scriptChoice)
     }
     val verseCount = remember(stanzas) {
-        stanzas.count { !it.isHeading && !it.isDescription && !it.isSalutation }
+        stanzas.count { !it.isHeading && !it.isDescription && !it.isSalutation && !it.isAdivaravu }
     }
 
     // The prosody switch's confirmation. The marks are small, and on a line
@@ -182,10 +189,8 @@ fun ReaderScreen(
     // Hides the app bar, the reading-progress hairline and the font-size
     // control, leaving only a small floating circle to exit -- matching the
     // iOS reader, where the same toggle hides its whole toolbar too. The
-    // bottom navigation bar is already hidden for the entire time the
-    // reader is on screen (see AppScaffold's isReader), fullscreen or not,
-    // so there is nothing left for this toggle to do there.
-    // Kept on AppState, so the music pill in AppScaffold can shrink with it.
+    // bottom navigation bar goes with it (see AppScaffold's barHidden).
+    // Kept on AppState, so the shell can hide the bar and shrink the pill.
     var isFullscreen by appState::readerFullscreen
     DisposableEffect(Unit) { onDispose { appState.readerFullscreen = false } }
 
@@ -224,6 +229,54 @@ fun ReaderScreen(
                 .takeIf { it >= 0 }
                 ?: stanzas.indexOfFirst { section.key(it) == key }
             if (index >= 0) listState.scrollToItem(index + leadingRows)
+        }
+    }
+
+    // Follow recitation: ring the pasuram being recited and keep it in view,
+    // as lyrics do. The position comes from the shell, which follows Amazon
+    // Music; this page only reads it.
+    val recitation = LocalRecitationPosition.current
+    val workId = work?.id ?: remember(section.id) { repository.workContaining(section.id)?.id }
+    val hasTimedRecitation = remember(workId, section.id) {
+        workId?.let { repository.amazonTarget(it) }?.mark(section.id) != null
+    }
+    val followsThisPage = appState.followRecitation && workId != null &&
+        recitation?.workId == workId && recitation.sectionId == section.id
+    val followIndex = if (followsThisPage) recitation?.stanzaIndex else null
+    // Scrolling by hand while following lets go of the recitation, until
+    // "Back to recitation" is tapped.
+    var followDetached by remember(section.id) { mutableStateOf(false) }
+    LaunchedEffect(followsThisPage) { followDetached = false }
+    LaunchedEffect(listState, followsThisPage) {
+        if (!followsThisPage) return@LaunchedEffect
+        listState.interactionSource.interactions.collect {
+            if (it is DragInteraction.Start) followDetached = true
+        }
+    }
+    LaunchedEffect(followIndex, followDetached) {
+        val index = followIndex ?: return@LaunchedEffect
+        if (followDetached) return@LaunchedEffect
+        // The recited card a fifth of the way down the screen, where the eye
+        // already is, rather than pinned to the top edge.
+        val target = index + leadingRows
+        val lead = listState.layoutInfo.viewportSize.height * 0.2f
+        val shown = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == target }
+        if (shown == null) listState.animateScrollToItem(target)
+        val offset = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == target }?.offset
+            ?: return@LaunchedEffect
+        listState.animateScrollBy(offset - lead)
+    }
+    // When the recitation moves on from this decade to the next one, turn
+    // the page with it.
+    val recitingSection = recitation?.takeIf { it.workId == workId }?.sectionId
+    var lastRecitingSection by remember(section.id) { mutableStateOf(recitingSection) }
+    LaunchedEffect(recitingSection) {
+        val was = lastRecitingSection
+        lastRecitingSection = recitingSection
+        if (appState.followRecitation && !followDetached && was == section.id &&
+            next != null && recitingSection == next.id
+        ) {
+            onOpenSection(next.id, null)
         }
     }
 
@@ -277,6 +330,27 @@ fun ReaderScreen(
                                 contentDescription = appState.ui(Ui.FULLSCREEN_TOGGLE),
                                 tint = palette.secondaryText,
                             )
+                        }
+                        // Follow recitation, only where there is a timed
+                        // recitation to follow. Also a switch in Settings.
+                        if (hasTimedRecitation) {
+                            IconButton(onClick = {
+                                val on = !appState.followRecitation
+                                appState.updateFollowRecitation(on)
+                                scope.launch {
+                                    prosodyHost.currentSnackbarData?.dismiss()
+                                    prosodyHost.showSnackbar(
+                                        appState.ui(if (on) Ui.FOLLOW_RECITATION_ON else Ui.FOLLOW_RECITATION_OFF),
+                                        duration = SnackbarDuration.Short,
+                                    )
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Filled.GraphicEq,
+                                    contentDescription = appState.ui(Ui.FOLLOW_RECITATION),
+                                    tint = if (appState.followRecitation) accent else palette.secondaryText,
+                                )
+                            }
                         }
                         // Only under Tamil: the romanisations show vowel length in
                         // their spelling already, and the marks would be annotating
@@ -397,12 +471,18 @@ fun ReaderScreen(
                         stanza.isDescription -> DecadeDescription(stanza.text, palette, accent)
                         stanza.isHeading -> AttributionHeader(stanza.text, accent)
                         stanza.isSalutation -> SalutationLine(stanza.text, palette)
+                        stanza.isAdivaravu -> AdivaravuLine(stanza.text, palette)
                         else -> StanzaCard(
                             stanza = stanza,
                             section = section,
                             work = work,
                             palette = palette,
                             accent = accent,
+                            follow = when (followIndex) {
+                                null -> FollowState.OFF
+                                stanza.index -> FollowState.CURRENT
+                                else -> FollowState.DIMMED
+                            },
                             onShowEssence = { essence ->
                                 essenceSheet = EssenceTarget(stanza.number, essence)
                             },
@@ -442,6 +522,19 @@ fun ReaderScreen(
                             contentDescription = appState.ui(Ui.READING_PROGRESS)
                         },
                 )
+
+                if (followsThisPage && followDetached) {
+                    FilledTonalButton(
+                        onClick = { followDetached = false },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp),
+                    ) {
+                        Icon(Icons.Filled.GraphicEq, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(appState.ui(Ui.FOLLOW_RECITATION_RESUME))
+                    }
+                }
 
                 FontSizeControl(
                     expanded = fontBarExpanded,
@@ -490,6 +583,10 @@ fun ReaderScreen(
 
 private data class EssenceTarget(val number: Int?, val essence: Essence?)
 
+/** A pasuram's part in a followed recitation, as lyrics show it: the one
+ *  being recited is ringed, the rest are quietened. */
+enum class FollowState { OFF, CURRENT, DIMMED }
+
 @Composable
 private fun ReaderHeader(
     work: Work?,
@@ -534,11 +631,16 @@ internal fun StanzaCard(
     palette: ReaderPalette,
     accent: Color,
     onShowEssence: (Essence?) -> Unit,
+    follow: FollowState = FollowState.OFF,
 ) {
     val appState = LocalAppState.current
     val repository = LocalRepository.current
     val context = LocalContext.current
     val key = section.key(stanza)
+    val followAlpha by animateFloatAsState(
+        if (follow == FollowState.DIMMED) 0.4f else 1f,
+        label = "followAlpha",
+    )
     val bookmarked = appState.isBookmarked(key)
     val essence = stanza.number?.let { repository.essence(it, section.id) }
 
@@ -566,17 +668,30 @@ internal fun StanzaCard(
             .fillMaxWidth()
             .combinedClickable(onClick = {}, onLongClick = { addToCollectionOpen = true }),
         shape = MaterialTheme.shapes.large,
-        color = if (stanza.repeatsTwice) repeatHighlight(palette) else palette.card,
-        border = palette.cardBorder?.let { border ->
-            androidx.compose.foundation.BorderStroke(
-                width = if (bookmarked) 2.5.dp else 1.5.dp,
-                color = if (bookmarked) accent else border,
-            )
+        color = when {
+            // The pasuram being recited takes a wash of the accent as well
+            // as the ring, so it stands out on a pale page too.
+            follow == FollowState.CURRENT ->
+                accent.copy(alpha = 0.14f).compositeOver(palette.card)
+            stanza.repeatsTwice -> repeatHighlight(palette)
+            else -> palette.card
+        },
+        border = if (follow == FollowState.CURRENT) {
+            androidx.compose.foundation.BorderStroke(2.5.dp, accent)
+        } else {
+            palette.cardBorder?.let { border ->
+                androidx.compose.foundation.BorderStroke(
+                    width = if (bookmarked) 2.5.dp else 1.5.dp,
+                    color = if (bookmarked) accent else border,
+                )
+            }
         },
         tonalElevation = if (palette.cardBorder == null) 1.dp else 0.dp,
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .graphicsLayer { alpha = followAlpha }
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -763,6 +878,39 @@ private fun SalutationLine(text: String, palette: ReaderPalette) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp),
+    )
+}
+
+/**
+ * A decade's closing அடிவரவு, after the last card: the label in bold, the
+ * opening words in italics, in the quieter text colour, as on iOS.
+ */
+@Composable
+private fun AdivaravuLine(text: String, palette: ReaderPalette) {
+    val appState = LocalAppState.current
+    val context = LocalContext.current
+    val colon = text.indexOf(':')
+    val label = if (colon > 0) text.substring(0, colon) else ""
+    val body = if (colon > 0) text.substring(colon + 1).trim() else ""
+    val styled = buildAnnotatedString {
+        if (label.isNotEmpty() && body.isNotEmpty()) {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("$label: ") }
+            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(body) }
+        } else {
+            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(text) }
+        }
+    }
+    Text(
+        text = styled,
+        style = TextStyle(
+            fontFamily = ReadingFonts.family(context, appState.fontChoice, appState.scriptChoice),
+            fontSize = (appState.fontSize * 0.88f).sp,
+            lineHeight = (appState.fontSize * 0.88f * 1.45f).sp,
+            color = palette.secondaryText,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 10.dp),
     )
 }
 

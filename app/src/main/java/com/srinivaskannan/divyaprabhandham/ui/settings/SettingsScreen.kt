@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -240,6 +241,7 @@ private fun RootList(
         onClick = { onPane(Pane.WIDGET) },
     )
     PlayerControlsRow(appState)
+    FollowRecitationRow(appState)
 
     GroupHeader(appState.ui(Ui.ABOUT))
     ListRow(
@@ -320,6 +322,44 @@ private fun PlayerControlsRow(appState: AppState) {
             onDecline = { asking = false },
             onDismiss = { asking = false },
         )
+    }
+}
+
+/**
+ * Follow recitation, also switchable from the reader's waveform button.
+ * The same setting either way.
+ */
+@Composable
+private fun FollowRecitationRow(appState: AppState) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Icon(
+                Icons.Filled.GraphicEq,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = appState.ui(Ui.FOLLOW_RECITATION),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = appState.ui(Ui.FOLLOW_RECITATION_FOOTER),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = appState.followRecitation,
+                onCheckedChange = { appState.updateFollowRecitation(it) },
+            )
+        }
     }
 }
 
